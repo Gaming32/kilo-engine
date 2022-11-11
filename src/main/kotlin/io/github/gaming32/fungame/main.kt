@@ -1,6 +1,7 @@
 package io.github.gaming32.fungame
 
 import io.github.gaming32.fungame.obj.ObjLoader
+import io.github.gaming32.fungame.util.TextureManager
 import io.github.gaming32.fungame.util.gluPerspective
 import org.joml.Math.clamp
 import org.joml.Math.toRadians
@@ -35,7 +36,7 @@ class Application {
     fun main() {
         init()
         registerEvents()
-        val displayList = objLoader.loadObj("/example.obj")
+        val model = objLoader.loadObj("/example.obj").toDisplayList()
         var lastTime = glfwGetTime()
         var lastPhysicsTime = lastTime
         while (!glfwWindowShouldClose(window)) {
@@ -73,11 +74,11 @@ class Application {
             glRotatef(rotation.y, 0f, 1f, 0f)
             glTranslatef(-position.x.toFloat(), -position.y.toFloat() - 1.8f, position.z.toFloat())
 
-            displayList.draw()
+            model.draw()
 
             glfwSwapBuffers(window)
         }
-        displayList.close()
+        model.close()
         quit()
     }
 
@@ -110,7 +111,7 @@ class Application {
         glEnable(GL_DEPTH_TEST)
         glClearColor(0f, 0f, 0f, 1f)
 
-        objLoader = ObjLoader(object {}::class.java::getResourceAsStream)
+        objLoader = ObjLoader(TextureManager.getResource)
     }
 
     private fun registerEvents() {
@@ -181,6 +182,7 @@ class Application {
     }
 
     private fun quit() {
+        TextureManager.quit()
         glfwFreeCallbacks(window)
         glfwDestroyWindow(window)
         glfwTerminate()

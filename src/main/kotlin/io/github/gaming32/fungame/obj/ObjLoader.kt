@@ -1,61 +1,76 @@
 package io.github.gaming32.fungame.obj
 
-import io.github.gaming32.fungame.util.DisplayListDrawable
-import io.github.gaming32.fungame.util.ModelBuilder
-import io.github.gaming32.fungame.util.buildDisplayList
+import io.github.gaming32.fungame.model.Material
+import io.github.gaming32.fungame.model.Model
 import io.github.gaming32.fungame.util.simpleParentDir
-import org.joml.Vector2f
 import org.joml.Vector3f
-import org.lwjgl.opengl.GL11.GL_LINE_STRIP
-import org.lwjgl.opengl.GL11.GL_POLYGON
 import java.io.BufferedReader
 import java.io.InputStream
 
 class ObjLoader(private val getResource: (String) -> InputStream?) {
-    fun loadObj(name: String): DisplayListDrawable {
+    fun loadObj(name: String) = textResource(name) { inp ->
         val parentDir = simpleParentDir(name)
-        return buildDisplayList {
-            textResource(name) { inp ->
-                val vertices = mutableListOf<Vector3f>()
-                val uvs = mutableListOf<Vector2f>()
-                color(1f, 1f, 1f)
-                for (line in parseLines(inp)) {
-                    when (line[0]) {
-                        "v" -> vertices += Vector3f(
-                            line[1].toFloat(),
-                            line[2].toFloat(),
-                            line[3].toFloat()
+        val verts = mutableListOf<Vector3f>()
+        val uvs = mutableListOf<Model.UV>()
+        val tris = mutableListOf<Model.Tri>()
+        val materials = mutableMapOf<String, Material>()
+        var material: Material? = null
+        for (line in parseLines(inp)) {
+            when (line[0]) {
+                "mtllib" -> materials += loadMaterialLibrary(parentDir + line[1])
+                "usemtl" -> material = materials[line[1]]
+                "v" -> verts += Vector3f(
+                    line[1].toFloat(),
+                    line[2].toFloat(),
+                    line[3].toFloat()
+                )
+                "vt" -> uvs += Model.UV(
+                    line[1].toFloat(),
+                    line[2].toFloat()
+                )
+                "f" -> {
+                    for (i in 2 until line.size - 1) {
+                        tris += Model.Tri(
+                            parseVertex(verts, uvs, line[1]),
+                            parseVertex(verts, uvs, line[i]),
+                            parseVertex(verts, uvs, line[i + 1]),
+                            material
                         )
-                        "vt" -> uvs += Vector2f(
-                            line[1].toFloat(),
-                            line[2].toFloat()
-                        )
-                        "f" -> {
-                            begin(GL_POLYGON)
-                            for (i in 1 until line.size) {
-                                parseVertex(vertices, uvs, line[i])
-                            }
-                            draw()
-                        }
-                        "l" -> {
-                            begin(GL_LINE_STRIP)
-                            for (i in 1 until line.size) {
-                                vertex(vertices[line[i].toInt() - 1])
-                            }
-                            draw()
-                        }
                     }
                 }
-            } ?: throw IllegalArgumentException("Missing OBJ model: $name")
+            }
         }
-    }
+        Model(tris)
+    } ?: throw IllegalArgumentException("Missing OBJ model: $name")
 
-    private fun ModelBuilder.parseVertex(vertices: List<Vector3f>, uvs: List<Vector2f>, vertex: String) {
-        val parts = vertex.split("/")
-        if (parts.size > 1 && parts[1].isNotEmpty()) {
-            uv(uvs[parts[1].toInt() - 1])
+    private fun loadMaterialLibrary(name: String): Map<String, Material> = textResource(name) { inp ->
+        val parentDir = simpleParentDir(name)
+        val materials = mutableMapOf<String, Material>()
+        var currentMaterial = ""
+        for (line in parseLines(inp)) {
+            when (line[0]) {
+                "newmtl" -> currentMaterial = line[1]
+                "Kd" -> if (materials[currentMaterial] !is Material.Texture) {
+                    materials[currentMaterial] = Material.Color(
+                        line[1].toFloat(), line[2].toFloat(), line[3].toFloat()
+                    )
+                }
+                "map_Kd" -> materials[currentMaterial] = Material.Texture(parentDir + line[1])
+            }
         }
-        vertex(vertices[parts[0].toInt() - 1])
+        materials
+    } ?: throw IllegalArgumentException("Missing material library: $name")
+
+    private fun parseVertex(verts: List<Vector3f>, uvs: List<Model.UV>, vertex: String): Model.Vertex {
+        val parts = vertex.split("/")
+        return Model.Vertex(
+            verts[parts[0].toInt() - 1],
+            if (parts.size > 1 && parts[1].isNotEmpty()) {
+                uvs[parts[1].toInt() - 1]
+            } else {
+                null
+            }
+        )
     }
 
     private inline fun <T> textResource(

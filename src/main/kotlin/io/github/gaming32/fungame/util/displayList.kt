@@ -3,8 +3,8 @@ package io.github.gaming32.fungame.util
 import org.lwjgl.opengl.GL11.*
 import java.lang.ref.Cleaner
 
-class DisplayListDrawable(displayList: Int) : Drawable, AutoCloseable {
-    private class DisplayList(val displayList: Int) : Runnable {
+class DisplayList(displayList: Int) : AutoCloseable {
+    private class DisplayListRef(val displayList: Int) : Runnable {
         var open = true
 
         override fun run() {
@@ -19,7 +19,7 @@ class DisplayListDrawable(displayList: Int) : Drawable, AutoCloseable {
         private val CLEANER = Cleaner.create()
     }
 
-    private val list = DisplayList(displayList)
+    private val list = DisplayListRef(displayList)
 
     init {
         CLEANER.register(this, list)
@@ -31,7 +31,7 @@ class DisplayListDrawable(displayList: Int) : Drawable, AutoCloseable {
         }
     }
 
-    override fun draw() {
+    fun draw() {
         ensureOpen()
         glCallList(list.displayList)
     }
@@ -39,10 +39,10 @@ class DisplayListDrawable(displayList: Int) : Drawable, AutoCloseable {
     override fun close() = list.run()
 }
 
-inline fun buildDisplayList(builder: ModelBuilder.() -> Unit): DisplayListDrawable {
+inline fun buildDisplayList(builder: ModelBuilder.() -> Unit): DisplayList {
     val list = glGenLists(1)
     glNewList(list, GL_COMPILE)
     ModelBuilder().builder()
     glEndList()
-    return DisplayListDrawable(list)
+    return DisplayList(list)
 }

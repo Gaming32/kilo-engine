@@ -23,7 +23,21 @@ class ModelBuilder {
 
     fun color(r: Float, g: Float, b: Float, a: Float) = apply { glColor4f(r, g, b, a) }
 
+    fun disable(target: Int) = apply { glDisable(target) }
+
+    fun enable(target: Int) = apply { glEnable(target) }
+
+    fun texture(name: String) = apply { glBindTexture(GL_TEXTURE_2D, TextureManager.getTexture(name)) }
+
     fun draw() = apply { glEnd() }
+
+    inline fun draw(mode: Int, action: ModelBuilder.() -> Unit) {
+        begin(mode)
+        action()
+        draw()
+    }
 }
 
 inline fun buildModel(builder: ModelBuilder.() -> Unit) = ModelBuilder().builder()
+
+inline fun drawModel(mode: Int, action: ModelBuilder.() -> Unit) = ModelBuilder().draw(mode, action)

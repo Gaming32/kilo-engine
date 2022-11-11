@@ -1,11 +1,11 @@
 package io.github.gaming32.fungame.util
 
-fun simpleParentDir(path: CharSequence): CharSequence {
+fun simpleParentDir(path: String): String {
     val slash = path.indexOf('/')
     if (slash == -1) {
         return ""
     }
-    return path.subSequence(0, slash + 1)
+    return path.substring(0, slash + 1)
 }
 
 fun CharSequence.count(c: Char) = count { it == c }
