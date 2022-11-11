@@ -1,0 +1,60 @@
+# Alias OBJ Model File
+# Exported from SketchUp, (c) 2000-2012 Trimble Navigation Limited
+# File units = meters
+
+mtllib skybox.mtl
+
+# g Mesh1 Model
+
+usemtl M_3
+v -1 -1 -1
+vt 0 1
+vn 0 1 -0
+v -1 -1 1
+vt 0 0
+v 1 -1 1
+vt 1 0
+v 1 -1 -1
+vt 1 1
+f 1/1/1 2/2/1 3/3/1 4/4/1
+
+usemtl M_6
+vt -1.11022e-16 -1
+vn 1 0 -0
+vt 1 -1
+v -1 1 -1
+vt 1 -2.21489e-14
+v -1 1 1
+vt -1.11022e-16 0
+f 2/5/2 1/6/2 5/7/2 6/8/2
+
+usemtl M_5
+vt 1.11022e-16 0
+vn 0 0 1
+v 1 1 -1
+vt 1.11022e-16 1
+f 1/9/3 4/3/3 7/4/3 5/10/3
+
+usemtl M_8
+vt 5.55112e-17 5.55112e-17
+vn -1 0 -0
+vt 1 5.55112e-17
+v 1 1 1
+vt 1.66533e-16 1
+f 4/11/4 3/12/4 8/4/4 7/13/4
+
+usemtl M_7
+vt -1.11022e-16 1.11022e-16
+vn 0 0 -1
+vt 1 1.11022e-16
+vt -1.11022e-16 1
+f 3/14/5 2/15/5 6/4/5 8/16/5
+
+usemtl M_11
+vt -2.22045e-16 -1
+vn 0 -1 -0
+vt -2.63108e-07 -3.51385e-14
+vt -1 0
+vt -1 -1
+f 6/17/6 5/18/6 7/19/6 8/20/6
+

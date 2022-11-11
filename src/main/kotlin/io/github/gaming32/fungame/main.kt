@@ -40,6 +40,7 @@ class Application {
     fun main() {
         init()
         registerEvents()
+        val skybox = objLoader.loadObj("/skybox.obj").toDisplayList()
         val model = objLoader.loadObj("/example.obj").toDisplayList()
         var lastTime = glfwGetTime()
         var lastPhysicsTime = lastTime
@@ -76,6 +77,13 @@ class Application {
             glLoadIdentity()
             glRotatef(rotation.x, 1f, 0f, 0f)
             glRotatef(rotation.y, 0f, 1f, 0f)
+
+            glDisable(GL_DEPTH_TEST)
+            glDisable(GL_LIGHTING)
+            skybox.draw()
+            glEnable(GL_DEPTH_TEST)
+            glEnable(GL_LIGHTING)
+
             glTranslatef(-position.x.toFloat(), -position.y.toFloat() - 1.8f, position.z.toFloat())
             glLightfv(
                 GL_LIGHT0, GL_POSITION, floatArrayOf(
@@ -90,6 +98,7 @@ class Application {
 
             glfwSwapBuffers(window)
         }
+        skybox.close()
         model.close()
         quit()
     }

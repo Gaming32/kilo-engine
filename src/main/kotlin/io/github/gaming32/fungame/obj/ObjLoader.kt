@@ -32,7 +32,7 @@ class ObjLoader(private val getResource: (String) -> InputStream?) {
                 )
                 "vt" -> uvs += Model.UV(
                     line[1].toFloat(),
-                    line[2].toFloat()
+                    1f - line[2].toFloat()
                 )
                 "f" -> {
                     for (i in 2 until line.size - 1) {
