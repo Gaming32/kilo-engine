@@ -11,6 +11,7 @@ class ObjLoader(private val getResource: (String) -> InputStream?) {
     fun loadObj(name: String) = textResource(name) { inp ->
         val parentDir = simpleParentDir(name)
         val verts = mutableListOf<Vector3f>()
+        val normals = mutableListOf<Vector3f>()
         val uvs = mutableListOf<Model.UV>()
         val tris = mutableListOf<Model.Tri>()
         val materials = mutableMapOf<String, Material>()
@@ -24,6 +25,11 @@ class ObjLoader(private val getResource: (String) -> InputStream?) {
                     line[2].toFloat(),
                     line[3].toFloat()
                 )
+                "vn" -> normals += Vector3f(
+                    line[1].toFloat(),
+                    line[2].toFloat(),
+                    line[3].toFloat()
+                )
                 "vt" -> uvs += Model.UV(
                     line[1].toFloat(),
                     line[2].toFloat()
@@ -31,9 +37,9 @@ class ObjLoader(private val getResource: (String) -> InputStream?) {
                 "f" -> {
                     for (i in 2 until line.size - 1) {
                         tris += Model.Tri(
-                            parseVertex(verts, uvs, line[1]),
-                            parseVertex(verts, uvs, line[i]),
-                            parseVertex(verts, uvs, line[i + 1]),
+                            parseVertex(verts, normals, uvs, line[1]),
+                            parseVertex(verts, normals, uvs, line[i]),
+                            parseVertex(verts, normals, uvs, line[i + 1]),
                             material
                         )
                     }
@@ -61,10 +67,20 @@ class ObjLoader(private val getResource: (String) -> InputStream?) {
         materials
     } ?: throw IllegalArgumentException("Missing material library: $name")
 
-    private fun parseVertex(verts: List<Vector3f>, uvs: List<Model.UV>, vertex: String): Model.Vertex {
+    private fun parseVertex(
+        verts: List<Vector3f>,
+        normals: List<Vector3f>,
+        uvs: List<Model.UV>,
+        vertex: String
+    ): Model.Vertex {
         val parts = vertex.split("/")
         return Model.Vertex(
             verts[parts[0].toInt() - 1],
+            if (parts.size > 2 && parts[2].isNotEmpty()) {
+                normals[parts[2].toInt() - 1]
+            } else {
+                null
+            },
             if (parts.size > 1 && parts[1].isNotEmpty()) {
                 uvs[parts[1].toInt() - 1]
             } else {

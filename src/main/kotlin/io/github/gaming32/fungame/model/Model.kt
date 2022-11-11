@@ -12,12 +12,11 @@ data class Model(val tris: List<Tri>) : Drawable {
         }
     }
 
-    data class Vertex(val x: Float, val y: Float, val z: Float, val uv: UV? = null) : Drawable {
-        constructor(position: Vector3f, uv: UV? = null) : this(position.x, position.y, position.z, uv)
-
+    data class Vertex(val position: Vector3f, val normal: Vector3f? = null, val uv: UV? = null) : Drawable {
         override fun draw(builder: ModelBuilder) {
             uv?.draw(builder)
-            builder.vertex(x, y, z)
+            normal?.let { builder.normal(it) }
+            builder.vertex(position)
         }
     }
 

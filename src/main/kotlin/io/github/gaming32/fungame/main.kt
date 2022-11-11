@@ -14,15 +14,19 @@ import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.glfw.GLFWErrorCallback
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11.*
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
 class Application {
     companion object {
         private const val MOUSE_SPEED = 0.5
-        private const val MOVE_SPEED = 7.0
-        private const val JUMP_SPEED = 6.0
+        private const val MOVE_SPEED = 7.0 // m/s
+        private const val JUMP_SPEED = 6.0 // m/s
         private const val DRAG = 25.0
         private const val PHYSICS_SPEED = 0.02
-        private const val GRAVITY = -11.0
+        private const val GRAVITY = -11.0 // m/s/s
+        private const val SUN_SPEED = 2 * PI / 120 // r/s
     }
 
     private val windowSize = Vector2i()
@@ -73,6 +77,14 @@ class Application {
             glRotatef(rotation.x, 1f, 0f, 0f)
             glRotatef(rotation.y, 0f, 1f, 0f)
             glTranslatef(-position.x.toFloat(), -position.y.toFloat() - 1.8f, position.z.toFloat())
+            glLightfv(
+                GL_LIGHT0, GL_POSITION, floatArrayOf(
+                    position.x.toFloat() + 30f * cos(time * SUN_SPEED).toFloat(),
+                    position.y.toFloat() + 30f,
+                    position.z.toFloat() + 30f * sin(time * SUN_SPEED).toFloat(),
+                    0f
+                )
+            )
 
             model.draw()
 
@@ -109,7 +121,13 @@ class Application {
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         glEnable(GL_DEPTH_TEST)
+        glEnable(GL_CULL_FACE)
+        glEnable(GL_LIGHTING)
+
         glClearColor(0f, 0f, 0f, 1f)
+        glShadeModel(GL_SMOOTH)
+        glEnable(GL_LIGHT0)
+        glMaterialfv(GL_FRONT, GL_AMBIENT, floatArrayOf(1f, 1f, 1f, 1f))
 
         objLoader = ObjLoader(TextureManager.getResource)
     }

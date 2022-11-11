@@ -15,6 +15,10 @@ class ModelBuilder {
 
     fun vertex(v: Vector3f) = vertex(v.x, v.y, v.z)
 
+    fun normal(x: Float, y: Float, z: Float) = apply { glNormal3f(x, y, z) }
+
+    fun normal(v: Vector3f) = normal(v.x, v.y, v.z)
+
     fun uv(u: Float, v: Float) = apply { glTexCoord2f(u, v) }
 
     fun uv(v: Vector2f) = uv(v.x, v.y)
