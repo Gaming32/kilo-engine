@@ -1,0 +1,42 @@
+# Alias OBJ Model File
+# Exported from SketchUp, (c) 2000-2012 Trimble Navigation Limited
+# File units = meters
+
+mtllib example.mtl
+
+# g Mesh1 Model
+
+usemtl Brick_Basket
+v 0 1 -1
+vt 0 1.23031
+vn 0 1 -0
+v 0 1 -0
+vt 0 0
+v 1 1 -0
+vt 1.23031 0
+v 1 1 -1
+vt 1.23031 1.23031
+f 1/1/1 2/2/1 3/3/1 4/4/1
+
+usemtl Brick_Antique_01
+v 0 0 -1
+vt -0.678794 0
+vn -1 0 -0
+v 0 0 -0
+vt 0 1.06406
+vt -0.678794 1.06406
+f 5/5/2 6/2/2 2/6/2 1/7/2
+
+vn 0 0 1
+v 1 0 -0
+vt 0.678794 0
+vt 0.678794 1.06406
+f 6/2/3 7/8/3 3/9/3 2/6/3
+
+vn 1 0 -0
+v 1 0 -1
+f 7/2/4 8/8/4 4/9/4 3/6/4
+
+vn 0 0 -1
+f 8/5/5 5/2/5 1/6/5 4/7/5
+

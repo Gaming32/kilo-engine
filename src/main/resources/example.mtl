@@ -1,0 +1,16 @@
+#
+## Alias OBJ Material File
+# Exported from SketchUp, (c) 2000-2012 Trimble Navigation Limited
+
+newmtl Brick_Basket
+Ka 0.000000 0.000000 0.000000
+Kd 0.901961 0.611765 0.596078
+Ks 0.330000 0.330000 0.330000
+map_Kd example/Brick_Basket.jpg
+
+newmtl Brick_Antique_01
+Ka 0.000000 0.000000 0.000000
+Kd 0.576471 0.411765 0.278431
+Ks 0.330000 0.330000 0.330000
+map_Kd example/Brick_Antique_01.jpg
+
