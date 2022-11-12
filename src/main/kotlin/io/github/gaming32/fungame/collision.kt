@@ -20,6 +20,9 @@ private fun isInTriangle(pt: Vector3d, tri: Model.Tri): Boolean {
         return false
     }
 
+    if (pt.y > 1) {
+        pt
+    }
     val d1 = side(pt, tri.a.position, tri.b.position)
     val d2 = side(pt, tri.b.position, tri.c.position)
     val d3 = side(pt, tri.c.position, tri.a.position)

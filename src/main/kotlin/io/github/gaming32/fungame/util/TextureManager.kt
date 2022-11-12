@@ -36,7 +36,7 @@ object TextureManager {
         tex
     }
 
-    fun quit() {
+    fun unload() {
         textures.values.forEach { glDeleteTextures(it) }
         textures.clear()
     }

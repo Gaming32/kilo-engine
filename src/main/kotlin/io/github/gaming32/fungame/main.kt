@@ -58,7 +58,9 @@ class Application {
                 lastPhysicsTime = time - 1.0
             }
             while (time - lastPhysicsTime > PHYSICS_SPEED) {
-                val adjustedMovementInput = Vector3d(movementInput).rotateY(toRadians(rotation.y.toDouble()))
+                val adjustedMovementInput = Vector3d(movementInput).rotateY(
+                    toRadians(rotation.y.toDouble())
+                )
                 motion.x += adjustedMovementInput.x
                 motion.z += adjustedMovementInput.z
                 if (movementInput.y != 0.0) {
@@ -76,13 +78,14 @@ class Application {
 //                    motion.y = 0.0
 //                }
                 collide(position, motion, level)
+//                println("X: ${position.x} Y: ${position.y} Z: ${position.z} ROT: ${rotation.y}")
                 lastPhysicsTime += PHYSICS_SPEED
             }
 
             glMatrixMode(GL_MODELVIEW)
             glLoadIdentity()
             glRotatef(rotation.x, 1f, 0f, 0f)
-            glRotatef(rotation.y, 0f, 1f, 0f)
+            glRotatef(180 - rotation.y, 0f, 1f, 0f)
 
             glDisable(GL_DEPTH_TEST)
             glDisable(GL_LIGHTING)
@@ -90,7 +93,7 @@ class Application {
             glEnable(GL_DEPTH_TEST)
             glEnable(GL_LIGHTING)
 
-            glTranslatef(-position.x.toFloat(), -position.y.toFloat() - 1.8f, position.z.toFloat())
+            glTranslatef(-position.x.toFloat(), -position.y.toFloat() - 1.8f, -position.z.toFloat())
             glLightfv(
                 GL_LIGHT0, GL_POSITION, floatArrayOf(
                     position.x.toFloat() + 30f * cos(time * SUN_SPEED).toFloat(),
@@ -154,7 +157,7 @@ class Application {
                 lastMousePos.x != Double.POSITIVE_INFINITY &&
                 glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED
             ) {
-                rotation.y += ((x - lastMousePos.x) * MOUSE_SPEED).toFloat()
+                rotation.y -= ((x - lastMousePos.x) * MOUSE_SPEED).toFloat()
                 rotation.x = clamp(-90f, 90f, rotation.x + ((y - lastMousePos.y) * MOUSE_SPEED).toFloat())
             }
             lastMousePos.set(x, y)
@@ -169,15 +172,15 @@ class Application {
         glfwSetKeyCallback(window) { _, key, _, action, _ ->
             if (action == GLFW_REPEAT) return@glfwSetKeyCallback
             val press = action == GLFW_PRESS
-            if (press && key == GLFW_KEY_ESCAPE) {
-                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL)
-                movementInput.x = 0.0
-                movementInput.z = 0.0
-            }
             if (glfwGetInputMode(window, GLFW_CURSOR) != GLFW_CURSOR_DISABLED) {
                 return@glfwSetKeyCallback
             }
             when (key) {
+                GLFW_KEY_ESCAPE -> if (press) {
+                    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL)
+                    movementInput.x = 0.0
+                    movementInput.z = 0.0
+                }
                 GLFW_KEY_W -> if (press) {
                     movementInput.z += MOVE_SPEED
                 } else {
@@ -189,14 +192,14 @@ class Application {
                     movementInput.z += MOVE_SPEED
                 }
                 GLFW_KEY_A -> if (press) {
-                    movementInput.x -= MOVE_SPEED
-                } else {
                     movementInput.x += MOVE_SPEED
+                } else {
+                    movementInput.x -= MOVE_SPEED
                 }
                 GLFW_KEY_D -> if (press) {
-                    movementInput.x += MOVE_SPEED
-                } else {
                     movementInput.x -= MOVE_SPEED
+                } else {
+                    movementInput.x += MOVE_SPEED
                 }
                 GLFW_KEY_SPACE -> if (press /* && position.y <= 0 */) {
                     movementInput.y = JUMP_SPEED
@@ -219,7 +222,7 @@ class Application {
     }
 
     private fun quit() {
-        TextureManager.quit()
+        TextureManager.unload()
         glfwFreeCallbacks(window)
         glfwDestroyWindow(window)
         glfwTerminate()
