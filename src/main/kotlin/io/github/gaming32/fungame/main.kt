@@ -30,10 +30,11 @@ class Application {
     }
 
     private val windowSize = Vector2i()
-    private val position = Vector3d()
+    private val position = Vector3d(0.0, 0.5, -5.0)
     private val motion = Vector3d()
     private val movementInput = Vector3d()
     private val rotation = Vector2f()
+    private var wireframe = false
     private var window = 0L
     private lateinit var objLoader: ObjLoader
 
@@ -41,7 +42,8 @@ class Application {
         init()
         registerEvents()
         val skybox = objLoader.loadObj("/skybox.obj").toDisplayList()
-        val model = objLoader.loadObj("/example.obj").toDisplayList()
+        val level = objLoader.loadObj("/example.obj")
+        val levelList = level.toDisplayList()
         var lastTime = glfwGetTime()
         var lastPhysicsTime = lastTime
         while (!glfwWindowShouldClose(window)) {
@@ -52,6 +54,9 @@ class Application {
             val deltaTime = time - lastTime
             lastTime = time
 
+            if (time - lastPhysicsTime > 1.0) {
+                lastPhysicsTime = time - 1.0
+            }
             while (time - lastPhysicsTime > PHYSICS_SPEED) {
                 val adjustedMovementInput = Vector3d(movementInput).rotateY(toRadians(rotation.y.toDouble()))
                 motion.x += adjustedMovementInput.x
@@ -66,10 +71,11 @@ class Application {
                 position.x += motion.x * PHYSICS_SPEED
                 position.y += motion.y * PHYSICS_SPEED
                 position.z += motion.z * PHYSICS_SPEED
-                if (position.y <= 0) {
-                    position.y = 0.0
-                    motion.y = 0.0
-                }
+//                if (position.y <= 0) {
+//                    position.y = 0.0
+//                    motion.y = 0.0
+//                }
+                collide(position, motion, level)
                 lastPhysicsTime += PHYSICS_SPEED
             }
 
@@ -94,12 +100,12 @@ class Application {
                 )
             )
 
-            model.draw()
+            levelList.draw()
 
             glfwSwapBuffers(window)
         }
         skybox.close()
-        model.close()
+        levelList.close()
         quit()
     }
 
@@ -111,10 +117,10 @@ class Application {
 
         glfwDefaultWindowHints()
 
-        val monitor = glfwGetPrimaryMonitor()
-        val videoMode = glfwGetVideoMode(monitor) ?: throw Exception("Could not determine video mode")
+//        val monitor = glfwGetPrimaryMonitor()
+//        val videoMode = glfwGetVideoMode(monitor) ?: throw Exception("Could not determine video mode")
 
-        windowSize.set(videoMode.width() / 2, videoMode.height() / 2)
+        windowSize.set(1280, 720)
         window = glfwCreateWindow(windowSize.x, windowSize.y, "Fun 3D Game", 0, 0)
         glfwMakeContextCurrent(window)
         GL.createCapabilities()
@@ -192,8 +198,12 @@ class Application {
                 } else {
                     movementInput.x -= MOVE_SPEED
                 }
-                GLFW_KEY_SPACE -> if (press && position.y <= 0) {
+                GLFW_KEY_SPACE -> if (press /* && position.y <= 0 */) {
                     movementInput.y = JUMP_SPEED
+                }
+                GLFW_KEY_F3 -> if (press) {
+                    wireframe = !wireframe
+                    glPolygonMode(GL_FRONT_AND_BACK, if (wireframe) GL_LINE else GL_FILL)
                 }
             }
         }
