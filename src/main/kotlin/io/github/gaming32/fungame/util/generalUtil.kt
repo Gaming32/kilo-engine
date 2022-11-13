@@ -1,5 +1,9 @@
 package io.github.gaming32.fungame.util
 
+import kotlin.math.PI
+
+const val FPI = PI.toFloat()
+
 fun simpleParentDir(path: String): String {
     val slash = path.indexOf('/')
     if (slash == -1) {

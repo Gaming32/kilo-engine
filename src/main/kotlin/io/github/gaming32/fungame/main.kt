@@ -1,6 +1,8 @@
 package io.github.gaming32.fungame
 
+import io.github.gaming32.fungame.model.Model
 import io.github.gaming32.fungame.obj.ObjLoader
+import io.github.gaming32.fungame.util.ModelBuilder
 import io.github.gaming32.fungame.util.TextureManager
 import io.github.gaming32.fungame.util.gluPerspective
 import org.joml.Math.clamp
@@ -43,9 +45,10 @@ class Application {
         registerEvents()
         val skybox = objLoader.loadObj("/skybox.obj").toDisplayList()
         val level = objLoader.loadObj("/example.obj")
-        val levelList = level.toDisplayList()
+        val levelList = level//.toDisplayList()
         var lastTime = glfwGetTime()
         var lastPhysicsTime = lastTime
+        val collisions = mutableListOf<Model.Tri>()
         while (!glfwWindowShouldClose(window)) {
             glfwPollEvents()
             glClear(GL_DEPTH_BUFFER_BIT or GL_COLOR_BUFFER_BIT)
@@ -77,7 +80,8 @@ class Application {
 //                    position.y = 0.0
 //                    motion.y = 0.0
 //                }
-                collide(position, motion, level)
+                collisions.clear()
+                collide(position, motion, level, collisions)
 //                println("X: ${position.x} Y: ${position.y} Z: ${position.z} ROT: ${rotation.y}")
                 lastPhysicsTime += PHYSICS_SPEED
             }
@@ -103,12 +107,12 @@ class Application {
                 )
             )
 
-            levelList.draw()
+            levelList.draw(ModelBuilder(), collisions)
 
             glfwSwapBuffers(window)
         }
         skybox.close()
-        levelList.close()
+//        levelList.close()
         quit()
     }
 
