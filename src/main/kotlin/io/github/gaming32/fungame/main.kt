@@ -16,9 +16,6 @@ import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.glfw.GLFWErrorCallback
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11.*
-import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.sin
 
 class Application {
     companion object {
@@ -28,7 +25,6 @@ class Application {
         private const val DRAG = 25.0
         private const val PHYSICS_SPEED = 0.02
         private const val GRAVITY = -11.0 // m/s/s
-        private const val SUN_SPEED = 2 * PI / 120 // r/s
     }
 
     private val windowSize = Vector2i()
@@ -86,6 +82,10 @@ class Application {
                 lastPhysicsTime += PHYSICS_SPEED
             }
 
+            if (position.y < -100) {
+                position.set(0.0, 0.5, -5.0)
+            }
+
             glMatrixMode(GL_MODELVIEW)
             glLoadIdentity()
             glRotatef(rotation.x, 1f, 0f, 0f)
@@ -100,14 +100,14 @@ class Application {
             glTranslatef(-position.x.toFloat(), -position.y.toFloat() - 1.8f, -position.z.toFloat())
             glLightfv(
                 GL_LIGHT0, GL_POSITION, floatArrayOf(
-                    position.x.toFloat() + 30f * cos(time * SUN_SPEED).toFloat(),
+                    position.x.toFloat() - 12.9f,
                     position.y.toFloat() + 30f,
-                    position.z.toFloat() + 30f * sin(time * SUN_SPEED).toFloat(),
+                    position.z.toFloat() + 17.1f,
                     0f
                 )
             )
 
-            levelList.draw(ModelBuilder(), collisions)
+            levelList.draw(ModelBuilder() /* , collisions */)
 
             glfwSwapBuffers(window)
         }
@@ -221,7 +221,7 @@ class Application {
 
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
-        gluPerspective(80f, windowSize.x.toFloat() / windowSize.y, 0.1f, 1000f)
+        gluPerspective(80f, windowSize.x.toFloat() / windowSize.y, 0.01f, 1000f)
 //        glOrtho(-5.0, 5.0, -5.0, 5.0, -1.0, 500.0)
     }
 
