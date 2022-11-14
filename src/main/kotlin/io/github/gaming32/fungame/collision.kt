@@ -10,6 +10,8 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 
+private val ZERO = Vector3f()
+
 fun collide(position: Vector3d, motion: Vector3d, level: Model, collisions: MutableList<Model.Tri>) {
     for (tri in level.tris) {
         if (tri.a.normal!!.y < 0.1f) continue
@@ -23,9 +25,9 @@ fun collide(position: Vector3d, motion: Vector3d, level: Model, collisions: Muta
 private fun isInTriangle(pt: Vector3d, tri: Model.Tri): Boolean {
     val origin = tri.a.position
     val normal = tri.a.normal!!
-    val a = Vector3f()
-    val b = normalize(Vector3f(tri.b.position), origin, normal)
-    val c = normalize(Vector3f(tri.c.position), origin, normal)
+    val a = ZERO
+    val b = maybeNormalize(tri.b, origin, normal)
+    val c = maybeNormalize(tri.c, origin, normal)
     val pt2 = normalize(Vector3f(pt), origin, normal)
 
     if (-pt2.y !in 0.0..0.75) {
@@ -48,12 +50,17 @@ private fun isInTriangle(pt: Vector3d, tri: Model.Tri): Boolean {
     return false
 }
 
+private fun maybeNormalize(vertex: Model.Vertex, origin: Vector3f, normal: Vector3f): Vector3f {
+    var norm = vertex.collisionCache
+    if (norm == null) {
+        norm = normalize(Vector3f(vertex.position), origin, normal).also { vertex.collisionCache = it }
+    }
+    return norm
+}
+
 /** Mutates [pt]. */
 private fun normalize(pt: Vector3f, origin: Vector3f, normal: Vector3f): Vector3f {
     pt -= origin
-//    pt.x *= 0.5f / normal.x
-//    pt.y = 0f
-//    pt.z *= 0.5f / normal.z
     val xAngle = FPI / 2f - atan2(normal.y, normal.x) // Radians
     val xSin = sin(xAngle)
     val xCos = cos(xAngle)

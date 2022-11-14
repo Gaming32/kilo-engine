@@ -2,10 +2,7 @@ package io.github.gaming32.fungame
 
 import io.github.gaming32.fungame.model.Model
 import io.github.gaming32.fungame.obj.ObjLoader
-import io.github.gaming32.fungame.util.TextureManager
-import io.github.gaming32.fungame.util.gluPerspective
-import io.github.gaming32.fungame.util.loadFont
-import io.github.gaming32.fungame.util.withValue
+import io.github.gaming32.fungame.util.*
 import org.joml.Math.clamp
 import org.joml.Math.toRadians
 import org.joml.Vector2d
@@ -44,6 +41,7 @@ class Application {
     private var wireframe = false
     private var window = 0L
     private var nanovg = 0L
+    private var clearParams = GL_DEPTH_BUFFER_BIT
     private lateinit var objLoader: ObjLoader
 
     fun main() {
@@ -62,7 +60,7 @@ class Application {
         var fpsAverage = 0.0
         while (!glfwWindowShouldClose(window)) {
             glfwPollEvents()
-            glClear(GL_DEPTH_BUFFER_BIT)
+            glClear(clearParams)
 
             val time = glfwGetTime()
             val deltaTime = time - lastTime
@@ -129,7 +127,7 @@ class Application {
                 )
             )
 
-            levelList.draw()
+            levelList.draw(/* ModelBuilder(), collisions */)
 
             // HUD
             glMatrixMode(GL_PROJECTION)
@@ -204,6 +202,7 @@ class Application {
         glShadeModel(GL_SMOOTH)
         glEnable(GL_LIGHT0)
         glMaterialfv(GL_FRONT, GL_AMBIENT, floatArrayOf(1f, 1f, 1f, 1f))
+        glLineWidth(10f)
 
         objLoader = ObjLoader(TextureManager.getResource)
     }
@@ -221,7 +220,7 @@ class Application {
             lastMousePos.set(x, y)
         }
 
-        glfwSetMouseButtonCallback(window) { _, button, action, _ ->
+        glfwSetMouseButtonCallback(window) { _, _, action, _ ->
             if (action == GLFW_PRESS) {
                 glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED)
             }
@@ -264,7 +263,16 @@ class Application {
                 }
                 GLFW_KEY_F3 -> if (press) {
                     wireframe = !wireframe
-                    glPolygonMode(GL_FRONT_AND_BACK, if (wireframe) GL_LINE else GL_FILL)
+                    @Suppress("LiftReturnOrAssignment")
+                    if (wireframe) {
+                        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
+                        glLineWidth(2f)
+                        clearParams = GL_DEPTH_BUFFER_BIT or GL_COLOR_BUFFER_BIT
+                    } else {
+                        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
+                        glLineWidth(10f)
+                        clearParams = GL_DEPTH_BUFFER_BIT
+                    }
                 }
             }
         }
