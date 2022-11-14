@@ -4,6 +4,7 @@ import io.github.gaming32.fungame.model.Model
 import io.github.gaming32.fungame.obj.ObjLoader
 import io.github.gaming32.fungame.util.TextureManager
 import io.github.gaming32.fungame.util.gluPerspective
+import io.github.gaming32.fungame.util.loadFont
 import io.github.gaming32.fungame.util.withValue
 import org.joml.Math.clamp
 import org.joml.Math.toRadians
@@ -14,9 +15,15 @@ import org.joml.Vector3d
 import org.lwjgl.glfw.Callbacks.glfwFreeCallbacks
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.glfw.GLFWErrorCallback
+import org.lwjgl.nanovg.NanoVG.*
+import org.lwjgl.nanovg.NanoVGGL2.NVG_ANTIALIAS
+import org.lwjgl.nanovg.NanoVGGL2.nvgCreate
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11.*
+import org.lwjgl.opengl.GL13.GL_MULTISAMPLE
 import org.lwjgl.opengl.GLUtil
+import java.text.DecimalFormat
+import kotlin.math.roundToLong
 
 class Application {
     companion object {
@@ -26,6 +33,7 @@ class Application {
         private const val DRAG = 25.0
         private const val PHYSICS_SPEED = 0.02
         private const val GRAVITY = -11.0 // m/s/s
+        private val DEC_FORMAT = DecimalFormat("0.0")
     }
 
     private val windowSize = Vector2i()
@@ -35,6 +43,7 @@ class Application {
     private val rotation = Vector2f()
     private var wireframe = false
     private var window = 0L
+    private var nanovg = 0L
     private lateinit var objLoader: ObjLoader
 
     fun main() {
@@ -50,12 +59,15 @@ class Application {
         var lastTime = glfwGetTime()
         var lastPhysicsTime = lastTime
         val collisions = mutableListOf<Model.Tri>()
+        var fpsAverage = 0.0
         while (!glfwWindowShouldClose(window)) {
             glfwPollEvents()
-            glClear(GL_DEPTH_BUFFER_BIT or GL_COLOR_BUFFER_BIT)
+            glClear(GL_DEPTH_BUFFER_BIT)
 
             val time = glfwGetTime()
             val deltaTime = time - lastTime
+            val fps = 1 / deltaTime
+            fpsAverage = 0.95 * fpsAverage + 0.05 * fps
             lastTime = time
 
             if (time - lastPhysicsTime > 1.0) {
@@ -91,17 +103,22 @@ class Application {
                 position.set(0.0, 0.5, -5.0)
             }
 
+            // 3D Mode
+            glEnable(GL_CULL_FACE)
+            glMatrixMode(GL_PROJECTION)
+            glLoadIdentity()
+            gluPerspective(80f, windowSize.x.toFloat() / windowSize.y, 0.01f, 1000f)
             glMatrixMode(GL_MODELVIEW)
             glLoadIdentity()
             glRotatef(rotation.x, 1f, 0f, 0f)
             glRotatef(180 - rotation.y, 0f, 1f, 0f)
 
-            glDisable(GL_DEPTH_TEST)
-            glDisable(GL_LIGHTING)
+            // Skybox
             skybox.draw()
+
+            // Level
             glEnable(GL_DEPTH_TEST)
             glEnable(GL_LIGHTING)
-
             glTranslatef(-position.x.toFloat(), -position.y.toFloat() - 1.8f, -position.z.toFloat())
             glLightfv(
                 GL_LIGHT0, GL_POSITION, floatArrayOf(
@@ -113,6 +130,34 @@ class Application {
             )
 
             levelList.draw()
+
+            // HUD
+            glMatrixMode(GL_PROJECTION)
+            glLoadIdentity()
+            glOrtho(0.0, windowSize.x.toDouble(), windowSize.y.toDouble(), 0.0, 1.0, 3.0)
+            glMatrixMode(GL_MODELVIEW)
+            glLoadIdentity()
+            glTranslatef(0f, 0f, -2f)
+            glDisable(GL_DEPTH_TEST)
+            glDisable(GL_LIGHTING)
+
+            val widthArray = IntArray(1)
+            glfwGetFramebufferSize(window, widthArray, null)
+            nvgBeginFrame(
+                nanovg,
+                windowSize.x.toFloat(), windowSize.y.toFloat(),
+                widthArray[0].toFloat() / windowSize.x
+            )
+            nvgFontFace(nanovg, "minecraftia")
+            nvgText(nanovg, 10f, 35f, "FPS: ${fpsAverage.roundToLong()}")
+            nvgText(
+                nanovg, 10f, 55f,
+                "X/Y/Z: " +
+                    "${DEC_FORMAT.format(position.x)}/" +
+                    "${DEC_FORMAT.format(position.y)}/" +
+                    DEC_FORMAT.format(position.z)
+            )
+            nvgEndFrame(nanovg)
 
             glfwSwapBuffers(window)
         }
@@ -128,6 +173,8 @@ class Application {
         }
 
         glfwDefaultWindowHints()
+        glfwWindowHint(GLFW_SAMPLES, 4)
+//        glfwWindowHint(GLFW_DECORATED, GLFW_FALSE)
 
 //        val monitor = glfwGetPrimaryMonitor()
 //        val videoMode = glfwGetVideoMode(monitor) ?: throw Exception("Could not determine video mode")
@@ -138,19 +185,20 @@ class Application {
         GL.createCapabilities()
         GLUtil.setupDebugMessageCallback()
 
+        nanovg = nvgCreate(NVG_ANTIALIAS)
+        loadFont(nanovg, "minecraftia")
+
         glfwSwapInterval(1)
 
         glfwSetWindowSizeCallback(window) { _, width, height ->
             windowSize.set(width, height)
-            setViewport()
+            glViewport(0, 0, windowSize.x, windowSize.y)
         }
-        setViewport()
+        glViewport(0, 0, windowSize.x, windowSize.y)
 
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-        glEnable(GL_DEPTH_TEST)
-        glEnable(GL_CULL_FACE)
-        glEnable(GL_LIGHTING)
+        glEnable(GL_MULTISAMPLE)
 
         glClearColor(0f, 0f, 0f, 1f)
         glShadeModel(GL_SMOOTH)
@@ -220,15 +268,6 @@ class Application {
                 }
             }
         }
-    }
-
-    private fun setViewport() {
-        glViewport(0, 0, windowSize.x, windowSize.y)
-
-        glMatrixMode(GL_PROJECTION)
-        glLoadIdentity()
-        gluPerspective(80f, windowSize.x.toFloat() / windowSize.y, 0.01f, 1000f)
-//        glOrtho(-5.0, 5.0, -5.0, 5.0, -1.0, 500.0)
     }
 
     private fun quit() {

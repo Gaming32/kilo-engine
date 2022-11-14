@@ -1,5 +1,8 @@
 package io.github.gaming32.fungame.util
 
+import org.lwjgl.nanovg.NanoVG.nvgCreateFontMem
+import org.lwjgl.system.MemoryUtil
+import java.io.ByteArrayOutputStream
 import kotlin.math.PI
 
 const val FPI = PI.toFloat()
@@ -20,4 +23,13 @@ inline fun <T, R> withValue(value: T, get: () -> T, set: (T) -> Unit, action: ()
     val result = action()
     set(old)
     return result
+}
+
+fun loadFont(nanovg: Long, name: String): Int {
+    val baos = ByteArrayOutputStream()
+    object {}::class.java.getResourceAsStream("/$name.ttf")?.use { it.copyTo(baos) }
+    val memory = MemoryUtil.memAlloc(baos.size())
+    memory.put(baos.toByteArray())
+    memory.flip()
+    return nvgCreateFontMem(nanovg, name, memory, 1)
 }
