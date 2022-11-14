@@ -25,6 +25,9 @@ tasks.withType<Jar> {
 
 repositories {
     mavenCentral()
+    maven {
+        url = uri("https://jitpack.io")
+    }
 }
 
 dependencies {
@@ -42,6 +45,8 @@ dependencies {
     }
 
     implementation("org.joml", "joml", jomlVersion)
+
+    implementation("com.github.rkalla:imgscalr:8ed3644d1e")
 }
 
 tasks.withType<KotlinCompile> {

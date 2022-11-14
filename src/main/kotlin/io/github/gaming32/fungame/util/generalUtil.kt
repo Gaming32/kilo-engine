@@ -13,3 +13,11 @@ fun simpleParentDir(path: String): String {
 }
 
 fun CharSequence.count(c: Char) = count { it == c }
+
+inline fun <T, R> withValue(value: T, get: () -> T, set: (T) -> Unit, action: () -> R): R {
+    val old = get()
+    set(value)
+    val result = action()
+    set(old)
+    return result
+}

@@ -4,6 +4,7 @@ import io.github.gaming32.fungame.model.Model
 import io.github.gaming32.fungame.obj.ObjLoader
 import io.github.gaming32.fungame.util.TextureManager
 import io.github.gaming32.fungame.util.gluPerspective
+import io.github.gaming32.fungame.util.withValue
 import org.joml.Math.clamp
 import org.joml.Math.toRadians
 import org.joml.Vector2d
@@ -15,6 +16,7 @@ import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.glfw.GLFWErrorCallback
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11.*
+import org.lwjgl.opengl.GLUtil
 
 class Application {
     companion object {
@@ -38,7 +40,11 @@ class Application {
     fun main() {
         init()
         registerEvents()
-        val skybox = objLoader.loadObj("/skybox.obj").toDisplayList()
+        val skybox = withValue(-1, TextureManager::maxMipmap, { TextureManager.maxMipmap = it }) {
+            withValue(GL_NEAREST, TextureManager::filter, { TextureManager.filter = it }) {
+                objLoader.loadObj("/skybox.obj").toDisplayList()
+            }
+        }
         val level = objLoader.loadObj("/example.obj")
         val levelList = level.toDisplayList()
         var lastTime = glfwGetTime()
@@ -130,6 +136,7 @@ class Application {
         window = glfwCreateWindow(windowSize.x, windowSize.y, "Fun 3D Game", 0, 0)
         glfwMakeContextCurrent(window)
         GL.createCapabilities()
+        GLUtil.setupDebugMessageCallback()
 
         glfwSwapInterval(1)
 
