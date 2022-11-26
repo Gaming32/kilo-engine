@@ -47,6 +47,8 @@ dependencies {
     implementation("org.joml", "joml", jomlVersion)
 
     implementation("com.github.rkalla:imgscalr:8ed3644d1e")
+
+    implementation("org.ode4j:core:0.4.0")
 }
 
 tasks.withType<KotlinCompile> {
