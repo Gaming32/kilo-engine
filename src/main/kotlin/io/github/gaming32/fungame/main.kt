@@ -92,6 +92,8 @@ class Application {
         var fpsAverage = 0.0
         val contactJointGroup = OdeHelper.createJointGroup()
         val force = DVector3()
+        var targetZAngle = 0f
+        var zAngle = 0f
         while (!glfwWindowShouldClose(window)) {
             glfwPollEvents()
             glClear(clearParams)
@@ -192,11 +194,15 @@ class Application {
                         rotation.y
                 )
                 if (horizAngle < 0) {
-                    glRotatef(5f, 0f, 0f, 1f)
+                    targetZAngle = 5f
                 } else if (horizAngle > 0) {
-                    glRotatef(-5f, 0f, 0f, 1f)
+                    targetZAngle = -5f
                 }
+            } else {
+                targetZAngle = 0f
             }
+            zAngle = lerp(zAngle, targetZAngle, 0.25f)
+            glRotatef(zAngle, 0f, 0f, 1f)
             glRotatef(180 - rotation.y, 0f, 1f, 0f)
 
             // Skybox
