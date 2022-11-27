@@ -1,11 +1,14 @@
 package io.github.gaming32.fungame.obj
 
+import io.github.gaming32.fungame.model.CollisionModel
+import io.github.gaming32.fungame.model.CollisionType
 import io.github.gaming32.fungame.model.Material
 import io.github.gaming32.fungame.model.Model
 import io.github.gaming32.fungame.util.simpleParentDir
 import org.joml.Vector3f
 import java.io.BufferedReader
 import java.io.InputStream
+import java.util.*
 
 class ObjLoader(private val getResource: (String) -> InputStream?) {
     fun loadObj(name: String) = textResource(name) { inp ->
@@ -46,7 +49,7 @@ class ObjLoader(private val getResource: (String) -> InputStream?) {
                 }
             }
         }
-        Model(tris)
+        Model(tris, materials)
     } ?: throw IllegalArgumentException("Missing OBJ model: $name")
 
     private fun loadMaterialLibrary(name: String): Map<String, Material> = textResource(name) { inp ->
@@ -58,14 +61,34 @@ class ObjLoader(private val getResource: (String) -> InputStream?) {
                 "newmtl" -> currentMaterial = line[1]
                 "Kd" -> if (materials[currentMaterial] !is Material.Texture) {
                     materials[currentMaterial] = Material.Color(
-                        line[1].toFloat(), line[2].toFloat(), line[3].toFloat()
+                        line[1].toFloat(), line[2].toFloat(), line[3].toFloat(), line.getOrNull(4)?.toFloat() ?: 1f
                     )
                 }
                 "map_Kd" -> materials[currentMaterial] = Material.Texture(parentDir + line[1])
+                "d" -> materials[currentMaterial].let { oldMat ->
+                    val opacity = line[1].toFloat()
+                    materials[currentMaterial] = when (oldMat) {
+                        null -> Material.Color(1f, 1f, 1f, opacity)
+                        is Material.Color -> oldMat.copy(a = opacity)
+                        is Material.Texture -> oldMat.copy(color = oldMat.color.copy(a = opacity))
+                    }
+                }
             }
         }
         materials
     } ?: throw IllegalArgumentException("Missing material library: $name")
+
+    fun parseCollision(model: Model, name: String) = textResource(name) { inp ->
+        val collisions = IdentityHashMap<Material, CollisionType>()
+        for (line in parseLines(inp)) {
+            when (line[0]) {
+                "coltype" -> collisions[
+                    model.materials[line[1]] ?: throw IllegalArgumentException("Missing material: ${line[1]}")
+                ] = line[2]
+            }
+        }
+        CollisionModel(model, collisions)
+    } ?: throw IllegalArgumentException("Missing collision data: $name")
 
     private fun parseVertex(
         verts: List<Vector3f>,

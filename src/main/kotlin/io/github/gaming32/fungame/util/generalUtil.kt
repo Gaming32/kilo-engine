@@ -8,7 +8,7 @@ import kotlin.math.PI
 const val FPI = PI.toFloat()
 
 fun simpleParentDir(path: String): String {
-    val slash = path.indexOf('/')
+    val slash = path.lastIndexOf('/')
     if (slash == -1) {
         return ""
     }
@@ -32,4 +32,10 @@ fun loadFont(nanovg: Long, name: String): Int {
     memory.put(baos.toByteArray())
     memory.flip()
     return nvgCreateFontMem(nanovg, name, memory, 1)
+}
+
+fun <K, V> Map<K, V>.invert(): Map<V, K> {
+    val result = mutableMapOf<V, K>()
+    forEach { (k, v) -> result[v] = k }
+    return result
 }

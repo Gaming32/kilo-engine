@@ -5,22 +5,22 @@ import io.github.gaming32.fungame.util.ModelBuilder
 import org.lwjgl.opengl.GL11.GL_TEXTURE_2D
 
 sealed class Material : Drawable {
-    data class Color(val r: Float, val g: Float, val b: Float, val a: Float? = null) : Material() {
+    data class Color(val r: Float, val g: Float, val b: Float, val a: Float = 1f) : Material() {
         override fun draw(builder: ModelBuilder) {
             builder.disable(GL_TEXTURE_2D)
-            if (a != null) {
-                builder.color(r, g, b, a)
-            } else {
-                builder.color(r, g, b)
-            }
+            builder.color(r, g, b, /*a*/)
         }
     }
 
-    data class Texture(val name: String) : Material() {
+    data class Texture(val path: String, val color: Color = DEFAULT_COLOR) : Material() {
+        companion object {
+            val DEFAULT_COLOR = Color(1f, 1f, 1f, 1f)
+        }
+
         override fun draw(builder: ModelBuilder) {
-            builder.color(1f, 1f, 1f, 1f)
+            builder.color(color.r, color.g, color.b, /*color.a*/)
             builder.enable(GL_TEXTURE_2D)
-            builder.texture(name)
+            builder.texture(path)
         }
     }
 }

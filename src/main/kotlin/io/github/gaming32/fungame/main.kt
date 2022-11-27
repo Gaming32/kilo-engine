@@ -1,5 +1,7 @@
 package io.github.gaming32.fungame
 
+import io.github.gaming32.fungame.entity.PlayerEntity
+import io.github.gaming32.fungame.model.CollisionType
 import io.github.gaming32.fungame.obj.ObjLoader
 import io.github.gaming32.fungame.util.*
 import org.joml.Math.clamp
@@ -22,6 +24,7 @@ import org.ode4j.math.DMatrix3
 import org.ode4j.math.DVector3
 import org.ode4j.ode.DContact.DSurfaceParameters
 import org.ode4j.ode.DContactGeomBuffer
+import org.ode4j.ode.DGeom
 import org.ode4j.ode.OdeHelper
 import java.text.DecimalFormat
 import kotlin.math.roundToLong
@@ -32,7 +35,6 @@ class Application {
         private const val MOVE_SPEED = 14.0 // m/s
         private const val JUMP_SPEED = 6.0 // m/s
         private const val PHYSICS_SPEED = 0.02
-        private const val GRAVITY = -11.0 // m/s/s
         private const val CONTACT_COUNT = 16
         private val SURFACE_PARAMS = DSurfaceParameters().apply {
             mu = 0.95
@@ -44,17 +46,9 @@ class Application {
         OdeHelper.initODE()
     }
 
-    private val world = OdeHelper.createWorld().also { world ->
-        world.setGravity(0.0, GRAVITY, 0.0)
-        world.setDamping(0.05, 1.0)
-    }
-    private val space = OdeHelper.createSimpleSpace()
+    private val world = World()
     private val windowSize = Vector2i()
-    private val playerGeom = OdeHelper.createCapsule(space, 0.5, 1.8)
-    private val player = OdeHelper.createBody(world).also { body ->
-        body.setPosition(0.0, 1.4, -5.0)
-        playerGeom.body = body
-    }
+    private val player = PlayerEntity(world)
     private val movementInput = Vector3d()
     private val rotation = Vector2f()
     private var wireframe = false
@@ -68,18 +62,23 @@ class Application {
         registerEvents()
         val skybox = withValue(-1, TextureManager::maxMipmap, { TextureManager.maxMipmap = it }) {
             withValue(GL_NEAREST, TextureManager::filter, { TextureManager.filter = it }) {
-                objLoader.loadObj("/skybox.obj").toDisplayList()
+                objLoader.loadObj("/skybox/skybox.obj").toDisplayList()
             }
         }
-        val level = objLoader.loadObj("/example.obj")
-        val levelBody = OdeHelper.createBody(world)
-        OdeHelper.createTriMesh(
-            space,
-            level.toTriMeshData(),
-            { _, _, _ -> 1 },
-            { _, _, _, _ -> },
-            { _, _, _, _, _ -> 1 }
-        ).body = levelBody
+        val level = objLoader.loadObj("/example/example.obj")
+        val levelBody = OdeHelper.createBody(world.world)
+        val levelCollision = objLoader.parseCollision(level, "/example/example_collision.txt")
+        val collisionMeshes = mutableMapOf<DGeom, CollisionType>()
+        for ((collision, mesh) in levelCollision.toMultiTriMeshData()) {
+            val geom = OdeHelper.createTriMesh(
+                world.space, mesh,
+                { _, _, _ -> 1 },
+                { _, _, _, _ -> },
+                { _, _, _, _, _ -> 1 }
+            )
+            collisionMeshes[geom] = collision
+            geom.body = levelBody
+        }
         levelBody.setKinematic()
         val levelList = level.toDisplayList()
         var lastTime = glfwGetTime()
@@ -104,30 +103,38 @@ class Application {
                 val adjustedMovementInput = Vector3d(movementInput).rotateY(
                     toRadians(rotation.y.toDouble())
                 )
-                player.addForce(adjustedMovementInput.x, movementInput.y, adjustedMovementInput.z)
+                player.body.addForce(adjustedMovementInput.x, movementInput.y, adjustedMovementInput.z)
                 movementInput.y = 0.0
-                player.rotation = DMatrix3()
-                force.set(player.force)
+                player.body.rotation = DMatrix3()
+                force.set(player.body.force)
                 val contactBuffer = DContactGeomBuffer(CONTACT_COUNT)
                 contactJointGroup.clear()
-                space.collide(null) { _, o1, o2 ->
+                world.space.collide(null) { _, o1, o2 ->
                     repeat(OdeHelper.collide(o1, o2, CONTACT_COUNT, contactBuffer)) {
                         val contact = contactBuffer[it]
                         val joint = OdeHelper.createContactJoint(
-                            world,
+                            world.world,
                             contactJointGroup,
                             DContact(contact, SURFACE_PARAMS)
                         )
                         joint.attach(contact.g1.body, contact.g2.body)
+                        if (contact.g1.body == levelBody) {
+                            world.getEntityByGeom(contact.g2)
+                                .collideWith(levelCollision, collisionMeshes.getValue(contact.g1))
+                        } else if (contact.g2.body == levelBody) {
+                            world.getEntityByGeom(contact.g1)
+                                .collideWith(levelCollision, collisionMeshes.getValue(contact.g2))
+                        } else {
+                            val e1 = world.getEntityByGeom(contact.g1)
+                            val e2 = world.getEntityByGeom(contact.g2)
+                            e1.collideWith(e2)
+                            e2.collideWith(e1)
+                        }
                     }
                 }
-                world.quickStep(PHYSICS_SPEED)
+                world.world.quickStep(PHYSICS_SPEED)
+                world.forEachEntity { it.tick() }
                 lastPhysicsTime += PHYSICS_SPEED
-            }
-
-            if (player.position.y < -100) {
-                player.setPosition(0.0, 0.5, -5.0)
-                player.setLinearVel(0.0, 0.0, 0.0)
             }
 
             // 3D Mode
@@ -146,7 +153,7 @@ class Application {
             // Level
             glEnable(GL_DEPTH_TEST)
             glEnable(GL_LIGHTING)
-            val position = player.position
+            val position = player.body.position
             glTranslatef(-position.x.toFloat(), -position.y.toFloat() - 0.9f, -position.z.toFloat())
             glLightfv(
                 GL_LIGHT0, GL_POSITION, floatArrayOf(
@@ -195,9 +202,9 @@ class Application {
             nvgText(
                 nanovg, 10f, 95f,
                 "VX/VY/VZ: " +
-                    "${DEC_FORMAT.format(player.linearVel.x)}/" +
-                    "${DEC_FORMAT.format(player.linearVel.y)}/" +
-                    DEC_FORMAT.format(player.linearVel.z)
+                    "${DEC_FORMAT.format(player.body.linearVel.x)}/" +
+                    "${DEC_FORMAT.format(player.body.linearVel.y)}/" +
+                    DEC_FORMAT.format(player.body.linearVel.z)
             )
             nvgEndFrame(nanovg)
 
@@ -325,7 +332,6 @@ class Application {
 
     private fun quit() {
         world.destroy()
-        space.destroy()
         OdeHelper.closeODE()
         TextureManager.unload()
         glfwFreeCallbacks(window)
