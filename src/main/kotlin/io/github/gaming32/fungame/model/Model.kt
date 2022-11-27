@@ -26,6 +26,7 @@ data class Model(val tris: List<Tri>, val materials: Map<String, Material>) : Dr
 
     data class Tri(val a: Vertex, val b: Vertex, val c: Vertex, val material: Material? = null) : Drawable {
         override fun draw(builder: ModelBuilder) {
+            if (material?.isFullyTransparent == true) return
             material?.draw(builder)
             builder.begin(GL_TRIANGLES)
             a.draw(builder)

@@ -12,12 +12,12 @@ import org.ode4j.ode.OdeHelper
 
 class PlayerEntity(world: World) : Entity(
     world,
-    OdeHelper.createCapsule(world.space, 0.5, 1.8).also { geom ->
+    OdeHelper.createCapsule(world.space, 0.4, 1.0).also { geom ->
         geom.rotation = Application.Z_FORWARD
     }
 ) {
     companion object {
-        val START_POS = DVector3(0.0, 1.4, -5.0)
+        val START_POS = DVector3(0.0, 0.0, -5.0)
         val UP = DVector3(0.0, 1.0, 0.0)
     }
 

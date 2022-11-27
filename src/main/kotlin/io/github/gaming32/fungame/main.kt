@@ -2,6 +2,7 @@ package io.github.gaming32.fungame
 
 import io.github.gaming32.fungame.entity.PlayerEntity
 import io.github.gaming32.fungame.model.CollisionType
+import io.github.gaming32.fungame.model.CollisionTypes
 import io.github.gaming32.fungame.obj.ObjLoader
 import io.github.gaming32.fungame.util.*
 import org.joml.*
@@ -29,7 +30,7 @@ import kotlin.math.roundToLong
 class Application {
     companion object {
         private const val MOUSE_SPEED = 0.5
-        private const val MOVE_SPEED = 65.0
+        private const val MOVE_SPEED = 85.0
         private const val JUMP_SPEED = 500.0
         private const val WALL_JUMP_HORIZONTAL = 1500.0
         private const val WALL_JUMP_VERTICAL = 500.0
@@ -40,6 +41,9 @@ class Application {
         val Z_FORWARD = Matrix3d().rotateX(PI / 2).toDMatrix3()
         private val SURFACE_PARAMS = DSurfaceParameters().apply {
             mu = 0.0
+        }
+        private val WALL_PARAMS = DSurfaceParameters().apply {
+            mu = 3.0
         }
         private val DEC_FORMAT = DecimalFormat("0.0")
     }
@@ -134,10 +138,25 @@ class Application {
                 world.space.collide(null) { _, o1, o2 ->
                     repeat(OdeHelper.collide(o1, o2, CONTACT_COUNT, contactBuffer)) {
                         val contact = contactBuffer[it]
+                        val surfaceParams = if (contact.g1.body == levelBody) {
+                            if (collisionMeshes.getValue(contact.g1) == CollisionTypes.WALL) {
+                                WALL_PARAMS
+                            } else {
+                                SURFACE_PARAMS
+                            }
+                        } else if (contact.g2.body == levelBody) {
+                            if (collisionMeshes.getValue(contact.g2) == CollisionTypes.WALL) {
+                                WALL_PARAMS
+                            } else {
+                                SURFACE_PARAMS
+                            }
+                        } else {
+                            return@repeat // Just don't collide for now
+                        }
                         val joint = OdeHelper.createContactJoint(
                             world.world,
                             contactJointGroup,
-                            DContact(contact, SURFACE_PARAMS)
+                            DContact(contact, surfaceParams)
                         )
                         joint.attach(contact.g1.body, contact.g2.body)
                         if (contact.g1.body == levelBody) {
@@ -187,7 +206,7 @@ class Application {
             glEnable(GL_DEPTH_TEST)
             glEnable(GL_LIGHTING)
             val position = player.body.position
-            glTranslatef(-position.x.toFloat(), -position.y.toFloat() - 0.9f, -position.z.toFloat())
+            glTranslatef(-position.x.toFloat(), -position.y.toFloat() - 0.7f, -position.z.toFloat())
             glLightfv(
                 GL_LIGHT0, GL_POSITION, floatArrayOf(
                     position.x.toFloat() - 12.9f,

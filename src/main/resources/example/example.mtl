@@ -45,4 +45,13 @@ Ns 0
 d 0
 Tr 0
 
+newmtl Height_Scale
+Ka 0.854902 0.494118 0
+Kd 0.854902 0.494118 0
+Ks 0.333 0.333 0.333
+Ns 0
+d 1
+Tr 1
+map_Kd example_Textures/Height_Scale.PNG
+
 #EOF
