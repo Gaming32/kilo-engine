@@ -1,1 +1,3 @@
+coltype Brick_Antique_01 wall
+coltype Brick_Basket floor
 coltype Death_Plane death

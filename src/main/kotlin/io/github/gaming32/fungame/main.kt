@@ -4,12 +4,8 @@ import io.github.gaming32.fungame.entity.PlayerEntity
 import io.github.gaming32.fungame.model.CollisionType
 import io.github.gaming32.fungame.obj.ObjLoader
 import io.github.gaming32.fungame.util.*
-import org.joml.Math.clamp
-import org.joml.Math.toRadians
-import org.joml.Vector2d
-import org.joml.Vector2f
-import org.joml.Vector2i
-import org.joml.Vector3d
+import org.joml.*
+import org.joml.Math.*
 import org.lwjgl.glfw.Callbacks.glfwFreeCallbacks
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.glfw.GLFWErrorCallback
@@ -20,24 +16,30 @@ import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11.*
 import org.lwjgl.opengl.GL13.GL_MULTISAMPLE
 import org.lwjgl.opengl.GLUtil
-import org.ode4j.math.DMatrix3
 import org.ode4j.math.DVector3
 import org.ode4j.ode.DContact.DSurfaceParameters
 import org.ode4j.ode.DContactGeomBuffer
 import org.ode4j.ode.DGeom
+import org.ode4j.ode.OdeConstants.*
 import org.ode4j.ode.OdeHelper
 import java.text.DecimalFormat
+import kotlin.math.atan2
 import kotlin.math.roundToLong
 
 class Application {
     companion object {
         private const val MOUSE_SPEED = 0.5
-        private const val MOVE_SPEED = 14.0 // m/s
-        private const val JUMP_SPEED = 6.0 // m/s
+        private const val MOVE_SPEED = 65.0
+        private const val JUMP_SPEED = 500.0
+        private const val WALL_JUMP_HORIZONTAL = 1500.0
+        private const val WALL_JUMP_VERTICAL = 500.0
         private const val PHYSICS_SPEED = 0.02
         private const val CONTACT_COUNT = 16
+        private const val VERTICAL_DAMPING = 0.01
+        private const val HORIZONTAL_DAMPING = 0.17
+        val Z_FORWARD = Matrix3d().rotateX(PI / 2).toDMatrix3()
         private val SURFACE_PARAMS = DSurfaceParameters().apply {
-            mu = 0.95
+            mu = 0.0
         }
         private val DEC_FORMAT = DecimalFormat("0.0")
     }
@@ -100,12 +102,32 @@ class Application {
                 lastPhysicsTime = time - 1.0
             }
             while (time - lastPhysicsTime > PHYSICS_SPEED) {
+                world.forEachEntity { it.preTick() }
                 val adjustedMovementInput = Vector3d(movementInput).rotateY(
                     toRadians(rotation.y.toDouble())
                 )
-                player.body.addForce(adjustedMovementInput.x, movementInput.y, adjustedMovementInput.z)
+                player.body.addForce(adjustedMovementInput.x * MOVE_SPEED, 0.0, adjustedMovementInput.z * MOVE_SPEED)
+                if (movementInput.y > 0.0 && glfwGetTime() - player.lastJumpCollidedTime <= 0.1) {
+                    if (player.jumpNormal.y < 0.95) {
+                        player.body.addForce(
+                            0.0,
+                            movementInput.y * (WALL_JUMP_VERTICAL - player.body.linearVel.y),
+                            0.0
+                        )
+                        player.body.addForce(DVector3(player.jumpNormal).scale(movementInput.y * WALL_JUMP_HORIZONTAL))
+                    } else {
+                        player.body.addForce(0.0, movementInput.y * JUMP_SPEED, 0.0)
+                    }
+                }
                 movementInput.y = 0.0
-                player.body.rotation = DMatrix3()
+                world.forEachEntity { entity ->
+                    entity.body.addForce(
+                        entity.body.linearVel.x * -HORIZONTAL_DAMPING / PHYSICS_SPEED,
+                        entity.body.linearVel.y * -VERTICAL_DAMPING / PHYSICS_SPEED,
+                        entity.body.linearVel.z * -HORIZONTAL_DAMPING / PHYSICS_SPEED
+                    )
+                }
+                player.body.rotation = Z_FORWARD
                 force.set(player.body.force)
                 val contactBuffer = DContactGeomBuffer(CONTACT_COUNT)
                 contactJointGroup.clear()
@@ -120,15 +142,15 @@ class Application {
                         joint.attach(contact.g1.body, contact.g2.body)
                         if (contact.g1.body == levelBody) {
                             world.getEntityByGeom(contact.g2)
-                                .collideWith(levelCollision, collisionMeshes.getValue(contact.g1))
+                                .collideWith(levelCollision, collisionMeshes.getValue(contact.g1), contact)
                         } else if (contact.g2.body == levelBody) {
                             world.getEntityByGeom(contact.g1)
-                                .collideWith(levelCollision, collisionMeshes.getValue(contact.g2))
+                                .collideWith(levelCollision, collisionMeshes.getValue(contact.g2), contact)
                         } else {
                             val e1 = world.getEntityByGeom(contact.g1)
                             val e2 = world.getEntityByGeom(contact.g2)
-                            e1.collideWith(e2)
-                            e2.collideWith(e1)
+                            e1.collideWith(e2, contact)
+                            e2.collideWith(e1, contact)
                         }
                     }
                 }
@@ -145,6 +167,17 @@ class Application {
             glMatrixMode(GL_MODELVIEW)
             glLoadIdentity()
             glRotatef(rotation.x, 1f, 0f, 0f)
+            if (player.jumpNormal.y < 0.95 && glfwGetTime() - player.lastJumpCollidedTime < 0.1) {
+                val horizAngle = normalizeDegrees(
+                    toDegrees(atan2(player.jumpNormal.z, player.jumpNormal.x)) - 90 -
+                        rotation.y
+                )
+                if (horizAngle < 0) {
+                    glRotatef(5f, 0f, 0f, 1f)
+                } else if (horizAngle > 0) {
+                    glRotatef(-5f, 0f, 0f, 1f)
+                }
+            }
             glRotatef(180 - rotation.y, 0f, 1f, 0f)
 
             // Skybox
@@ -206,6 +239,12 @@ class Application {
                     "${DEC_FORMAT.format(player.body.linearVel.y)}/" +
                     DEC_FORMAT.format(player.body.linearVel.z)
             )
+            nvgText(
+                nanovg, 10f, 115f,
+                "RY/RX: " +
+                    "${DEC_FORMAT.format(rotation.y)}/" +
+                    DEC_FORMAT.format(rotation.x)
+            )
             nvgEndFrame(nanovg)
 
             glfwSwapBuffers(window)
@@ -266,7 +305,7 @@ class Application {
                 lastMousePos.x != Double.POSITIVE_INFINITY &&
                 glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED
             ) {
-                rotation.y -= ((x - lastMousePos.x) * MOUSE_SPEED).toFloat()
+                rotation.y = normalizeDegrees(rotation.y - ((x - lastMousePos.x) * MOUSE_SPEED).toFloat())
                 rotation.x = clamp(-90f, 90f, rotation.x + ((y - lastMousePos.y) * MOUSE_SPEED).toFloat())
             }
             lastMousePos.set(x, y)
@@ -291,27 +330,27 @@ class Application {
                     movementInput.z = 0.0
                 }
                 GLFW_KEY_W -> if (press) {
-                    movementInput.z += MOVE_SPEED
+                    movementInput.z++
                 } else {
-                    movementInput.z -= MOVE_SPEED
+                    movementInput.z--
                 }
                 GLFW_KEY_S -> if (press) {
-                    movementInput.z -= MOVE_SPEED
+                    movementInput.z--
                 } else {
-                    movementInput.z += MOVE_SPEED
+                    movementInput.z++
                 }
                 GLFW_KEY_A -> if (press) {
-                    movementInput.x += MOVE_SPEED
+                    movementInput.x++
                 } else {
-                    movementInput.x -= MOVE_SPEED
+                    movementInput.x--
                 }
                 GLFW_KEY_D -> if (press) {
-                    movementInput.x -= MOVE_SPEED
+                    movementInput.x--
                 } else {
-                    movementInput.x += MOVE_SPEED
+                    movementInput.x++
                 }
-                GLFW_KEY_SPACE -> if (press /* && position.y <= 0 */) {
-                    movementInput.y = JUMP_SPEED
+                GLFW_KEY_SPACE -> if (press) {
+                    movementInput.y = 1.0
                 }
                 GLFW_KEY_F3 -> if (press) {
                     wireframe = !wireframe

@@ -4,6 +4,7 @@ import org.lwjgl.nanovg.NanoVG.nvgCreateFontMem
 import org.lwjgl.system.MemoryUtil
 import java.io.ByteArrayOutputStream
 import kotlin.math.PI
+import kotlin.math.abs
 
 const val FPI = PI.toFloat()
 
@@ -37,5 +38,31 @@ fun loadFont(nanovg: Long, name: String): Int {
 fun <K, V> Map<K, V>.invert(): Map<V, K> {
     val result = mutableMapOf<V, K>()
     forEach { (k, v) -> result[v] = k }
+    return result
+}
+
+fun Double.fuzzyEquals(other: Double, delta: Double) = abs(other - this) <= delta
+
+infix fun Double.fuzzyEquals(other: Double) = fuzzyEquals(other, 0.001)
+
+fun normalizeDegrees(angle: Double): Double {
+    var result = angle
+    while (result <= -180) {
+        result += 360
+    }
+    while (result > 180) {
+        result -= 360
+    }
+    return result
+}
+
+fun normalizeDegrees(angle: Float): Float {
+    var result = angle
+    while (result <= -180) {
+        result += 360
+    }
+    while (result > 180) {
+        result -= 360
+    }
     return result
 }

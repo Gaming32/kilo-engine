@@ -6,6 +6,7 @@ import io.github.gaming32.fungame.model.CollisionType
 import io.github.gaming32.fungame.model.CollisionTypes
 import io.github.gaming32.fungame.util.y
 import org.ode4j.ode.DBody
+import org.ode4j.ode.DContactGeom
 import org.ode4j.ode.DGeom
 import org.ode4j.ode.OdeHelper
 
@@ -18,21 +19,26 @@ abstract class Entity(val world: World, val geom: DGeom) {
         world.addEntity(this)
     }
 
-    open fun collideWith(model: CollisionModel, collision: CollisionType): Boolean = when (collision) {
-        CollisionTypes.SOLID -> true
-        CollisionTypes.NON_SOLID -> false
-        CollisionTypes.DEATH -> {
-            kill()
-            false
+    open fun collideWith(model: CollisionModel, collision: CollisionType, contact: DContactGeom): Boolean =
+        when (collision) {
+            CollisionTypes.SOLID,
+            CollisionTypes.WALL,
+            CollisionTypes.FLOOR -> true
+            CollisionTypes.NON_SOLID -> false
+            CollisionTypes.DEATH -> {
+                kill()
+                false
+            }
+            else -> true
         }
-        else -> true
-    }
 
-    open fun collideWith(other: Entity) = Unit
+    open fun collideWith(other: Entity, contact: DContactGeom) = Unit
 
     open fun kill() {
         world.removeEntity(this)
     }
+
+    open fun preTick() = Unit
 
     open fun tick() {
         if (body.position.y <= -100) {

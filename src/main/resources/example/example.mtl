@@ -8,6 +8,7 @@ Kd 1 1 1
 Ks 0.333 0.333 0.333
 Ns 0
 d 1
+Tr 1
 
 newmtl Brick_Antique_01
 Ka 0.576471 0.411765 0.278431
@@ -15,6 +16,7 @@ Kd 0.576471 0.411765 0.278431
 Ks 0.333 0.333 0.333
 Ns 0
 d 1
+Tr 1
 map_Kd example_Textures/Brick_Antique_01.PNG
 
 newmtl Brick_Basket
@@ -23,6 +25,7 @@ Kd 0.901961 0.611765 0.596078
 Ks 0.333 0.333 0.333
 Ns 0
 d 1
+Tr 1
 map_Kd example_Textures/Brick_Basket.PNG
 
 newmtl Concrete_Aggregate_Smoke
@@ -31,6 +34,7 @@ Kd 0.603922 0.588235 0.580392
 Ks 0.333 0.333 0.333
 Ns 0
 d 1
+Tr 1
 map_Kd example_Textures/Concrete_Aggregate_Smoke.PNG
 
 newmtl Death_Plane
@@ -39,5 +43,6 @@ Kd 0.556863 0.0196078 0
 Ks 0.333 0.333 0.333
 Ns 0
 d 0
+Tr 0
 
 #EOF
