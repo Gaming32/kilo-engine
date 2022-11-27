@@ -18,6 +18,7 @@ import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11.*
 import org.lwjgl.opengl.GL13.GL_MULTISAMPLE
 import org.lwjgl.opengl.GLUtil
+import org.ode4j.math.DMatrix3
 import org.ode4j.math.DVector3
 import org.ode4j.ode.DContact.DSurfaceParameters
 import org.ode4j.ode.DContactGeomBuffer
@@ -28,13 +29,13 @@ import kotlin.math.roundToLong
 class Application {
     companion object {
         private const val MOUSE_SPEED = 0.5
-        private const val MOVE_SPEED = 7.0 // m/s
+        private const val MOVE_SPEED = 14.0 // m/s
         private const val JUMP_SPEED = 6.0 // m/s
         private const val PHYSICS_SPEED = 0.02
         private const val GRAVITY = -11.0 // m/s/s
         private const val CONTACT_COUNT = 16
         private val SURFACE_PARAMS = DSurfaceParameters().apply {
-            mu = 0.9
+            mu = 0.95
         }
         private val DEC_FORMAT = DecimalFormat("0.0")
     }
@@ -45,6 +46,7 @@ class Application {
 
     private val world = OdeHelper.createWorld().also { world ->
         world.setGravity(0.0, GRAVITY, 0.0)
+        world.setDamping(0.05, 1.0)
     }
     private val space = OdeHelper.createSimpleSpace()
     private val windowSize = Vector2i()
@@ -53,7 +55,6 @@ class Application {
         body.setPosition(0.0, 1.4, -5.0)
         playerGeom.body = body
     }
-//    private val motion = Vector3d()
     private val movementInput = Vector3d()
     private val rotation = Vector2f()
     private var wireframe = false
@@ -79,17 +80,10 @@ class Application {
             { _, _, _, _ -> },
             { _, _, _, _, _ -> 1 }
         ).body = levelBody
-//        OdeHelper.createBox(
-//            space,
-//            100.0,
-//            1.0,
-//            100.0
-//        ).body = levelBody
         levelBody.setKinematic()
         val levelList = level.toDisplayList()
         var lastTime = glfwGetTime()
         var lastPhysicsTime = lastTime
-//        val collisions = mutableListOf<Model.Tri>()
         var fpsAverage = 0.0
         val contactJointGroup = OdeHelper.createJointGroup()
         val force = DVector3()
@@ -112,6 +106,7 @@ class Application {
                 )
                 player.addForce(adjustedMovementInput.x, movementInput.y, adjustedMovementInput.z)
                 movementInput.y = 0.0
+                player.rotation = DMatrix3()
                 force.set(player.force)
                 val contactBuffer = DContactGeomBuffer(CONTACT_COUNT)
                 contactJointGroup.clear()
