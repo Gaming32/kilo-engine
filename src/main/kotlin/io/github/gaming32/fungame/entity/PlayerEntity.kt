@@ -1,9 +1,11 @@
 package io.github.gaming32.fungame.entity
 
-import io.github.gaming32.fungame.Application
 import io.github.gaming32.fungame.Level
 import io.github.gaming32.fungame.model.CollisionType
 import io.github.gaming32.fungame.model.CollisionTypes
+import io.github.gaming32.fungame.util.toDMatrix3
+import org.joml.Math
+import org.joml.Matrix3d
 import org.joml.Vector2f
 import org.joml.Vector2fc
 import org.lwjgl.glfw.GLFW.glfwGetTime
@@ -14,20 +16,21 @@ import org.ode4j.ode.OdeHelper
 
 class PlayerEntity(
     level: Level, val startPos: DVector3C, val startRotation: Vector2fc
-) : Entity<PlayerEntity>(PlayerEntity, level, OdeHelper.createCapsule(level.space, 0.4, 1.0)) {
-    companion object : EntityType<PlayerEntity>() {
+) : Entity<PlayerEntity>(PlayerEntity, level, OdeHelper.createCapsule(level.space, 0.4, 1.0), startPos) {
+    companion object Type : EntityType<PlayerEntity>() {
         val UP = DVector3(0.0, 1.0, 0.0)
-        override fun create(level: Level, args: List<String>) = PlayerEntity(
-            level,
-            DVector3(args[0].toDouble(), args[1].toDouble(), args[2].toDouble()),
-            Vector2f(args[3].toFloat(), args[4].toFloat())
+        val Z_FORWARD = Matrix3d().rotateX(Math.PI / 2).toDMatrix3()
+
+        override fun create(level: Level, position: DVector3C, args: List<String>) = PlayerEntity(
+            level, position,
+            Vector2f(args[0].toFloat(), args[1].toFloat())
         )
     }
 
     val rotation = Vector2f(startRotation)
 
     init {
-        geom.rotation = Application.Z_FORWARD
+        geom.rotation = Z_FORWARD
     }
 
     var lastJumpCollidedTime = 0.0
@@ -58,4 +61,11 @@ class PlayerEntity(
         }
         return result
     }
+
+    override fun tick() {
+        super.tick()
+        body.rotation = Z_FORWARD
+    }
+
+    override fun draw() = Unit
 }

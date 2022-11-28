@@ -36,7 +36,6 @@ class Application {
         private const val CONTACT_COUNT = 16
         private const val VERTICAL_DAMPING = 0.01
         private const val HORIZONTAL_DAMPING = 0.17
-        val Z_FORWARD = Matrix3d().rotateX(PI / 2).toDMatrix3()
         private val SURFACE_PARAMS = DSurfaceParameters().apply {
             mu = 0.0
         }
@@ -117,16 +116,15 @@ class Application {
                         entity.body.linearVel.z * -HORIZONTAL_DAMPING / PHYSICS_SPEED
                     )
                 }
-                player.body.rotation = Z_FORWARD
                 force.set(player.body.force)
                 val contactBuffer = DContactGeomBuffer(CONTACT_COUNT)
                 contactJointGroup.clear()
-                this.level.space.collide(null) { _, o1, o2 ->
+                level.space.collide(null) { _, o1, o2 ->
                     repeat(OdeHelper.collide(o1, o2, CONTACT_COUNT, contactBuffer)) {
                         val contact = contactBuffer[it]
                         val surfaceParams = if (contact.g1.body == level.levelBody) {
                             val collisionType = level.getCollisionType(contact.g1)
-                            this.level.getEntityByGeom(contact.g2).collideWithLevel(collisionType, contact, true)
+                            level.getEntityByGeom(contact.g2)?.collideWithLevel(collisionType, contact, true)
                             if (collisionType == CollisionTypes.WALL) {
                                 WALL_PARAMS
                             } else {
@@ -134,31 +132,32 @@ class Application {
                             }
                         } else if (contact.g2.body == level.levelBody) {
                             val collisionType = level.getCollisionType(contact.g2)
-                            this.level.getEntityByGeom(contact.g1).collideWithLevel(collisionType, contact, false)
+                            level.getEntityByGeom(contact.g1)?.collideWithLevel(collisionType, contact, false)
                             if (collisionType == CollisionTypes.WALL) {
                                 WALL_PARAMS
                             } else {
                                 SURFACE_PARAMS
                             }
                         } else {
-                            val e1 = this.level.getEntityByGeom(contact.g1)
-                            val e2 = this.level.getEntityByGeom(contact.g2)
-                            if (e1.collideWithEntity(e2, contact) || e2.collideWithEntity(e1, contact)) {
+                            val e1 = level.getEntityByGeom(contact.g1)
+                            val e2 = level.getEntityByGeom(contact.g2)
+                            if (e1 == null || e2 == null) return@repeat
+                            if (e1.collideWithEntity(e2, contact) or e2.collideWithEntity(e1, contact)) {
                                 SURFACE_PARAMS
                             } else {
                                 return@repeat
                             }
                         }
                         val joint = OdeHelper.createContactJoint(
-                            this.level.world,
+                            level.world,
                             contactJointGroup,
                             DContact(contact, surfaceParams)
                         )
                         joint.attach(contact.g1.body, contact.g2.body)
                     }
                 }
-                this.level.world.quickStep(PHYSICS_SPEED)
-                this.level.forEachEntity { it.tick() }
+                level.world.quickStep(PHYSICS_SPEED)
+                level.forEachEntity { it.tick() }
                 lastPhysicsTime += PHYSICS_SPEED
             }
 
@@ -172,8 +171,8 @@ class Application {
             glRotatef(player.rotation.x, 1f, 0f, 0f)
             if (player.jumpNormal.y < 0.95 && glfwGetTime() - player.lastJumpCollidedTime < 0.1) {
                 val horizAngle = normalizeDegrees(
-                    toDegrees(atan2(player.jumpNormal.z, player.jumpNormal.x)) - 90 -
-                        player.rotation.y
+                    player.rotation.y -
+                    (toDegrees(atan2(player.jumpNormal.z, player.jumpNormal.x)) - 90)
                 )
                 if (horizAngle < 0) {
                     targetZAngle = 5f
@@ -205,6 +204,8 @@ class Application {
             )
 
             levelList.draw()
+
+            level.forEachEntity { it.draw() }
 
             // HUD
             glMatrixMode(GL_PROJECTION)

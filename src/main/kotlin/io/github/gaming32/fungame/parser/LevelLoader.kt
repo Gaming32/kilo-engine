@@ -8,6 +8,7 @@ import io.github.gaming32.fungame.model.Material
 import io.github.gaming32.fungame.model.Model
 import io.github.gaming32.fungame.util.simpleParentDir
 import org.joml.Vector3f
+import org.ode4j.math.DVector3
 import java.io.BufferedReader
 import java.io.InputStream
 import java.util.*
@@ -106,7 +107,11 @@ class LevelLoader(private val getResource: (String) -> InputStream?) {
                     }
                     level.setGeom(loadCollision(geom, parentDir + line[1]))
                 }
-                "entity" -> EntityRegistry.getType(line[1]).create(level, line.subList(2, 7))
+                "entity" -> EntityRegistry.getType(line[1]).create(
+                    level,
+                    DVector3(line[2].toDouble(), line[3].toDouble(), line[4].toDouble()),
+                    line.subList(5, line.size)
+                )
             }
         }
         level

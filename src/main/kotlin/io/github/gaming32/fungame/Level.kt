@@ -43,9 +43,7 @@ class Level {
 
     fun getCollisionType(geom: DGeom) = collisionMeshes.getValue(geom)
 
-    fun getEntityByGeom(geom: DGeom) =
-        geomToEntity[geom]
-            ?: throw IllegalArgumentException("No entity exists from geom $geom")
+    fun getEntityByGeom(geom: DGeom) = geomToEntity[geom]
 
     fun removeEntity(entity: Entity<*>) {
         geomToEntity.remove(entity.geom)

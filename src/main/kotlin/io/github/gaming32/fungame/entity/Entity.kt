@@ -4,16 +4,23 @@ import io.github.gaming32.fungame.Level
 import io.github.gaming32.fungame.model.CollisionType
 import io.github.gaming32.fungame.model.CollisionTypes
 import io.github.gaming32.fungame.util.y
+import org.ode4j.math.DVector3C
 import org.ode4j.ode.DBody
 import org.ode4j.ode.DContactGeom
 import org.ode4j.ode.DGeom
 import org.ode4j.ode.OdeHelper
 
-abstract class Entity<T : Entity<T>>(val type: EntityType<T>, val level: Level, val geom: DGeom) {
+abstract class Entity<T : Entity<T>>(
+    val type: EntityType<T>,
+    val level: Level,
+    val geom: DGeom,
+    position: DVector3C
+) {
     val body: DBody = OdeHelper.createBody(level.world)
 
     init {
         geom.body = body
+        body.position = position
         @Suppress("LeakingThis")
         level.addEntity(this)
     }
@@ -47,4 +54,6 @@ abstract class Entity<T : Entity<T>>(val type: EntityType<T>, val level: Level, 
             kill()
         }
     }
+
+    abstract fun draw()
 }
