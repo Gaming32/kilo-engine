@@ -32,7 +32,10 @@ abstract class Entity(val world: World, val geom: DGeom) {
             else -> true
         }
 
-    open fun collideWith(other: Entity, contact: DContactGeom) = Unit
+    /**
+     * @return `true` if this entity should collide solidly with the other entity.
+     */
+    open fun collideWith(other: Entity, contact: DContactGeom) = false
 
     open fun kill() {
         world.removeEntity(this)

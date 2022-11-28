@@ -10,15 +10,14 @@ import org.ode4j.math.DVector3
 import org.ode4j.ode.DContactGeom
 import org.ode4j.ode.OdeHelper
 
-class PlayerEntity(world: World) : Entity(
-    world,
-    OdeHelper.createCapsule(world.space, 0.4, 1.0).also { geom ->
-        geom.rotation = Application.Z_FORWARD
-    }
-) {
+class PlayerEntity(world: World) : Entity(world, OdeHelper.createCapsule(world.space, 0.4, 1.0)) {
     companion object {
-        val START_POS = DVector3(0.0, 0.0, -5.0)
+        val START_POS = DVector3(0.0, 0.5, -5.0)
         val UP = DVector3(0.0, 1.0, 0.0)
+    }
+
+    init {
+        geom.rotation = Application.Z_FORWARD
     }
 
     var lastJumpCollidedTime = 0.0

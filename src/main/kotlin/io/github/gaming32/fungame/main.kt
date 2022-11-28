@@ -141,19 +141,29 @@ class Application {
                     repeat(OdeHelper.collide(o1, o2, CONTACT_COUNT, contactBuffer)) {
                         val contact = contactBuffer[it]
                         val surfaceParams = if (contact.g1.body == levelBody) {
-                            if (collisionMeshes.getValue(contact.g1) == CollisionTypes.WALL) {
+                            val collisionType = collisionMeshes.getValue(contact.g1)
+                            world.getEntityByGeom(contact.g2).collideWith(levelCollision, collisionType, contact)
+                            if (collisionType == CollisionTypes.WALL) {
                                 WALL_PARAMS
                             } else {
                                 SURFACE_PARAMS
                             }
                         } else if (contact.g2.body == levelBody) {
-                            if (collisionMeshes.getValue(contact.g2) == CollisionTypes.WALL) {
+                            val collisionType = collisionMeshes.getValue(contact.g2)
+                            world.getEntityByGeom(contact.g1).collideWith(levelCollision, collisionType, contact)
+                            if (collisionType == CollisionTypes.WALL) {
                                 WALL_PARAMS
                             } else {
                                 SURFACE_PARAMS
                             }
                         } else {
-                            return@repeat // Just don't collide for now
+                            val e1 = world.getEntityByGeom(contact.g1)
+                            val e2 = world.getEntityByGeom(contact.g2)
+                            if (e1.collideWith(e2, contact) || e2.collideWith(e1, contact)) {
+                                SURFACE_PARAMS
+                            } else {
+                                return@repeat
+                            }
                         }
                         val joint = OdeHelper.createContactJoint(
                             world.world,
@@ -161,18 +171,6 @@ class Application {
                             DContact(contact, surfaceParams)
                         )
                         joint.attach(contact.g1.body, contact.g2.body)
-                        if (contact.g1.body == levelBody) {
-                            world.getEntityByGeom(contact.g2)
-                                .collideWith(levelCollision, collisionMeshes.getValue(contact.g1), contact)
-                        } else if (contact.g2.body == levelBody) {
-                            world.getEntityByGeom(contact.g1)
-                                .collideWith(levelCollision, collisionMeshes.getValue(contact.g2), contact)
-                        } else {
-                            val e1 = world.getEntityByGeom(contact.g1)
-                            val e2 = world.getEntityByGeom(contact.g2)
-                            e1.collideWith(e2, contact)
-                            e2.collideWith(e1, contact)
-                        }
                     }
                 }
                 world.world.quickStep(PHYSICS_SPEED)
@@ -222,7 +220,7 @@ class Application {
                 )
             )
 
-            levelList.draw(/* ModelBuilder(), collisions */)
+            levelList.draw()
 
             // HUD
             glMatrixMode(GL_PROJECTION)
@@ -376,6 +374,9 @@ class Application {
                 }
                 GLFW_KEY_SPACE -> if (press) {
                     movementInput.y = 1.0
+                }
+                GLFW_KEY_LEFT_SHIFT -> if (press) {
+                    movementInput.y = -1.0
                 }
                 GLFW_KEY_F3 -> if (press) {
                     wireframe = !wireframe
