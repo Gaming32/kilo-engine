@@ -36,6 +36,10 @@ data class Model(val tris: List<Tri>, val materials: Map<String, Material>) : Dr
         }
     }
 
+    companion object {
+        val EMPTY = Model(listOf(), mapOf())
+    }
+
     override fun draw(builder: ModelBuilder) {
         tris.forEach {
             it.draw(builder)

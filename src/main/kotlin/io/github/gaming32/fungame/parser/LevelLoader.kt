@@ -1,5 +1,7 @@
-package io.github.gaming32.fungame.obj
+package io.github.gaming32.fungame.parser
 
+import io.github.gaming32.fungame.Level
+import io.github.gaming32.fungame.entity.EntityRegistry
 import io.github.gaming32.fungame.model.CollisionModel
 import io.github.gaming32.fungame.model.CollisionType
 import io.github.gaming32.fungame.model.Material
@@ -10,9 +12,8 @@ import java.io.BufferedReader
 import java.io.InputStream
 import java.util.*
 
-class ObjLoader(private val getResource: (String) -> InputStream?) {
-    fun loadObj(name: String) = textResource(name) { inp ->
-        val parentDir = simpleParentDir(name)
+class LevelLoader(private val getResource: (String) -> InputStream?) {
+    fun loadObj(name: String) = textResource(name) { inp, parentDir ->
         val verts = mutableListOf<Vector3f>()
         val normals = mutableListOf<Vector3f>()
         val uvs = mutableListOf<Model.UV>()
@@ -52,8 +53,7 @@ class ObjLoader(private val getResource: (String) -> InputStream?) {
         Model(tris, materials)
     } ?: throw IllegalArgumentException("Missing OBJ model: $name")
 
-    private fun loadMaterialLibrary(name: String): Map<String, Material> = textResource(name) { inp ->
-        val parentDir = simpleParentDir(name)
+    fun loadMaterialLibrary(name: String): Map<String, Material> = textResource(name) { inp, parentDir ->
         val materials = mutableMapOf<String, Material>()
         var currentMaterial = ""
         for (line in parseLines(inp)) {
@@ -78,7 +78,7 @@ class ObjLoader(private val getResource: (String) -> InputStream?) {
         materials
     } ?: throw IllegalArgumentException("Missing material library: $name")
 
-    fun parseCollision(model: Model, name: String) = textResource(name) { inp ->
+    fun loadCollision(model: Model, name: String) = textResource(name) { inp, _ ->
         val collisions = IdentityHashMap<Material, CollisionType>()
         for (line in parseLines(inp)) {
             when (line[0]) {
@@ -89,6 +89,28 @@ class ObjLoader(private val getResource: (String) -> InputStream?) {
         }
         CollisionModel(model, collisions)
     } ?: throw IllegalArgumentException("Missing collision data: $name")
+
+    fun loadLevel(name: String, level: Level = Level()) = textResource(name) { inp, parentDir ->
+        var geom: Model? = null
+        for (line in parseLines(inp)) {
+            when (line[0]) {
+                "geom" -> {
+                    if (geom != null) {
+                        throw IllegalArgumentException("geom can only be set once")
+                    }
+                    geom = loadObj(parentDir + line[1])
+                }
+                "collision" -> {
+                    if (geom == null) {
+                        throw IllegalArgumentException("geom must be set before collision")
+                    }
+                    level.setGeom(loadCollision(geom, parentDir + line[1]))
+                }
+                "entity" -> EntityRegistry.getType(line[1]).create(level, line.subList(2, 7))
+            }
+        }
+        level
+    } ?: throw IllegalArgumentException("Missing level: $name")
 
     private fun parseVertex(
         verts: List<Vector3f>,
@@ -114,8 +136,8 @@ class ObjLoader(private val getResource: (String) -> InputStream?) {
 
     private inline fun <T> textResource(
         name: String,
-        action: (inp: BufferedReader) -> T
-    ) = getResource(name)?.bufferedReader(Charsets.UTF_8)?.use(action)
+        action: (inp: BufferedReader, parentDir: String) -> T
+    ) = getResource(name)?.bufferedReader(Charsets.UTF_8)?.use { action(it, simpleParentDir(name)) }
 
     private fun parseLines(inp: BufferedReader) = inp.lineSequence()
         .map(String::trim)

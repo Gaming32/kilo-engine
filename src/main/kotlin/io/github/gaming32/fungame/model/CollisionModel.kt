@@ -7,6 +7,10 @@ data class CollisionModel(
     val model: Model,
     val collisionTypes: Map<Material, CollisionType>
 ) {
+    companion object {
+        val EMPTY = CollisionModel(Model.EMPTY, mapOf())
+    }
+
     fun getCollision(mat: Material?) = collisionTypes[mat] ?: CollisionTypes.SOLID
 
     fun getCollision(tri: Model.Tri) = getCollision(tri.material)

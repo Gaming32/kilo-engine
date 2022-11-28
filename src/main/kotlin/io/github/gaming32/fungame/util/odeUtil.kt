@@ -13,6 +13,18 @@ inline val DVector3C.x get() = get0()
 inline val DVector3C.y get() = get1()
 inline val DVector3C.z get() = get2()
 
+inline var DVector3.x
+    get() = get0()
+    set(x) = set0(x)
+
+inline var DVector3.y
+    get() = get1()
+    set(y) = set1(y)
+
+inline var DVector3.z
+    get() = get2()
+    set(z) = set2(z)
+
 inline operator fun DVector3C.plus(other: DVector3C) = DVector3(x + other.x, y + other.y, z + other.z)
 
 inline operator fun DVector3C.minus(other: DVector3C): DVector3 = reSub(other)

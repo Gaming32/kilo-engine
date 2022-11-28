@@ -1,9 +1,8 @@
 package io.github.gaming32.fungame
 
 import io.github.gaming32.fungame.entity.PlayerEntity
-import io.github.gaming32.fungame.model.CollisionType
 import io.github.gaming32.fungame.model.CollisionTypes
-import io.github.gaming32.fungame.obj.ObjLoader
+import io.github.gaming32.fungame.parser.LevelLoader
 import io.github.gaming32.fungame.util.*
 import org.joml.*
 import org.joml.Math.*
@@ -20,7 +19,6 @@ import org.lwjgl.opengl.GLUtil
 import org.ode4j.math.DVector3
 import org.ode4j.ode.DContact.DSurfaceParameters
 import org.ode4j.ode.DContactGeomBuffer
-import org.ode4j.ode.DGeom
 import org.ode4j.ode.OdeConstants.*
 import org.ode4j.ode.OdeHelper
 import java.text.DecimalFormat
@@ -52,41 +50,27 @@ class Application {
         OdeHelper.initODE()
     }
 
-    private val world = World()
+    private val level = Level()
     private val windowSize = Vector2i()
-    private val player = PlayerEntity(world)
     private val movementInput = Vector3d()
-    private val rotation = Vector2f()
+    private lateinit var player: PlayerEntity
     private var wireframe = false
     private var window = 0L
     private var nanovg = 0L
     private var clearParams = GL_DEPTH_BUFFER_BIT
-    private lateinit var objLoader: ObjLoader
+    private lateinit var levelLoader: LevelLoader
 
     fun main() {
         init()
         registerEvents()
         val skybox = withValue(-1, TextureManager::maxMipmap, { TextureManager.maxMipmap = it }) {
             withValue(GL_NEAREST, TextureManager::filter, { TextureManager.filter = it }) {
-                objLoader.loadObj("/skybox/skybox.obj").toDisplayList()
+                levelLoader.loadObj("/skybox/skybox.obj").toDisplayList()
             }
         }
-        val level = objLoader.loadObj("/example/example.obj")
-        val levelBody = OdeHelper.createBody(world.world)
-        val levelCollision = objLoader.parseCollision(level, "/example/example_collision.txt")
-        val collisionMeshes = mutableMapOf<DGeom, CollisionType>()
-        for ((collision, mesh) in levelCollision.toMultiTriMeshData()) {
-            val geom = OdeHelper.createTriMesh(
-                world.space, mesh,
-                { _, _, _ -> 1 },
-                { _, _, _, _ -> },
-                { _, _, _, _, _ -> 1 }
-            )
-            collisionMeshes[geom] = collision
-            geom.body = levelBody
-        }
-        levelBody.setKinematic()
-        val levelList = level.toDisplayList()
+        levelLoader.loadLevel("/example/example_level.txt", level)
+        val levelList = level.levelModel.model.toDisplayList()
+        player = level.getEntityOfType(PlayerEntity)
         var lastTime = glfwGetTime()
         var lastPhysicsTime = lastTime
         var fpsAverage = 0.0
@@ -108,9 +92,9 @@ class Application {
                 lastPhysicsTime = time - 1.0
             }
             while (time - lastPhysicsTime > PHYSICS_SPEED) {
-                world.forEachEntity { it.preTick() }
+                level.forEachEntity { it.preTick() }
                 val adjustedMovementInput = Vector3d(movementInput).rotateY(
-                    toRadians(rotation.y.toDouble())
+                    toRadians(player.rotation.y.toDouble())
                 )
                 player.body.addForce(adjustedMovementInput.x * MOVE_SPEED, 0.0, adjustedMovementInput.z * MOVE_SPEED)
                 if (movementInput.y > 0.0 && glfwGetTime() - player.lastJumpCollidedTime <= 0.1) {
@@ -126,7 +110,7 @@ class Application {
                     }
                 }
                 movementInput.y = 0.0
-                world.forEachEntity { entity ->
+                level.forEachEntity { entity ->
                     entity.body.addForce(
                         entity.body.linearVel.x * -HORIZONTAL_DAMPING / PHYSICS_SPEED,
                         entity.body.linearVel.y * -VERTICAL_DAMPING / PHYSICS_SPEED,
@@ -137,44 +121,44 @@ class Application {
                 force.set(player.body.force)
                 val contactBuffer = DContactGeomBuffer(CONTACT_COUNT)
                 contactJointGroup.clear()
-                world.space.collide(null) { _, o1, o2 ->
+                this.level.space.collide(null) { _, o1, o2 ->
                     repeat(OdeHelper.collide(o1, o2, CONTACT_COUNT, contactBuffer)) {
                         val contact = contactBuffer[it]
-                        val surfaceParams = if (contact.g1.body == levelBody) {
-                            val collisionType = collisionMeshes.getValue(contact.g1)
-                            world.getEntityByGeom(contact.g2).collideWith(levelCollision, collisionType, contact)
+                        val surfaceParams = if (contact.g1.body == level.levelBody) {
+                            val collisionType = level.getCollisionType(contact.g1)
+                            this.level.getEntityByGeom(contact.g2).collideWithLevel(collisionType, contact, true)
                             if (collisionType == CollisionTypes.WALL) {
                                 WALL_PARAMS
                             } else {
                                 SURFACE_PARAMS
                             }
-                        } else if (contact.g2.body == levelBody) {
-                            val collisionType = collisionMeshes.getValue(contact.g2)
-                            world.getEntityByGeom(contact.g1).collideWith(levelCollision, collisionType, contact)
+                        } else if (contact.g2.body == level.levelBody) {
+                            val collisionType = level.getCollisionType(contact.g2)
+                            this.level.getEntityByGeom(contact.g1).collideWithLevel(collisionType, contact, false)
                             if (collisionType == CollisionTypes.WALL) {
                                 WALL_PARAMS
                             } else {
                                 SURFACE_PARAMS
                             }
                         } else {
-                            val e1 = world.getEntityByGeom(contact.g1)
-                            val e2 = world.getEntityByGeom(contact.g2)
-                            if (e1.collideWith(e2, contact) || e2.collideWith(e1, contact)) {
+                            val e1 = this.level.getEntityByGeom(contact.g1)
+                            val e2 = this.level.getEntityByGeom(contact.g2)
+                            if (e1.collideWithEntity(e2, contact) || e2.collideWithEntity(e1, contact)) {
                                 SURFACE_PARAMS
                             } else {
                                 return@repeat
                             }
                         }
                         val joint = OdeHelper.createContactJoint(
-                            world.world,
+                            this.level.world,
                             contactJointGroup,
                             DContact(contact, surfaceParams)
                         )
                         joint.attach(contact.g1.body, contact.g2.body)
                     }
                 }
-                world.world.quickStep(PHYSICS_SPEED)
-                world.forEachEntity { it.tick() }
+                this.level.world.quickStep(PHYSICS_SPEED)
+                this.level.forEachEntity { it.tick() }
                 lastPhysicsTime += PHYSICS_SPEED
             }
 
@@ -185,11 +169,11 @@ class Application {
             gluPerspective(80f, windowSize.x.toFloat() / windowSize.y, 0.01f, 1000f)
             glMatrixMode(GL_MODELVIEW)
             glLoadIdentity()
-            glRotatef(rotation.x, 1f, 0f, 0f)
+            glRotatef(player.rotation.x, 1f, 0f, 0f)
             if (player.jumpNormal.y < 0.95 && glfwGetTime() - player.lastJumpCollidedTime < 0.1) {
                 val horizAngle = normalizeDegrees(
                     toDegrees(atan2(player.jumpNormal.z, player.jumpNormal.x)) - 90 -
-                        rotation.y
+                        player.rotation.y
                 )
                 if (horizAngle < 0) {
                     targetZAngle = 5f
@@ -201,7 +185,7 @@ class Application {
             }
             zAngle = lerp(zAngle, targetZAngle, 0.25f)
             glRotatef(zAngle, 0f, 0f, 1f)
-            glRotatef(180 - rotation.y, 0f, 1f, 0f)
+            glRotatef(180 - player.rotation.y, 0f, 1f, 0f)
 
             // Skybox
             skybox.draw()
@@ -265,8 +249,8 @@ class Application {
             nvgText(
                 nanovg, 10f, 115f,
                 "RY/RX: " +
-                    "${DEC_FORMAT.format(rotation.y)}/" +
-                    DEC_FORMAT.format(rotation.x)
+                    "${DEC_FORMAT.format(player.rotation.y)}/" +
+                    DEC_FORMAT.format(player.rotation.x)
             )
             nvgEndFrame(nanovg)
 
@@ -318,7 +302,7 @@ class Application {
         glMaterialfv(GL_FRONT, GL_AMBIENT, floatArrayOf(1f, 1f, 1f, 1f))
         glLineWidth(10f)
 
-        objLoader = ObjLoader(TextureManager.getResource)
+        levelLoader = LevelLoader(TextureManager.getResource)
     }
 
     private fun registerEvents() {
@@ -328,8 +312,13 @@ class Application {
                 lastMousePos.x != Double.POSITIVE_INFINITY &&
                 glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED
             ) {
-                rotation.y = normalizeDegrees(rotation.y - ((x - lastMousePos.x) * MOUSE_SPEED).toFloat())
-                rotation.x = clamp(-90f, 90f, rotation.x + ((y - lastMousePos.y) * MOUSE_SPEED).toFloat())
+                player.rotation.y = normalizeDegrees(
+                    player.rotation.y - ((x - lastMousePos.x) * MOUSE_SPEED).toFloat()
+                )
+                player.rotation.x = clamp(
+                    -90f, 90f,
+                    player.rotation.x + ((y - lastMousePos.y) * MOUSE_SPEED).toFloat()
+                )
             }
             lastMousePos.set(x, y)
         }
@@ -396,7 +385,7 @@ class Application {
     }
 
     private fun quit() {
-        world.destroy()
+        level.destroy()
         OdeHelper.closeODE()
         TextureManager.unload()
         glfwFreeCallbacks(window)

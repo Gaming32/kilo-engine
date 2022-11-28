@@ -1,0 +1,3 @@
+geom example.obj
+collision example_collision.txt
+entity player 0.0 1.4 -5.0 0.0 0.0
