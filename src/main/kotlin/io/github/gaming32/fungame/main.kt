@@ -1,8 +1,8 @@
 package io.github.gaming32.fungame
 
 import io.github.gaming32.fungame.entity.PlayerEntity
-import io.github.gaming32.fungame.model.CollisionTypes
-import io.github.gaming32.fungame.parser.LevelLoader
+import io.github.gaming32.fungame.loader.LevelLoader
+import io.github.gaming32.fungame.loader.LevelLoaderImpl
 import io.github.gaming32.fungame.util.*
 import org.joml.*
 import org.joml.Math.*
@@ -36,10 +36,10 @@ class Application {
         private const val CONTACT_COUNT = 16
         private const val VERTICAL_DAMPING = 0.01
         private const val HORIZONTAL_DAMPING = 0.17
-        private val SURFACE_PARAMS = DSurfaceParameters().apply {
+        val SURFACE_PARAMS = DSurfaceParameters().apply {
             mu = 0.0
         }
-        private val WALL_PARAMS = DSurfaceParameters().apply {
+        val WALL_PARAMS = DSurfaceParameters().apply {
             mu = 3.0
         }
         private val DEC_FORMAT = DecimalFormat("0.0")
@@ -67,8 +67,7 @@ class Application {
                 levelLoader.loadObj("/skybox/skybox.obj").toDisplayList()
             }
         }
-        levelLoader.loadLevel("/example/example_level.txt", level)
-        val levelList = level.levelModel.model.toDisplayList()
+        levelLoader.loadLevel("/example/example.level.txt", level)
         player = level.getEntityOfType(PlayerEntity)
         var lastTime = glfwGetTime()
         var lastPhysicsTime = lastTime
@@ -91,7 +90,7 @@ class Application {
                 lastPhysicsTime = time - 1.0
             }
             while (time - lastPhysicsTime > PHYSICS_SPEED) {
-                level.forEachEntity { it.preTick() }
+                level.entities.toList().forEach { it.preTick() }
                 val adjustedMovementInput = Vector3d(movementInput).rotateY(
                     toRadians(player.rotation.y.toDouble())
                 )
@@ -122,32 +121,13 @@ class Application {
                 level.space.collide(null) { _, o1, o2 ->
                     repeat(OdeHelper.collide(o1, o2, CONTACT_COUNT, contactBuffer)) {
                         val contact = contactBuffer[it]
-                        val surfaceParams = if (contact.g1.body == level.levelBody) {
-                            val collisionType = level.getCollisionType(contact.g1)
-                            level.getEntityByGeom(contact.g2)?.collideWithLevel(collisionType, contact, true)
-                            if (collisionType == CollisionTypes.WALL) {
-                                WALL_PARAMS
-                            } else {
-                                SURFACE_PARAMS
-                            }
-                        } else if (contact.g2.body == level.levelBody) {
-                            val collisionType = level.getCollisionType(contact.g2)
-                            level.getEntityByGeom(contact.g1)?.collideWithLevel(collisionType, contact, false)
-                            if (collisionType == CollisionTypes.WALL) {
-                                WALL_PARAMS
-                            } else {
-                                SURFACE_PARAMS
-                            }
-                        } else {
-                            val e1 = level.getEntityByGeom(contact.g1)
-                            val e2 = level.getEntityByGeom(contact.g2)
-                            if (e1 == null || e2 == null) return@repeat
-                            if (e1.collideWithEntity(e2, contact) or e2.collideWithEntity(e1, contact)) {
-                                SURFACE_PARAMS
-                            } else {
-                                return@repeat
-                            }
-                        }
+                        val e1 = level.getEntityByBody(contact.g1.body)
+                        val e2 = level.getEntityByBody(contact.g2.body)
+                        if (e1 == null || e2 == null) return@repeat
+                        var surfaceParams = e1.collideWithEntity(e2, contact, true)
+                        val surfaceParams2 = e2.collideWithEntity(e1, contact, false)
+                        surfaceParams = surfaceParams ?: surfaceParams2
+                        if (surfaceParams == null) return@repeat
                         val joint = OdeHelper.createContactJoint(
                             level.world,
                             contactJointGroup,
@@ -157,7 +137,7 @@ class Application {
                     }
                 }
                 level.world.quickStep(PHYSICS_SPEED)
-                level.forEachEntity { it.tick() }
+                level.entities.toList().forEach { it.tick() }
                 lastPhysicsTime += PHYSICS_SPEED
             }
 
@@ -202,8 +182,6 @@ class Application {
                     0f
                 )
             )
-
-            levelList.draw()
 
             level.forEachEntity { it.draw() }
 
@@ -258,7 +236,6 @@ class Application {
             glfwSwapBuffers(window)
         }
         skybox.close()
-        levelList.close()
         contactJointGroup.destroy()
         quit()
     }
@@ -303,7 +280,7 @@ class Application {
         glMaterialfv(GL_FRONT, GL_AMBIENT, floatArrayOf(1f, 1f, 1f, 1f))
         glLineWidth(10f)
 
-        levelLoader = LevelLoader(TextureManager.getResource)
+        levelLoader = LevelLoaderImpl(TextureManager.getResource)
     }
 
     private fun registerEvents() {
@@ -364,9 +341,6 @@ class Application {
                 }
                 GLFW_KEY_SPACE -> if (press) {
                     movementInput.y = 1.0
-                }
-                GLFW_KEY_LEFT_SHIFT -> if (press) {
-                    movementInput.y = -1.0
                 }
                 GLFW_KEY_F3 -> if (press) {
                     wireframe = !wireframe

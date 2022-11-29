@@ -1,6 +1,8 @@
 package io.github.gaming32.fungame.entity
 
+import io.github.gaming32.fungame.Application
 import io.github.gaming32.fungame.Level
+import io.github.gaming32.fungame.loader.LevelLoader
 import io.github.gaming32.fungame.util.*
 import org.lwjgl.opengl.GL11.GL_TEXTURE_2D
 import org.lwjgl.opengl.GL11.GL_TRIANGLE_FAN
@@ -9,14 +11,16 @@ import org.ode4j.math.DVector3C
 import org.ode4j.ode.DContactGeom
 import org.ode4j.ode.OdeHelper
 
-class BoxEntity(
-    level: Level, position: DVector3C, size: DVector3C
-) : Entity<BoxEntity>(BoxEntity, level, OdeHelper.createBox(level.space, DVector3(size.x, size.y, size.z)), position) {
+class BoxEntity(level: Level, position: DVector3C, size: DVector3C) : Entity<BoxEntity>(BoxEntity, level, position) {
     companion object Type : EntityType<BoxEntity>() {
-        override fun create(level: Level, position: DVector3C, args: List<String>) = BoxEntity(
+        override fun create(level: Level, position: DVector3C, args: List<String>, loader: LevelLoader) = BoxEntity(
             level, position,
             DVector3(args[0].toDouble(), args[1].toDouble(), args[2].toDouble())
         )
+    }
+
+    init {
+        OdeHelper.createBox(level.space, DVector3(size.x, size.y, size.z)).body = body
     }
 
     private val jomlHalfSize = size.toVector3f().div(2f)
@@ -75,5 +79,6 @@ class BoxEntity(
         draw()
     }
 
-    override fun collideWithEntity(other: Entity<*>, contact: DContactGeom) = true
+    override fun collideWithEntity(other: Entity<*>, contact: DContactGeom, selfIsG1: Boolean) =
+        Application.SURFACE_PARAMS
 }

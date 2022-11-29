@@ -1,4 +1,4 @@
-package io.github.gaming32.fungame.parser
+package io.github.gaming32.fungame.loader
 
 import io.github.gaming32.fungame.Level
 import io.github.gaming32.fungame.entity.EntityRegistry
@@ -13,8 +13,8 @@ import java.io.BufferedReader
 import java.io.InputStream
 import java.util.*
 
-class LevelLoader(private val getResource: (String) -> InputStream?) {
-    fun loadObj(name: String) = textResource(name) { inp, parentDir ->
+class LevelLoaderImpl(private val getResource: (String) -> InputStream?) : LevelLoader {
+    override fun loadObj(name: String) = textResource(name) { inp, parentDir ->
         val verts = mutableListOf<Vector3f>()
         val normals = mutableListOf<Vector3f>()
         val uvs = mutableListOf<Model.UV>()
@@ -54,7 +54,7 @@ class LevelLoader(private val getResource: (String) -> InputStream?) {
         Model(tris, materials)
     } ?: throw IllegalArgumentException("Missing OBJ model: $name")
 
-    fun loadMaterialLibrary(name: String): Map<String, Material> = textResource(name) { inp, parentDir ->
+    override fun loadMaterialLibrary(name: String) = textResource(name) { inp, parentDir ->
         val materials = mutableMapOf<String, Material>()
         var currentMaterial = ""
         for (line in parseLines(inp)) {
@@ -79,7 +79,7 @@ class LevelLoader(private val getResource: (String) -> InputStream?) {
         materials
     } ?: throw IllegalArgumentException("Missing material library: $name")
 
-    fun loadCollision(model: Model, name: String) = textResource(name) { inp, _ ->
+    override fun loadCollision(model: Model, name: String) = textResource(name) { inp, _ ->
         val collisions = IdentityHashMap<Material, CollisionType>()
         for (line in parseLines(inp)) {
             when (line[0]) {
@@ -91,28 +91,15 @@ class LevelLoader(private val getResource: (String) -> InputStream?) {
         CollisionModel(model, collisions)
     } ?: throw IllegalArgumentException("Missing collision data: $name")
 
-    fun loadLevel(name: String, level: Level = Level()) = textResource(name) { inp, parentDir ->
-        var geom: Model? = null
+    override fun loadLevel(name: String, level: Level) = textResource(name) { inp, parentDir ->
+        val subLoader = ProxyLevelLoader(this, parentDir)
         for (line in parseLines(inp)) {
-            when (line[0]) {
-                "geom" -> {
-                    if (geom != null) {
-                        throw IllegalArgumentException("geom can only be set once")
-                    }
-                    geom = loadObj(parentDir + line[1])
-                }
-                "collision" -> {
-                    if (geom == null) {
-                        throw IllegalArgumentException("geom must be set before collision")
-                    }
-                    level.setGeom(loadCollision(geom, parentDir + line[1]))
-                }
-                "entity" -> EntityRegistry.getType(line[1]).create(
-                    level,
-                    DVector3(line[2].toDouble(), line[3].toDouble(), line[4].toDouble()),
-                    line.subList(5, line.size)
-                )
-            }
+            EntityRegistry.getType(line[0]).create(
+                level,
+                DVector3(line[1].toDouble(), line[2].toDouble(), line[3].toDouble()),
+                line.subList(4, line.size),
+                subLoader
+            )
         }
         level
     } ?: throw IllegalArgumentException("Missing level: $name")

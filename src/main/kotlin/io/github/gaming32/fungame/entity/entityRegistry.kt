@@ -1,6 +1,7 @@
 package io.github.gaming32.fungame.entity
 
 import io.github.gaming32.fungame.Level
+import io.github.gaming32.fungame.loader.LevelLoader
 import org.ode4j.math.DVector3C
 
 object EntityRegistry {
@@ -14,10 +15,11 @@ object EntityRegistry {
 
     init {
         register("box", BoxEntity)
+        register("levelMesh", LevelMeshEntity)
         register("player", PlayerEntity)
     }
 }
 
 abstract class EntityType<T : Entity<T>> {
-    abstract fun create(level: Level, position: DVector3C, args: List<String>): T
+    abstract fun create(level: Level, position: DVector3C, args: List<String>, loader: LevelLoader): T
 }
