@@ -33,7 +33,7 @@ class LevelMeshEntity(
                 { _, _, _, _ -> },
                 { _, _, _, _, _ -> 1 }
             )
-            geom.body = body
+            addGeom(geom)
             geom to collision
         }
     private val drawList = model.model.toDisplayList()

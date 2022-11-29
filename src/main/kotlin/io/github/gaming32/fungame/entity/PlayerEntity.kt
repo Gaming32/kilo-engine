@@ -33,16 +33,12 @@ class PlayerEntity(
 
     init {
         val geom = OdeHelper.createCapsule(level.space, 0.4, 1.0)
-        geom.body = body
+        addGeom(geom)
         geom.rotation = Z_FORWARD
     }
 
     var lastJumpCollidedTime = 0.0
     val jumpNormal = DVector3(UP)
-
-    init {
-        body.position = startPos
-    }
 
     override fun kill() {
         body.position = startPos

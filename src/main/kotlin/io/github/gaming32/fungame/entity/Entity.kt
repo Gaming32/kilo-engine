@@ -9,6 +9,7 @@ import org.ode4j.math.DVector3C
 import org.ode4j.ode.DBody
 import org.ode4j.ode.DContact.DSurfaceParameters
 import org.ode4j.ode.DContactGeom
+import org.ode4j.ode.DGeom
 import org.ode4j.ode.OdeHelper
 
 abstract class Entity<T : Entity<T>>(
@@ -17,11 +18,17 @@ abstract class Entity<T : Entity<T>>(
     position: DVector3C
 ) {
     val body: DBody = OdeHelper.createBody(level.world)
+    private val geoms = mutableListOf<DGeom>()
 
     init {
         body.position = position
         @Suppress("LeakingThis")
         level.addEntity(this)
+    }
+
+    protected fun addGeom(geom: DGeom) {
+        geom.body = body
+        geoms += geom
     }
 
     open fun collideWithMesh(collision: CollisionType, contact: DContactGeom, selfIsG1: Boolean): DSurfaceParameters? =
@@ -53,6 +60,7 @@ abstract class Entity<T : Entity<T>>(
 
     open fun destroy() {
         body.destroy()
+        geoms.forEach(DGeom::destroy)
     }
 
     abstract fun draw()

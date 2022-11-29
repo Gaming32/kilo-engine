@@ -20,7 +20,7 @@ class BoxEntity(level: Level, position: DVector3C, size: DVector3C) : Entity<Box
     }
 
     init {
-        OdeHelper.createBox(level.space, DVector3(size.x, size.y, size.z)).body = body
+        addGeom(OdeHelper.createBox(level.space, DVector3(size.x, size.y, size.z)))
     }
 
     private val jomlHalfSize = size.toVector3f().div(2f)
