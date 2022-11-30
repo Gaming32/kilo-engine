@@ -1,3 +1,3 @@
 levelMesh 0.0 0.0 0.0 example.obj example.collision.txt
 player 0.0 1.4 -5.0 0.0 0.0
-# box 0.0 20.0 15.0 5.0 1.0 1.0
+# box 0.0 6.0 0.0 5.0 1.0 5.0

@@ -4,6 +4,10 @@ import io.github.gaming32.fungame.Level
 import io.github.gaming32.fungame.loader.LevelLoader
 import io.github.gaming32.fungame.model.CollisionModel
 import io.github.gaming32.fungame.model.CollisionType
+import io.github.gaming32.fungame.util.x
+import io.github.gaming32.fungame.util.y
+import io.github.gaming32.fungame.util.z
+import org.lwjgl.opengl.GL11.*
 import org.ode4j.math.DVector3C
 import org.ode4j.ode.DContact
 import org.ode4j.ode.DContactGeom
@@ -38,7 +42,13 @@ class LevelMeshEntity(
         }
     private val drawList = model.model.toDisplayList()
 
-    override fun draw() = drawList.draw()
+    override fun draw() {
+        glMatrixMode(GL_MODELVIEW)
+        glPushMatrix()
+        glTranslatef(body.position.x.toFloat(), body.position.y.toFloat(), body.position.z.toFloat())
+        drawList.draw()
+        glPopMatrix()
+    }
 
     override fun destroy() {
         super.destroy()
