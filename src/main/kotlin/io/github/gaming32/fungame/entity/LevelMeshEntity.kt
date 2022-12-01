@@ -26,10 +26,6 @@ class LevelMeshEntity(
             )
     }
 
-    init {
-        body.setKinematic()
-    }
-
     private val collisionMeshes: Map<DGeom, CollisionType> =
         model.toMultiTriMeshData().entries.associate { (collision, mesh) ->
             val geom = OdeHelper.createTriMesh(
