@@ -22,7 +22,20 @@
           radius: 0.4,
           length: 1
         },
-        "player"
+        "player",
+        {
+          type: "camera",
+          offset: [0, 0.7, 0]
+        },
+//        {
+//          // Minimap camera
+//          type: "camera",
+//          offset: [0, 100, 0],
+//          rotation: [90, 0, 0],
+//          screenMin: [0.75, 0.25],
+//          screenMax: [1, 0],
+//          fov: null
+//        }
       ]
     },
 //    {

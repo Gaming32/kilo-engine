@@ -43,9 +43,15 @@ class Level {
     fun <T : BaseComponent<T>> getComponent(type: BaseComponent.ComponentType<T>) =
         getComponentOrNull(type) ?: throw IllegalArgumentException("$this missing entity of type $type")
 
+    fun <T : BaseComponent<T>> getComponents(type: BaseComponent.ComponentType<T>) =
+        entities.asSequence().flatMap { it.getComponents(type) }
+
     inline fun <reified T : BaseComponent<T>> getComponentOrNull() =
         entities.firstNotNullOfOrNull { it.getComponentOrNull<T>() }
 
     inline fun <reified T : BaseComponent<T>> getComponent() = getComponentOrNull<T>()
         ?: throw IllegalArgumentException("$this missing entity of type ${T::class.java.simpleName}")
+
+    inline fun <reified T : BaseComponent<T>> getComponents() =
+        entities.asSequence().flatMap { it.getComponents<T>() }
 }

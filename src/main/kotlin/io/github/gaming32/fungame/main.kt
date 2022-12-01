@@ -1,5 +1,6 @@
 package io.github.gaming32.fungame
 
+import io.github.gaming32.fungame.entity.CameraComponent
 import io.github.gaming32.fungame.entity.PlayerComponent
 import io.github.gaming32.fungame.loader.LevelLoader
 import io.github.gaming32.fungame.loader.LevelLoaderImpl
@@ -15,7 +16,9 @@ import org.lwjgl.nanovg.NanoVGGL2.nvgCreate
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11.*
 import org.lwjgl.opengl.GL13.GL_MULTISAMPLE
-import org.lwjgl.opengl.GLUtil
+import org.lwjgl.opengl.GL13.GL_TEXTURE_2D
+import org.lwjgl.opengl.GL30.*
+import org.lwjgl.system.MemoryUtil.NULL
 import org.ode4j.math.DVector3
 import org.ode4j.ode.DBody
 import org.ode4j.ode.DContact.DSurfaceParameters
@@ -23,7 +26,6 @@ import org.ode4j.ode.DContactGeomBuffer
 import org.ode4j.ode.OdeConstants.*
 import org.ode4j.ode.OdeHelper
 import java.text.DecimalFormat
-import kotlin.math.atan2
 import kotlin.math.roundToLong
 
 class Application {
@@ -77,11 +79,8 @@ class Application {
         var fpsAverage = 0.0
         val contactJointGroup = OdeHelper.createJointGroup()
         val force = DVector3()
-        var targetZAngle = 0f
-        var zAngle = 0f
         while (!glfwWindowShouldClose(window)) {
             glfwPollEvents()
-            glClear(clearParams)
 
             val time = glfwGetTime()
             val deltaTime = time - lastTime
@@ -146,47 +145,114 @@ class Application {
 
             // 3D Mode
             glEnable(GL_CULL_FACE)
-            glMatrixMode(GL_PROJECTION)
-            glLoadIdentity()
-            gluPerspective(80f, windowSize.x.toFloat() / windowSize.y, 0.01f, 1000f)
-            glMatrixMode(GL_MODELVIEW)
-            glLoadIdentity()
-            glRotatef(player.rotation.x, 1f, 0f, 0f)
-            if (player.jumpNormal.y < 0.95 && glfwGetTime() - player.lastJumpCollidedTime < 0.1) {
-                val horizAngle = normalizeDegrees(
-                    player.rotation.y -
-                    (toDegrees(atan2(player.jumpNormal.z, player.jumpNormal.x)) - 90)
-                )
-                if (horizAngle < 0) {
-                    targetZAngle = 5f
-                } else if (horizAngle > 0) {
-                    targetZAngle = -5f
+
+            for (camera in level.getComponents<CameraComponent>()) {
+                val aspect: Float
+                if (camera.renderFullscreen) {
+                    glBindFramebuffer(GL_FRAMEBUFFER, 0)
+                    glViewport(0, 0, windowSize.x, windowSize.y)
+                    aspect = windowSize.x.toFloat() / windowSize.y
+                } else {
+                    if (camera.lastWindowSize != windowSize) {
+                        camera.textureResolution.set(
+                            abs(windowSize.x * (camera.renderArea!!.second.x - camera.renderArea.first.x)),
+                            abs(windowSize.y * (camera.renderArea.first.y - camera.renderArea.second.y))
+                        )
+                        camera.destroyFramebuffer()
+                        camera.framebuffer = glGenFramebuffers()
+                        glBindFramebuffer(GL_FRAMEBUFFER, camera.framebuffer)
+                        camera.texture = glGenTextures()
+                        glBindTexture(GL_TEXTURE_2D, camera.texture)
+                        glTexImage2D(
+                            GL_TEXTURE_2D,
+                            0,
+                            GL_RGBA,
+                            camera.textureResolution.x.toInt(),
+                            camera.textureResolution.y.toInt(),
+                            0,
+                            GL_RGBA,
+                            GL_UNSIGNED_BYTE,
+                            NULL
+                        )
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+                        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, camera.texture, 0)
+                        camera.depthStencilBuffer = glGenRenderbuffers()
+                        glBindRenderbuffer(GL_RENDERBUFFER, camera.depthStencilBuffer)
+                        glRenderbufferStorage(
+                            GL_RENDERBUFFER,
+                            GL_DEPTH24_STENCIL8,
+                            camera.textureResolution.x.toInt(),
+                            camera.textureResolution.y.toInt()
+                        )
+                        glFramebufferRenderbuffer(
+                            GL_FRAMEBUFFER,
+                            GL_DEPTH_STENCIL_ATTACHMENT,
+                            GL_RENDERBUFFER,
+                            camera.depthStencilBuffer
+                        )
+                        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+                            System.err.println(
+                                "Couldn't create framebuffer: " +
+                                    "0x${glCheckFramebufferStatus(GL_FRAMEBUFFER).toString(16)}"
+                            )
+                        }
+                        glViewport(0, 0, camera.textureResolution.x.toInt(), camera.textureResolution.y.toInt())
+                    } else {
+                        glBindFramebuffer(GL_FRAMEBUFFER, camera.framebuffer)
+                    }
+                    aspect = camera.textureResolution.x / camera.textureResolution.y
                 }
-            } else {
-                targetZAngle = 0f
-            }
-            zAngle = lerp(zAngle, targetZAngle, 0.25f)
-            glRotatef(zAngle, 0f, 0f, 1f)
-            glRotatef(180 - player.rotation.y, 0f, 1f, 0f)
+                glMatrixMode(GL_PROJECTION)
+                glLoadIdentity()
+                if (camera.fov == null) {
+                    glOrtho(
+                        camera.orthoRange.first.x,
+                        camera.orthoRange.second.x,
+                        camera.orthoRange.first.y,
+                        camera.orthoRange.second.y,
+                        0.01, 1000.0
+                    )
+                } else {
+                    gluPerspective(camera.fov!!, aspect, 0.01f, 1000f)
+                }
+                glClear(clearParams)
 
-            // Skybox
-            skybox.draw()
+                // Rotate camera
+                glMatrixMode(GL_MODELVIEW)
+                glLoadIdentity()
+                glRotatef(camera.rotation.x, 1f, 0f, 0f)
+                glRotatef(camera.rotation.z, 0f, 0f, 1f)
+                glRotatef(camera.rotation.y, 0f, 1f, 0f)
 
-            // Level
-            glEnable(GL_DEPTH_TEST)
-            glEnable(GL_LIGHTING)
-            val position = playerBody.position
-            glTranslatef(-position.x.toFloat(), -position.y.toFloat() - 0.7f, -position.z.toFloat())
-            glLightfv(
-                GL_LIGHT0, GL_POSITION, floatArrayOf(
-                    position.x.toFloat() - 12.9f,
-                    position.y.toFloat() + 30f,
-                    position.z.toFloat() + 17.1f,
-                    0f
+                // Skybox
+                glDisable(GL_DEPTH_TEST)
+                glDisable(GL_LIGHTING)
+
+                if (camera.fov != null) {
+                    skybox.draw()
+                }
+
+                glClear(GL_DEPTH_BUFFER_BIT)
+
+                // Level
+                glEnable(GL_DEPTH_TEST)
+                glEnable(GL_LIGHTING)
+                val position = DVector3(camera.entity.body.position).add(camera.offset)
+                glTranslatef(-position.x.toFloat(), -position.y.toFloat(), -position.z.toFloat())
+                glLightfv(
+                    GL_LIGHT0, GL_POSITION, floatArrayOf(
+                        position.x.toFloat() - 12.9f,
+                        position.y.toFloat() + 30f,
+                        position.z.toFloat() + 17.1f,
+                        0f
+                    )
                 )
-            )
+                level.entities.forEach { it.draw() }
+            }
 
-            level.entities.forEach { it.draw() }
+            glBindFramebuffer(GL_FRAMEBUFFER, 0)
+            glViewport(0, 0, windowSize.x, windowSize.y)
 
             // HUD
             glMatrixMode(GL_PROJECTION)
@@ -195,8 +261,30 @@ class Application {
             glMatrixMode(GL_MODELVIEW)
             glLoadIdentity()
             glTranslatef(0f, 0f, -2f)
-            glDisable(GL_DEPTH_TEST)
             glDisable(GL_LIGHTING)
+            glDisable(GL_DEPTH_TEST)
+
+            glColor4f(1f, 1f, 1f, 1f)
+            glEnable(GL_TEXTURE_2D)
+            glDisable(GL_CULL_FACE)
+            for (camera in level.getComponents<CameraComponent>()) {
+                if (camera.renderFullscreen || camera.renderArea == null) {
+                    continue
+                }
+                glBindTexture(GL_TEXTURE_2D, camera.texture)
+                val (min, max) = camera.renderArea
+                glBegin(GL_QUADS)
+                glTexCoord2f(0f, 0f)
+                glVertex2f(min.x * windowSize.x, min.y * windowSize.y)
+                glTexCoord2f(0f, 1f)
+                glVertex2f(min.x * windowSize.x, max.y * windowSize.y)
+                glTexCoord2f(1f, 1f)
+                glVertex2f(max.x * windowSize.x, max.y * windowSize.y)
+                glTexCoord2f(1f, 0f)
+                glVertex2f(max.x * windowSize.x, min.y * windowSize.y)
+                glEnd()
+            }
+            glEnable(GL_CULL_FACE)
 
             val widthArray = IntArray(1)
             glfwGetFramebufferSize(window, widthArray, null)
@@ -210,9 +298,9 @@ class Application {
             nvgText(
                 nanovg, 10f, 55f,
                 "X/Y/Z: " +
-                    "${DEC_FORMAT.format(position.x)}/" +
-                    "${DEC_FORMAT.format(position.y)}/" +
-                    DEC_FORMAT.format(position.z)
+                    "${DEC_FORMAT.format(playerBody.position.x)}/" +
+                    "${DEC_FORMAT.format(playerBody.position.y)}/" +
+                    DEC_FORMAT.format(playerBody.position.z)
             )
             nvgText(
                 nanovg, 10f, 75f,
@@ -260,7 +348,7 @@ class Application {
         window = glfwCreateWindow(windowSize.x, windowSize.y, "Fun 3D Game", 0, 0)
         glfwMakeContextCurrent(window)
         GL.createCapabilities()
-        GLUtil.setupDebugMessageCallback()
+//        GLUtil.setupDebugMessageCallback()
 
         nanovg = nvgCreate(NVG_ANTIALIAS)
         loadFont(nanovg, "minecraftia")
@@ -269,9 +357,7 @@ class Application {
 
         glfwSetWindowSizeCallback(window) { _, width, height ->
             windowSize.set(width, height)
-            glViewport(0, 0, windowSize.x, windowSize.y)
         }
-        glViewport(0, 0, windowSize.x, windowSize.y)
 
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)

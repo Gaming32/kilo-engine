@@ -20,3 +20,9 @@ fun Matrix3d.toDMatrix3() = DMatrix3(
 fun Vector3d.toDVector3() = DVector3(x, y, z)
 
 fun JsonArray.toVector2f() = Vector2f(this[0].asFloat, this[1].asFloat)
+
+fun JsonArray.toVector2i() = Vector2i(this[0].asInt, this[1].asInt)
+
+fun JsonArray.toVector3f() = Vector3f(this[0].asFloat, this[1].asFloat, this[2].asFloat)
+
+fun JsonArray.toVector2d() = Vector2d(this[0].asDouble, this[1].asDouble)

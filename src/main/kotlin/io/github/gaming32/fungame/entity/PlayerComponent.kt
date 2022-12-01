@@ -4,7 +4,8 @@ import com.google.gson.JsonObject
 import io.github.gaming32.fungame.loader.LevelLoader
 import io.github.gaming32.fungame.model.CollisionType
 import io.github.gaming32.fungame.model.CollisionTypes
-import io.github.gaming32.fungame.util.toVector2f
+import io.github.gaming32.fungame.util.*
+import org.joml.Math
 import org.joml.Vector2f
 import org.joml.Vector2fc
 import org.lwjgl.glfw.GLFW.glfwGetTime
@@ -12,6 +13,7 @@ import org.ode4j.math.DMatrix3
 import org.ode4j.math.DVector3
 import org.ode4j.ode.DContact
 import org.ode4j.ode.DContactGeom
+import kotlin.math.atan2
 
 class PlayerComponent(
     entity: Entity, private val startRotation: Vector2fc
@@ -28,6 +30,9 @@ class PlayerComponent(
 
     var lastJumpCollidedTime = 0.0
     val jumpNormal = DVector3(0.0, 1.0, 0.0)
+
+    private var targetZAngle = 0f
+    private var zAngle = 0f
 
     override fun destroy() = Unit
 
@@ -60,5 +65,29 @@ class PlayerComponent(
 
     override fun tick() {
         entity.body.rotation = IDENTITY
+
+        if (jumpNormal.y < 0.95 && glfwGetTime() - lastJumpCollidedTime < 0.1) {
+            val horizAngle = normalizeDegrees(
+                (Math.toDegrees(atan2(jumpNormal.z, jumpNormal.x)) - 90) + rotation.y
+            )
+            if (horizAngle < 0) {
+                targetZAngle = 5f
+            } else if (horizAngle > 0) {
+                targetZAngle = -5f
+            }
+        } else {
+            targetZAngle = 0f
+        }
+        zAngle = Math.lerp(zAngle, targetZAngle, 0.25f)
+
+        var first = true
+        entity.getComponents<CameraComponent>().forEach { camera ->
+            if (first) {
+                camera.rotation.x = rotation.x
+                camera.rotation.z = zAngle
+                first = false
+            }
+            camera.rotation.y = 180 - rotation.y
+        }
     }
 }

@@ -3,7 +3,9 @@
 package io.github.gaming32.fungame.util
 
 import com.google.gson.JsonArray
+import org.joml.Matrix3f
 import org.joml.Vector3f
+import org.ode4j.math.DMatrix3C
 import org.ode4j.math.DVector3
 import org.ode4j.math.DVector3C
 import org.ode4j.ode.DContact.DSurfaceParameters
@@ -85,3 +87,9 @@ fun DContact(
 fun DVector3C.toVector3f() = Vector3f(x.toFloat(), y.toFloat(), z.toFloat())
 
 fun JsonArray.toDVector3() = DVector3(this[0].asDouble, this[1].asDouble, this[2].asDouble)
+
+fun DMatrix3C.toMatrix3f() = Matrix3f(
+    get00().toFloat(), get01().toFloat(), get02().toFloat(),
+    get10().toFloat(), get11().toFloat(), get12().toFloat(),
+    get20().toFloat(), get21().toFloat(), get22().toFloat()
+)

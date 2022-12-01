@@ -30,10 +30,17 @@ class Entity(val level: Level, position: DVector3C) {
     fun <T : BaseComponent<T>> getComponent(type: BaseComponent.ComponentType<T>) =
         getComponentOrNull(type) ?: throw IllegalArgumentException("$this missing component of type $type")
 
+    @Suppress("UNCHECKED_CAST")
+    fun <T : BaseComponent<T>> getComponents(type: BaseComponent.ComponentType<T>) =
+        components.asSequence().filter { it.type == type }.map { it as T }
+
     inline fun <reified T : BaseComponent<T>> getComponentOrNull() = components.firstOrNull { it is T } as T?
 
     inline fun <reified T : BaseComponent<T>> getComponent() = getComponentOrNull<T>()
         ?: throw IllegalArgumentException("$this missing component of type ${T::class.java.simpleName}")
+
+    inline fun <reified T : BaseComponent<T>> getComponents() =
+        components.asSequence().filter { it is T }.map { it as T }
 
     fun collideWithMesh(collision: CollisionType, contact: DContactGeom, selfIsG1: Boolean): DSurfaceParameters? {
         var result: DSurfaceParameters? = null

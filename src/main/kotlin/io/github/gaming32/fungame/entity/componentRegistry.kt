@@ -12,6 +12,7 @@ object ComponentRegistry {
     fun getType(id: String) = componentTypes.getValue(id)
 
     init {
+        register("camera", CameraComponent)
         register("capsuleCollider", CapsuleColliderComponent)
         register("mesh", MeshComponent)
         register("meshCollider", MeshColliderComponent)
