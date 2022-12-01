@@ -1,6 +1,6 @@
 package io.github.gaming32.fungame
 
-import io.github.gaming32.fungame.entity.PlayerEntity
+import io.github.gaming32.fungame.entity.PlayerComponent
 import io.github.gaming32.fungame.loader.LevelLoader
 import io.github.gaming32.fungame.loader.LevelLoaderImpl
 import io.github.gaming32.fungame.util.*
@@ -17,6 +17,7 @@ import org.lwjgl.opengl.GL11.*
 import org.lwjgl.opengl.GL13.GL_MULTISAMPLE
 import org.lwjgl.opengl.GLUtil
 import org.ode4j.math.DVector3
+import org.ode4j.ode.DBody
 import org.ode4j.ode.DContact.DSurfaceParameters
 import org.ode4j.ode.DContactGeomBuffer
 import org.ode4j.ode.OdeConstants.*
@@ -52,7 +53,8 @@ class Application {
     private val level = Level()
     private val windowSize = Vector2i()
     private val movementInput = Vector3d()
-    private lateinit var player: PlayerEntity
+    private lateinit var player: PlayerComponent
+    private lateinit var playerBody: DBody
     private var wireframe = false
     private var window = 0L
     private var nanovg = 0L
@@ -68,7 +70,8 @@ class Application {
             }
         }
         levelLoader.loadLevel("/example/example.level.json5", level)
-        player = level.getEntityOfType(PlayerEntity)
+        player = level.getComponent()
+        playerBody = player.entity.body
         var lastTime = glfwGetTime()
         var lastPhysicsTime = lastTime
         var fpsAverage = 0.0
@@ -94,28 +97,28 @@ class Application {
                 val adjustedMovementInput = Vector3d(movementInput).rotateY(
                     toRadians(player.rotation.y.toDouble())
                 )
-                player.body.addForce(adjustedMovementInput.x * MOVE_SPEED, 0.0, adjustedMovementInput.z * MOVE_SPEED)
+                playerBody.addForce(adjustedMovementInput.x * MOVE_SPEED, 0.0, adjustedMovementInput.z * MOVE_SPEED)
                 if (movementInput.y > 0.0 && glfwGetTime() - player.lastJumpCollidedTime <= 0.1) {
                     if (player.jumpNormal.y < 0.95) {
-                        player.body.addForce(
+                        playerBody.addForce(
                             0.0,
-                            movementInput.y * (WALL_JUMP_VERTICAL - player.body.linearVel.y),
+                            movementInput.y * (WALL_JUMP_VERTICAL - playerBody.linearVel.y),
                             0.0
                         )
-                        player.body.addForce(DVector3(player.jumpNormal).scale(movementInput.y * WALL_JUMP_HORIZONTAL))
+                        playerBody.addForce(DVector3(player.jumpNormal).scale(movementInput.y * WALL_JUMP_HORIZONTAL))
                     } else {
-                        player.body.addForce(0.0, movementInput.y * JUMP_SPEED, 0.0)
+                        playerBody.addForce(0.0, movementInput.y * JUMP_SPEED, 0.0)
                     }
                 }
                 movementInput.y = 0.0
-                level.forEachEntity { entity ->
+                level.entities.forEach { entity ->
                     entity.body.addForce(
                         entity.body.linearVel.x * -HORIZONTAL_DAMPING / PHYSICS_SPEED,
                         entity.body.linearVel.y * -VERTICAL_DAMPING / PHYSICS_SPEED,
                         entity.body.linearVel.z * -HORIZONTAL_DAMPING / PHYSICS_SPEED
                     )
                 }
-                force.set(player.body.force)
+                force.set(playerBody.force)
                 val contactBuffer = DContactGeomBuffer(CONTACT_COUNT)
                 contactJointGroup.clear()
                 level.space.collide(null) { _, o1, o2 ->
@@ -172,7 +175,7 @@ class Application {
             // Level
             glEnable(GL_DEPTH_TEST)
             glEnable(GL_LIGHTING)
-            val position = player.body.position
+            val position = playerBody.position
             glTranslatef(-position.x.toFloat(), -position.y.toFloat() - 0.7f, -position.z.toFloat())
             glLightfv(
                 GL_LIGHT0, GL_POSITION, floatArrayOf(
@@ -183,7 +186,7 @@ class Application {
                 )
             )
 
-            level.forEachEntity { it.draw() }
+            level.entities.forEach { it.draw() }
 
             // HUD
             glMatrixMode(GL_PROJECTION)
@@ -221,9 +224,9 @@ class Application {
             nvgText(
                 nanovg, 10f, 95f,
                 "VX/VY/VZ: " +
-                    "${DEC_FORMAT.format(player.body.linearVel.x)}/" +
-                    "${DEC_FORMAT.format(player.body.linearVel.y)}/" +
-                    DEC_FORMAT.format(player.body.linearVel.z)
+                    "${DEC_FORMAT.format(playerBody.linearVel.x)}/" +
+                    "${DEC_FORMAT.format(playerBody.linearVel.y)}/" +
+                    DEC_FORMAT.format(playerBody.linearVel.z)
             )
             nvgText(
                 nanovg, 10f, 115f,

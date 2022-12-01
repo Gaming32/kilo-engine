@@ -1,67 +1,70 @@
 package io.github.gaming32.fungame.entity
 
-import io.github.gaming32.fungame.Application
 import io.github.gaming32.fungame.Level
 import io.github.gaming32.fungame.model.CollisionType
-import io.github.gaming32.fungame.model.CollisionTypes
-import io.github.gaming32.fungame.util.y
 import org.ode4j.math.DVector3C
 import org.ode4j.ode.DBody
 import org.ode4j.ode.DContact.DSurfaceParameters
 import org.ode4j.ode.DContactGeom
-import org.ode4j.ode.DGeom
 import org.ode4j.ode.OdeHelper
 
-abstract class Entity<T : Entity<T>>(
-    val type: EntityType<T>,
-    val level: Level,
-    position: DVector3C
-) {
+class Entity(val level: Level, position: DVector3C) {
     val body: DBody = OdeHelper.createBody(level.world)
-    private val geoms = mutableListOf<DGeom>()
+
+    @PublishedApi
+    internal val components = mutableListOf<BaseComponent<*>>()
 
     init {
         body.position = position
-        @Suppress("LeakingThis")
         level.addEntity(this)
     }
 
-    protected fun addGeom(geom: DGeom) {
-        geom.body = body
-        geoms += geom
+    fun addComponent(component: BaseComponent<*>) {
+        components += component
     }
 
-    open fun collideWithMesh(collision: CollisionType, contact: DContactGeom, selfIsG1: Boolean): DSurfaceParameters? =
-        when (collision) {
-            CollisionTypes.SOLID,
-            CollisionTypes.FLOOR -> Application.SURFACE_PARAMS
-            CollisionTypes.WALL -> Application.WALL_PARAMS
-            CollisionTypes.NON_SOLID -> null
-            CollisionTypes.DEATH -> {
-                kill()
-                null
+    @Suppress("UNCHECKED_CAST")
+    fun <T : BaseComponent<T>> getComponentOrNull(type: BaseComponent.ComponentType<T>) =
+        components.firstOrNull { it.type == type } as T?
+
+    fun <T : BaseComponent<T>> getComponent(type: BaseComponent.ComponentType<T>) =
+        getComponentOrNull(type) ?: throw IllegalArgumentException("$this missing component of type $type")
+
+    inline fun <reified T : BaseComponent<T>> getComponentOrNull() = components.firstOrNull { it is T } as T?
+
+    inline fun <reified T : BaseComponent<T>> getComponent() = getComponentOrNull<T>()
+        ?: throw IllegalArgumentException("$this missing component of type ${T::class.java.simpleName}")
+
+    fun collideWithMesh(collision: CollisionType, contact: DContactGeom, selfIsG1: Boolean): DSurfaceParameters? {
+        var result: DSurfaceParameters? = null
+        for (component in components) {
+            val params = component.collideWithMesh(collision, contact, selfIsG1)
+            if (result == null) {
+                result = params
             }
-            else -> Application.SURFACE_PARAMS
         }
-
-    open fun collideWithEntity(other: Entity<*>, contact: DContactGeom, selfIsG1: Boolean): DSurfaceParameters? = null
-
-    open fun kill() {
-        level.removeEntity(this)
+        return result
     }
 
-    open fun preTick() = Unit
-
-    open fun tick() {
-        if (body.position.y <= -100) {
-            kill()
+    fun collideWithEntity(other: Entity, contact: DContactGeom, selfIsG1: Boolean): DSurfaceParameters? {
+        var result: DSurfaceParameters? = null
+        for (component in components) {
+            val params = component.collideWithEntity(other, contact, selfIsG1)
+            if (result == null) {
+                result = params
+            }
         }
+        return result
     }
 
-    open fun destroy() {
+    fun preTick() = components.forEach(BaseComponent<*>::preTick)
+
+    fun tick() = components.forEach(BaseComponent<*>::tick)
+
+    fun destroy() {
+        components.forEach(BaseComponent<*>::destroy)
         body.destroy()
-        geoms.forEach(DGeom::destroy)
     }
 
-    abstract fun draw()
+    fun draw() = components.forEach(BaseComponent<*>::draw)
 }

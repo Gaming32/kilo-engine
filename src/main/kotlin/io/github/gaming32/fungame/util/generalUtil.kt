@@ -1,5 +1,7 @@
 package io.github.gaming32.fungame.util
 
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
 import org.lwjgl.nanovg.NanoVG.nvgCreateFontMem
 import org.lwjgl.system.MemoryUtil
 import java.io.ByteArrayOutputStream
@@ -66,3 +68,5 @@ fun normalizeDegrees(angle: Float): Float {
     }
     return result
 }
+
+fun JsonObject.getElement(name: String): JsonElement = asMap().getValue(name)

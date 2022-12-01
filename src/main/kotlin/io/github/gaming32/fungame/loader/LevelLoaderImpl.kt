@@ -3,7 +3,8 @@ package io.github.gaming32.fungame.loader
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import io.github.gaming32.fungame.Level
-import io.github.gaming32.fungame.entity.EntityRegistry
+import io.github.gaming32.fungame.entity.ComponentRegistry
+import io.github.gaming32.fungame.entity.Entity
 import io.github.gaming32.fungame.model.CollisionModel
 import io.github.gaming32.fungame.model.CollisionType
 import io.github.gaming32.fungame.model.Material
@@ -96,17 +97,26 @@ class LevelLoaderImpl(private val getResource: (String) -> InputStream?) : Level
         CollisionModel(model, collisions)
     } ?: throw IllegalArgumentException("Missing collision data: $name")
 
-    override fun loadLevel(name: String, level: Level) = textResource(name) { inp, parentDir ->
-        val subLoader = ProxyLevelLoader(this, parentDir)
+    override fun loadLevel(name: String, level: Level) = textResource(name) { inp, _ ->
         val json = JsonParser.parseReader(Gson5Reader(JsonReader.json5(inp))).asJsonObject
         json["entities"]?.asJsonArray?.forEach { entityData ->
             entityData as JsonObject
-            val type = EntityRegistry.getType(entityData.remove("type").asString)
             val position = entityData.remove("position")?.asJsonArray?.toDVector3() ?: DVector3()
             val kinematic = entityData.remove("kinematic")?.asBoolean ?: false
-            val entity = type.create(level, position, entityData, subLoader)
+            val componentsData = entityData.remove("components")?.asJsonArray?.asList() ?: listOf()
+            val entity = Entity(level, position)
             if (kinematic) {
                 entity.body.setKinematic()
+            }
+            for (componentData in componentsData) {
+                if (componentData.isJsonPrimitive) {
+                    ComponentRegistry.getType(componentData.asString)
+                        .create(entity, this, JsonObject())
+                } else {
+                    componentData as JsonObject
+                    ComponentRegistry.getType(componentData.remove("type").asString)
+                        .create(entity, this, componentData)
+                }
             }
         }
         level

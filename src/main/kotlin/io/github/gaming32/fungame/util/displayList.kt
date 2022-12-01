@@ -3,7 +3,7 @@ package io.github.gaming32.fungame.util
 import org.lwjgl.opengl.GL11.*
 import java.lang.ref.Cleaner
 
-class DisplayList(displayList: Int) : AutoCloseable {
+class DisplayList(displayList: Int) : Destroyable {
     private class DisplayListRef(val displayList: Int) : Runnable {
         var open = true
 
@@ -36,7 +36,7 @@ class DisplayList(displayList: Int) : AutoCloseable {
         glCallList(list.displayList)
     }
 
-    override fun close() = list.run()
+    override fun destroy() = list.run()
 }
 
 inline fun buildDisplayList(builder: ModelBuilder.() -> Unit): DisplayList {

@@ -1,19 +1,43 @@
 {
   entities: [
     {
-      type: "mesh",
       kinematic: true,
-      model: "example.obj",
-      collision: "example.collision.txt"
+      components: [
+        {
+          type: "mesh",
+          mesh: "/example/example.obj"
+        },
+        "meshRenderer",
+        {
+          type: "meshCollider",
+          collision: "/example/example.collision.txt"
+        }
+      ]
     },
     {
-      type: "player",
-      position: [0, 1.4, -5]
+      position: [0, 1.4, -5],
+      components: [
+        {
+          type: "capsuleCollider",
+          radius: 0.4,
+          length: 1
+        },
+        "player"
+      ]
     },
 //    {
-//      type: "box",
 //      position: [0, 6, 0],
-//      size: [5, 1, 5]
+//      components: [
+//        {
+//          type: "boxCollider",
+//          size: [5, 1, 5]
+//        },
+//        {
+//          type: "boxRenderer",
+//          min: [-2.5, -0.5, -2.5],
+//          max: [2.5, 0.5, 2.5]
+//        }
+//      ]
 //    }
   ]
 }
