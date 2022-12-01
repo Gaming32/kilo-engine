@@ -1,5 +1,7 @@
 package io.github.gaming32.fungame.loader
 
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import io.github.gaming32.fungame.Level
 import io.github.gaming32.fungame.entity.EntityRegistry
 import io.github.gaming32.fungame.model.CollisionModel
@@ -7,8 +9,11 @@ import io.github.gaming32.fungame.model.CollisionType
 import io.github.gaming32.fungame.model.Material
 import io.github.gaming32.fungame.model.Model
 import io.github.gaming32.fungame.util.simpleParentDir
+import io.github.gaming32.fungame.util.toDVector3
+import io.github.gaming32.gson5.Gson5Reader
 import org.joml.Vector3f
 import org.ode4j.math.DVector3
+import org.quiltmc.json5.JsonReader
 import java.io.BufferedReader
 import java.io.InputStream
 import java.util.*
@@ -93,13 +98,16 @@ class LevelLoaderImpl(private val getResource: (String) -> InputStream?) : Level
 
     override fun loadLevel(name: String, level: Level) = textResource(name) { inp, parentDir ->
         val subLoader = ProxyLevelLoader(this, parentDir)
-        for (line in parseLines(inp)) {
-            EntityRegistry.getType(line[0]).create(
-                level,
-                DVector3(line[1].toDouble(), line[2].toDouble(), line[3].toDouble()),
-                line.subList(4, line.size),
-                subLoader
-            )
+        val json = JsonParser.parseReader(Gson5Reader(JsonReader.json5(inp))).asJsonObject
+        json["entities"]?.asJsonArray?.forEach { entityData ->
+            entityData as JsonObject
+            val type = EntityRegistry.getType(entityData.remove("type").asString)
+            val position = entityData.remove("position")?.asJsonArray?.toDVector3() ?: DVector3()
+            val kinematic = entityData.remove("kinematic")?.asBoolean ?: false
+            val entity = type.create(level, position, entityData, subLoader)
+            if (kinematic) {
+                entity.body.setKinematic()
+            }
         }
         level
     } ?: throw IllegalArgumentException("Missing level: $name")

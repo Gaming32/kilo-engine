@@ -1,0 +1,19 @@
+{
+  entities: [
+    {
+      type: "mesh",
+      kinematic: true,
+      model: "example.obj",
+      collision: "example.collision.txt"
+    },
+    {
+      type: "player",
+      position: [0, 1.4, -5]
+    },
+//    {
+//      type: "box",
+//      position: [0, 6, 0],
+//      size: [5, 1, 5]
+//    }
+  ]
+}

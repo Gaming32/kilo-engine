@@ -67,7 +67,7 @@ class Application {
                 levelLoader.loadObj("/skybox/skybox.obj").toDisplayList()
             }
         }
-        levelLoader.loadLevel("/example/example.level.txt", level)
+        levelLoader.loadLevel("/example/example.level.json5", level)
         player = level.getEntityOfType(PlayerEntity)
         var lastTime = glfwGetTime()
         var lastPhysicsTime = lastTime

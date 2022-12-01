@@ -1,10 +1,12 @@
 package io.github.gaming32.fungame.entity
 
+import com.google.gson.JsonObject
 import io.github.gaming32.fungame.Level
 import io.github.gaming32.fungame.loader.LevelLoader
 import io.github.gaming32.fungame.model.CollisionType
 import io.github.gaming32.fungame.model.CollisionTypes
 import io.github.gaming32.fungame.util.toDMatrix3
+import io.github.gaming32.fungame.util.toVector2f
 import org.joml.Math
 import org.joml.Matrix3d
 import org.joml.Vector2f
@@ -23,9 +25,8 @@ class PlayerEntity(
         val UP = DVector3(0.0, 1.0, 0.0)
         val Z_FORWARD = Matrix3d().rotateX(Math.PI / 2).toDMatrix3()
 
-        override fun create(level: Level, position: DVector3C, args: List<String>, loader: LevelLoader) = PlayerEntity(
-            level, position,
-            Vector2f(args[0].toFloat(), args[1].toFloat())
+        override fun create(level: Level, position: DVector3C, args: JsonObject, loader: LevelLoader) = PlayerEntity(
+            level, position, args["rotation"]?.asJsonArray?.toVector2f() ?: Vector2f()
         )
     }
 

@@ -1,5 +1,6 @@
 package io.github.gaming32.fungame.entity
 
+import com.google.gson.JsonObject
 import io.github.gaming32.fungame.Application
 import io.github.gaming32.fungame.Level
 import io.github.gaming32.fungame.loader.LevelLoader
@@ -13,9 +14,8 @@ import org.ode4j.ode.OdeHelper
 
 class BoxEntity(level: Level, position: DVector3C, size: DVector3C) : Entity<BoxEntity>(BoxEntity, level, position) {
     companion object Type : EntityType<BoxEntity>() {
-        override fun create(level: Level, position: DVector3C, args: List<String>, loader: LevelLoader) = BoxEntity(
-            level, position,
-            DVector3(args[0].toDouble(), args[1].toDouble(), args[2].toDouble())
+        override fun create(level: Level, position: DVector3C, args: JsonObject, loader: LevelLoader) = BoxEntity(
+            level, position, args["size"].asJsonArray.toDVector3()
         )
     }
 

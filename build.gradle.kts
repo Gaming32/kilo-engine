@@ -25,9 +25,9 @@ tasks.withType<Jar> {
 
 repositories {
     mavenCentral()
-    maven {
-        url = uri("https://jitpack.io")
-    }
+    maven("https://jitpack.io")
+    maven("https://maven.quiltmc.org/repository/release")
+    maven("https://maven.jemnetworks.com/releases")
 }
 
 dependencies {
@@ -47,8 +47,11 @@ dependencies {
     implementation("org.joml", "joml", jomlVersion)
 
     implementation("com.github.rkalla:imgscalr:8ed3644d1e")
-
     implementation("org.ode4j:core:0.4.0")
+
+    implementation("org.quiltmc:quilt-json5:1.0.2")
+    implementation("com.google.code.gson:gson:2.10")
+    implementation("io.github.gaming32:gson5-delegate:1.0.0")
 }
 
 tasks.withType<KotlinCompile> {

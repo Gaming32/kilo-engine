@@ -1,5 +1,6 @@
 package io.github.gaming32.fungame.entity
 
+import com.google.gson.JsonObject
 import io.github.gaming32.fungame.Level
 import io.github.gaming32.fungame.loader.LevelLoader
 import io.github.gaming32.fungame.model.CollisionModel
@@ -18,10 +19,10 @@ class LevelMeshEntity(
     level: Level, position: DVector3C, model: CollisionModel
 ) : Entity<LevelMeshEntity>(LevelMeshEntity, level, position) {
     companion object Type : EntityType<LevelMeshEntity>() {
-        override fun create(level: Level, position: DVector3C, args: List<String>, loader: LevelLoader) =
+        override fun create(level: Level, position: DVector3C, args: JsonObject, loader: LevelLoader) =
             LevelMeshEntity(
                 level, position,
-                loader.loadCollision(loader.loadObj(args[0]), args[1])
+                loader.loadCollision(loader.loadObj(args["model"].asString), args["collision"].asString)
             )
     }
 

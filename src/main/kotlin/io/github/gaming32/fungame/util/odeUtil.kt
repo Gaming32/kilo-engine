@@ -2,6 +2,7 @@
 
 package io.github.gaming32.fungame.util
 
+import com.google.gson.JsonArray
 import org.joml.Vector3f
 import org.ode4j.math.DVector3
 import org.ode4j.math.DVector3C
@@ -82,3 +83,5 @@ fun DContact(
 }
 
 fun DVector3C.toVector3f() = Vector3f(x.toFloat(), y.toFloat(), z.toFloat())
+
+fun JsonArray.toDVector3() = DVector3(this[0].asDouble, this[1].asDouble, this[2].asDouble)

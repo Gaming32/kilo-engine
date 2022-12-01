@@ -2,6 +2,7 @@
 
 package io.github.gaming32.fungame.util
 
+import com.google.gson.JsonArray
 import org.joml.*
 import org.ode4j.math.DMatrix3
 import org.ode4j.math.DVector3
@@ -17,3 +18,5 @@ fun Matrix3d.toDMatrix3() = DMatrix3(
 )
 
 fun Vector3d.toDVector3() = DVector3(x, y, z)
+
+fun JsonArray.toVector2f() = Vector2f(this[0].asFloat, this[1].asFloat)
