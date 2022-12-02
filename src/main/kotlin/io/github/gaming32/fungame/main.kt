@@ -16,9 +16,7 @@ import org.lwjgl.nanovg.NanoVGGL2.nvgCreate
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11.*
 import org.lwjgl.opengl.GL13.GL_MULTISAMPLE
-import org.lwjgl.opengl.GL13.GL_TEXTURE_2D
 import org.lwjgl.opengl.GL30.*
-import org.lwjgl.system.MemoryUtil.NULL
 import org.ode4j.math.DVector3
 import org.ode4j.ode.DBody
 import org.ode4j.ode.DContact.DSurfaceParameters
@@ -148,60 +146,22 @@ class Application {
 
             for (camera in level.getComponents<CameraComponent>()) {
                 val aspect: Float
-                if (camera.renderFullscreen) {
+                if (camera.renderArea != null) {
                     glBindFramebuffer(GL_FRAMEBUFFER, 0)
-                    glViewport(0, 0, windowSize.x, windowSize.y)
-                    aspect = windowSize.x.toFloat() / windowSize.y
+                    val w = (camera.renderArea.second.x - camera.renderArea.first.x) * windowSize.x
+                    val h = (camera.renderArea.second.y - camera.renderArea.first.y) * windowSize.y
+                    glViewport(
+                        (camera.renderArea.first.x * windowSize.x).toInt(),
+                        (camera.renderArea.first.y * windowSize.y).toInt(),
+                        w.toInt(), h.toInt()
+                    )
+                    aspect = w / h
+                } else if (camera.textureResolution != null) {
+                    glViewport(0, 0, camera.textureResolution.x, camera.textureResolution.y)
+                    glBindFramebuffer(GL_FRAMEBUFFER, camera.framebuffer)
+                    aspect = camera.textureResolution.x.toFloat() / camera.textureResolution.y
                 } else {
-                    if (camera.lastWindowSize != windowSize) {
-                        camera.textureResolution.set(
-                            abs(windowSize.x * (camera.renderArea!!.second.x - camera.renderArea.first.x)),
-                            abs(windowSize.y * (camera.renderArea.first.y - camera.renderArea.second.y))
-                        )
-                        camera.destroyFramebuffer()
-                        camera.framebuffer = glGenFramebuffers()
-                        glBindFramebuffer(GL_FRAMEBUFFER, camera.framebuffer)
-                        camera.texture = glGenTextures()
-                        glBindTexture(GL_TEXTURE_2D, camera.texture)
-                        glTexImage2D(
-                            GL_TEXTURE_2D,
-                            0,
-                            GL_RGBA,
-                            camera.textureResolution.x.toInt(),
-                            camera.textureResolution.y.toInt(),
-                            0,
-                            GL_RGBA,
-                            GL_UNSIGNED_BYTE,
-                            NULL
-                        )
-                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-                        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, camera.texture, 0)
-                        camera.depthStencilBuffer = glGenRenderbuffers()
-                        glBindRenderbuffer(GL_RENDERBUFFER, camera.depthStencilBuffer)
-                        glRenderbufferStorage(
-                            GL_RENDERBUFFER,
-                            GL_DEPTH24_STENCIL8,
-                            camera.textureResolution.x.toInt(),
-                            camera.textureResolution.y.toInt()
-                        )
-                        glFramebufferRenderbuffer(
-                            GL_FRAMEBUFFER,
-                            GL_DEPTH_STENCIL_ATTACHMENT,
-                            GL_RENDERBUFFER,
-                            camera.depthStencilBuffer
-                        )
-                        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-                            System.err.println(
-                                "Couldn't create framebuffer: " +
-                                    "0x${glCheckFramebufferStatus(GL_FRAMEBUFFER).toString(16)}"
-                            )
-                        }
-                        glViewport(0, 0, camera.textureResolution.x.toInt(), camera.textureResolution.y.toInt())
-                    } else {
-                        glBindFramebuffer(GL_FRAMEBUFFER, camera.framebuffer)
-                    }
-                    aspect = camera.textureResolution.x / camera.textureResolution.y
+                    unreachable()
                 }
                 glMatrixMode(GL_PROJECTION)
                 glLoadIdentity()
@@ -263,28 +223,6 @@ class Application {
             glTranslatef(0f, 0f, -2f)
             glDisable(GL_LIGHTING)
             glDisable(GL_DEPTH_TEST)
-
-            glColor4f(1f, 1f, 1f, 1f)
-            glEnable(GL_TEXTURE_2D)
-            glDisable(GL_CULL_FACE)
-            for (camera in level.getComponents<CameraComponent>()) {
-                if (camera.renderFullscreen || camera.renderArea == null) {
-                    continue
-                }
-                glBindTexture(GL_TEXTURE_2D, camera.texture)
-                val (min, max) = camera.renderArea
-                glBegin(GL_QUADS)
-                glTexCoord2f(0f, 0f)
-                glVertex2f(min.x * windowSize.x, min.y * windowSize.y)
-                glTexCoord2f(0f, 1f)
-                glVertex2f(min.x * windowSize.x, max.y * windowSize.y)
-                glTexCoord2f(1f, 1f)
-                glVertex2f(max.x * windowSize.x, max.y * windowSize.y)
-                glTexCoord2f(1f, 0f)
-                glVertex2f(max.x * windowSize.x, min.y * windowSize.y)
-                glEnd()
-            }
-            glEnable(GL_CULL_FACE)
 
             val widthArray = IntArray(1)
             glfwGetFramebufferSize(window, widthArray, null)

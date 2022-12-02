@@ -70,3 +70,7 @@ fun normalizeDegrees(angle: Float): Float {
 }
 
 fun JsonObject.getElement(name: String): JsonElement = asMap().getValue(name)
+
+fun unreachable(): Nothing {
+    throw IllegalStateException("Shouldn't reach here")
+}

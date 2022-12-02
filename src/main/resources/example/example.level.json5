@@ -32,8 +32,8 @@
 //          type: "camera",
 //          offset: [0, 100, 0],
 //          rotation: [90, 0, 0],
-//          screenMin: [0.75, 0.25],
-//          screenMax: [1, 0],
+//          screenMin: [0.75, 0],
+//          screenMax: [1, 0.25],
 //          fov: null
 //        }
       ]
