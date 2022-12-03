@@ -48,7 +48,7 @@ class PlayerComponent(
         selfIsG1: Boolean
     ): DContact.DSurfaceParameters? {
         if (collision == CollisionTypes.DEATH) {
-//            kill()
+            kill()
         } else if (collision == CollisionTypes.WALL || collision == CollisionTypes.FLOOR) {
             lastJumpCollidedTime = glfwGetTime()
             if (collision == CollisionTypes.FLOOR) {
@@ -64,6 +64,11 @@ class PlayerComponent(
     }
 
     override fun tick() {
+        if (entity.body.position.y <= -100) {
+            kill()
+            return
+        }
+
         entity.body.rotation = IDENTITY
 
         if (jumpNormal.y < 0.95 && glfwGetTime() - lastJumpCollidedTime < 0.1) {
