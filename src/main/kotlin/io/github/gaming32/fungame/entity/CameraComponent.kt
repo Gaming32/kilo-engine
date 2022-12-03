@@ -17,6 +17,7 @@ class CameraComponent(
     val offset: DVector3C = DVector3(),
     val renderArea: Pair<Vector2f, Vector2f>? = Vector2f(0f, 0f) to Vector2f(1f, 1f),
     val textureResolution: Vector2i? = null,
+    textureOut: String? = null,
     val rotation: Vector3f = Vector3f(),
     var fov: Float? = 80f,
     val orthoRange: Pair<Vector2d, Vector2d> = Vector2d(-10.0, -10.0) to Vector2d(10.0, 10.0)
@@ -25,13 +26,14 @@ class CameraComponent(
         override fun create(entity: Entity, loader: LevelLoader, data: JsonObject) = CameraComponent(
             entity,
             data["offset"]?.asJsonArray?.toDVector3() ?: DVector3(),
-            if (data["renderToScreen"]?.asBoolean == false) {
+            if (data["textureOut"] != null) {
                 null
             } else Pair(
                 data["screenMin"]?.asJsonArray?.toVector2f() ?: Vector2f(0f, 0f),
                 data["screenMax"]?.asJsonArray?.toVector2f() ?: Vector2f(1f, 1f)
             ),
-            data["renderResolution"]?.asJsonArray?.toVector2i(),
+            data["textureResolution"]?.asJsonArray?.toVector2i(),
+            data["textureOut"]?.asString,
             data["rotation"]?.asJsonArray?.toVector3f() ?: Vector3f(),
             data["fov"].let { when {
                 it == null -> 80f
@@ -46,8 +48,11 @@ class CameraComponent(
     }
 
     init {
-        require((renderArea == null) != (textureResolution == null)) {
+        require((renderArea != null) != (textureResolution != null)) {
             "renderArea and textureResolution are mutually exclusive"
+        }
+        require((textureResolution != null) == (textureOut != null)) {
+            "textureOut and textureResolution must both be specified"
         }
     }
 
@@ -57,10 +62,11 @@ class CameraComponent(
 
     init {
         if (textureResolution != null) {
+            texture = TextureManager.genVirtualTexture(textureOut!!)
+
             framebuffer = glGenFramebuffers()
             glBindFramebuffer(GL_FRAMEBUFFER, framebuffer)
 
-            texture = glGenTextures()
             glBindTexture(GL_TEXTURE_2D, texture)
             glTexImage2D(
                 GL_TEXTURE_2D,
@@ -96,10 +102,10 @@ class CameraComponent(
 
     override fun destroy() = destroyFramebuffer()
 
-    internal fun destroyFramebuffer() {
+    private fun destroyFramebuffer() {
         if (textureResolution != null) {
             glDeleteFramebuffers(framebuffer)
-            glDeleteTextures(texture)
+            TextureManager.deleteVirtualTexture(texture)
             glDeleteRenderbuffers(depthStencilBuffer)
         }
     }

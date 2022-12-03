@@ -48,7 +48,7 @@ class PlayerComponent(
         selfIsG1: Boolean
     ): DContact.DSurfaceParameters? {
         if (collision == CollisionTypes.DEATH) {
-            kill()
+//            kill()
         } else if (collision == CollisionTypes.WALL || collision == CollisionTypes.FLOOR) {
             lastJumpCollidedTime = glfwGetTime()
             if (collision == CollisionTypes.FLOOR) {

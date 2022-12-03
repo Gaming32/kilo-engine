@@ -71,7 +71,13 @@ class LevelLoaderImpl(private val getResource: (String) -> InputStream?) : Level
                         line[1].toFloat(), line[2].toFloat(), line[3].toFloat(), line.getOrNull(4)?.toFloat() ?: 1f
                     )
                 }
-                "map_Kd" -> materials[currentMaterial] = Material.Texture(parentDir + line[1])
+                "map_Kd" -> materials[currentMaterial] = Material.Texture(
+                    if (line[1].startsWith("~")) {
+                        line[1]
+                    } else {
+                        parentDir + line[1]
+                    }
+                )
                 "d" -> materials[currentMaterial].let { oldMat ->
                     val opacity = line[1].toFloat()
                     materials[currentMaterial] = when (oldMat) {

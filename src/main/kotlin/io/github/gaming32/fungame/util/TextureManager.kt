@@ -16,6 +16,33 @@ object TextureManager {
     var wrap = GL_REPEAT
 
     private val textures = mutableMapOf<String, Int>()
+    private val virtualTexturesById = mutableMapOf<Int, String>()
+
+    fun genVirtualTexture(name: String): Int {
+        val registeredName = "~$name"
+        val texture = glGenTextures()
+        textures.put(registeredName, texture)?.also { oldTexture ->
+            glDeleteTextures(texture)
+            textures[registeredName] = oldTexture
+            throw IllegalArgumentException("Duplicate virtual texture: $name")
+        }
+        virtualTexturesById[texture] = registeredName
+        return texture
+    }
+
+    fun deleteVirtualTexture(name: String) {
+        val texture = textures.remove("~$name")
+            ?: throw IllegalArgumentException("$name is not registered as a virtual texture")
+        virtualTexturesById.remove(texture)
+        glDeleteTextures(texture)
+    }
+
+    fun deleteVirtualTexture(texture: Int) {
+        val registeredName = virtualTexturesById.remove(texture)
+            ?: throw IllegalArgumentException("Texture $texture is not associated with a virtual texture")
+        textures.remove(registeredName)
+        glDeleteTextures(texture)
+    }
 
     fun getTexture(name: String) = textures.computeIfAbsent(name) { key ->
         val tex = glGenTextures()
@@ -27,7 +54,10 @@ object TextureManager {
         if (maxMipmap != -1) {
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, maxMipmap)
         }
-        val image = ImageIO.read(getResource(key))
+        val image = ImageIO.read(getResource(key) ?: run {
+            glDeleteTextures(tex)
+            throw IllegalArgumentException("Missing texture $key. Did you forget to create a virtual texture *before* it's used?")
+        })
         var width = image.width
         var height = image.height
         val rgba = MemoryUtil.memAlloc(width * height * 4).order(ByteOrder.BIG_ENDIAN)
