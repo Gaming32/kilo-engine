@@ -1,7 +1,7 @@
 package io.github.gaming32.fungame.entity
 
 import com.google.gson.JsonObject
-import io.github.gaming32.fungame.Application
+import io.github.gaming32.fungame.KiloEngineApp
 import io.github.gaming32.fungame.loader.LevelLoader
 import io.github.gaming32.fungame.model.CollisionType
 import io.github.gaming32.fungame.model.CollisionTypes
@@ -22,11 +22,11 @@ abstract class BaseComponent<T : BaseComponent<T>>(val type: ComponentType<T>, v
     open fun collideWithMesh(collision: CollisionType, contact: DContactGeom, selfIsG1: Boolean): DContact.DSurfaceParameters? =
         when (collision) {
             CollisionTypes.SOLID,
-            CollisionTypes.FLOOR -> Application.SURFACE_PARAMS
-            CollisionTypes.WALL -> Application.WALL_PARAMS
+            CollisionTypes.FLOOR -> KiloEngineApp.SURFACE_PARAMS
+            CollisionTypes.WALL -> KiloEngineApp.WALL_PARAMS
             CollisionTypes.NON_SOLID,
             CollisionTypes.DEATH -> null
-            else -> Application.SURFACE_PARAMS
+            else -> KiloEngineApp.SURFACE_PARAMS
         }
 
     open fun collideWithEntity(

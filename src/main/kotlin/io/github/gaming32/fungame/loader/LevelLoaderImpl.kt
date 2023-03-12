@@ -9,6 +9,7 @@ import io.github.gaming32.fungame.model.CollisionModel
 import io.github.gaming32.fungame.model.CollisionType
 import io.github.gaming32.fungame.model.Material
 import io.github.gaming32.fungame.model.Model
+import io.github.gaming32.fungame.util.ResourceGetter
 import io.github.gaming32.fungame.util.simpleParentDir
 import io.github.gaming32.fungame.util.toDVector3
 import io.github.gaming32.gson5.Gson5Reader
@@ -16,10 +17,9 @@ import org.joml.Vector3f
 import org.ode4j.math.DVector3
 import org.quiltmc.json5.JsonReader
 import java.io.BufferedReader
-import java.io.InputStream
 import java.util.*
 
-class LevelLoaderImpl(private val getResource: (String) -> InputStream?) : LevelLoader {
+class LevelLoaderImpl(private val resourceGetter: () -> ResourceGetter) : LevelLoader {
     override fun loadObj(name: String) = textResource(name) { inp, parentDir ->
         val verts = mutableListOf<Vector3f>()
         val normals = mutableListOf<Vector3f>()
@@ -153,7 +153,7 @@ class LevelLoaderImpl(private val getResource: (String) -> InputStream?) : Level
     private inline fun <T> textResource(
         name: String,
         action: (inp: BufferedReader, parentDir: String) -> T
-    ) = getResource(name)?.bufferedReader(Charsets.UTF_8)?.use { action(it, simpleParentDir(name)) }
+    ) = resourceGetter()(name)?.bufferedReader(Charsets.UTF_8)?.use { action(it, simpleParentDir(name)) }
 
     private fun parseLines(inp: BufferedReader) = inp.lineSequence()
         .map(String::trim)

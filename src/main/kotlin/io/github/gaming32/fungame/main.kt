@@ -26,7 +26,7 @@ import org.ode4j.ode.OdeHelper
 import java.text.DecimalFormat
 import kotlin.math.roundToLong
 
-class Application {
+abstract class KiloEngineApp {
     companion object {
         private const val MOUSE_SPEED = 0.25
         private const val MOVE_SPEED = 85.0
@@ -50,26 +50,24 @@ class Application {
         OdeHelper.initODE()
     }
 
-    private val level = Level()
+    val level = Level()
     private val windowSize = Vector2i()
     private val movementInput = Vector3d()
-    private lateinit var player: PlayerComponent
+    lateinit var player: PlayerComponent
+        private set
     private lateinit var playerBody: DBody
-    private var wireframe = false
+    var wireframe = false
     private var window = 0L
     private var nanovg = 0L
     private var clearParams = GL_DEPTH_BUFFER_BIT
-    private lateinit var levelLoader: LevelLoader
+    lateinit var levelLoader: LevelLoader
+        private set
 
     fun main() {
         init()
         registerEvents()
-        val skybox = withValue(-1, TextureManager::maxMipmap, { TextureManager.maxMipmap = it }) {
-            withValue(GL_NEAREST, TextureManager::filter, { TextureManager.filter = it }) {
-                levelLoader.loadObj("/skybox/skybox.obj").toDisplayList()
-            }
-        }
-        levelLoader.loadLevel("/example/example.level.json5", level)
+        val skybox = loadSkybox()
+        loadInitLevel()
         player = level.getComponent()
         playerBody = player.entity.body
         var lastTime = glfwGetTime()
@@ -307,7 +305,7 @@ class Application {
         glMaterialfv(GL_FRONT, GL_AMBIENT, floatArrayOf(1f, 1f, 1f, 1f))
         glLineWidth(10f)
 
-        levelLoader = LevelLoaderImpl(TextureManager.getResource)
+        levelLoader = LevelLoaderImpl(TextureManager::resourceGetter)
     }
 
     private fun registerEvents() {
@@ -395,6 +393,20 @@ class Application {
         glfwTerminate()
         glfwSetErrorCallback(null)?.free()
     }
+
+    open fun loadSkybox() = DisplayList.EMPTY
+
+    abstract fun loadInitLevel()
 }
 
-fun main() = Application().main()
+fun main() = object : KiloEngineApp() {
+    override fun loadSkybox() = withValue(-1, TextureManager::maxMipmap, { TextureManager.maxMipmap = it }) {
+        withValue(GL_NEAREST, TextureManager::filter, { TextureManager.filter = it }) {
+            levelLoader.loadObj("/skybox/skybox.obj").toDisplayList()
+        }
+    }
+
+    override fun loadInitLevel() {
+        levelLoader.loadLevel("/example/example.level.json5", level)
+    }
+}.main()

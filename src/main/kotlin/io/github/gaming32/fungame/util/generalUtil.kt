@@ -45,7 +45,7 @@ fun <K, V> Map<K, V>.invert(): Map<V, K> {
 
 fun Double.fuzzyEquals(other: Double, delta: Double) = abs(other - this) <= delta
 
-infix fun Double.fuzzyEquals(other: Double) = fuzzyEquals(other, 0.001)
+infix fun Double.fuzzyEquals(other: Double) = fuzzyEquals(other, 1e-7)
 
 fun normalizeDegrees(angle: Double): Double {
     var result = angle
@@ -74,3 +74,5 @@ fun JsonObject.getElement(name: String): JsonElement = asMap().getValue(name)
 fun unreachable(): Nothing {
     throw IllegalStateException("Shouldn't reach here")
 }
+
+operator fun <T, R> ((T) -> R?).plus(other: (T) -> R?): (T) -> R? = { invoke(it) ?: other(it) }

@@ -17,6 +17,8 @@ class DisplayList(displayList: Int) : Destroyable {
 
     companion object {
         private val CLEANER = Cleaner.create()
+
+        val EMPTY = buildDisplayList {}
     }
 
     private val list = DisplayListRef(displayList)

@@ -8,8 +8,10 @@ import java.io.InputStream
 import java.nio.ByteOrder
 import javax.imageio.ImageIO
 
+typealias ResourceGetter = (String) -> InputStream?
+
 object TextureManager {
-    val getResource: (String) -> InputStream? = object {}::class.java::getResourceAsStream
+    var resourceGetter: ResourceGetter = object {}::class.java::getResourceAsStream
     var maxMipmap = 4
     var filter = GL_LINEAR
     var mipmapFilter = GL_LINEAR_MIPMAP_LINEAR
@@ -17,6 +19,10 @@ object TextureManager {
 
     private val textures = mutableMapOf<String, Int>()
     private val virtualTexturesById = mutableMapOf<Int, String>()
+
+    fun addResourceGetter(getter: ResourceGetter) {
+        resourceGetter += getter
+    }
 
     fun genVirtualTexture(name: String): Int {
         val registeredName = "~$name"
@@ -54,7 +60,7 @@ object TextureManager {
         if (maxMipmap != -1) {
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, maxMipmap)
         }
-        val image = ImageIO.read(getResource(key) ?: run {
+        val image = ImageIO.read(resourceGetter(key) ?: run {
             glDeleteTextures(tex)
             throw IllegalArgumentException("Missing texture $key. Did you forget to create a virtual texture *before* it's used?")
         })
