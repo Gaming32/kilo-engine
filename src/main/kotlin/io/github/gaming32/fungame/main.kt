@@ -28,7 +28,7 @@ import kotlin.math.roundToLong
 
 class Application {
     companion object {
-        private const val MOUSE_SPEED = 0.5
+        private const val MOUSE_SPEED = 0.25
         private const val MOVE_SPEED = 85.0
         private const val JUMP_SPEED = 500.0
         private const val WALL_JUMP_HORIZONTAL = 1500.0
