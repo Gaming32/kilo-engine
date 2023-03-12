@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "io.github.gaming32"
-version = "1.0-SNAPSHOT"
+version = "0.1-SNAPSHOT"
 
 val lwjglVersion = "3.3.1"
 val jomlVersion = "1.10.5"
