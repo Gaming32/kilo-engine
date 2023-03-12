@@ -2,8 +2,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     application
-    kotlin("jvm") version "1.7.21"
-    id("io.ktor.plugin") version "2.1.1" // It builds fat JARs
+    kotlin("jvm") version "1.8.10"
+    `maven-publish`
 }
 
 group = "io.github.gaming32"
@@ -16,6 +16,10 @@ application {
     mainClass.set("io.github.gaming32.fungame.MainKt")
 }
 
+java {
+    withSourcesJar()
+}
+
 tasks.withType<Jar> {
     manifest {
         attributes["Main-Class"] = application.mainClass.get()
@@ -25,9 +29,9 @@ tasks.withType<Jar> {
 
 repositories {
     mavenCentral()
-    maven("https://jitpack.io")
     maven("https://maven.quiltmc.org/repository/release")
     maven("https://maven.jemnetworks.com/releases")
+    maven("https://jitpack.io")
 }
 
 dependencies {
@@ -57,4 +61,26 @@ dependencies {
 
 tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "11"
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "gaming32"
+            credentials(PasswordCredentials::class)
+
+            val baseUri = "https://maven.jemnetworks.com"
+            url = uri(baseUri + if (version.toString().endsWith("-SNAPSHOT")) "/snapshots" else "/releases")
+        }
+    }
+
+    publications {
+        create<MavenPublication>("maven") {
+            groupId = project.group.toString()
+            artifactId = project.name
+            version = project.version.toString()
+
+            from(components["java"])
+        }
+    }
 }
