@@ -50,8 +50,9 @@ object TextureManager {
         glDeleteTextures(texture)
     }
 
-    fun getTexture(name: String) = textures.computeIfAbsent(name) { key ->
-        val tex = glGenTextures()
+    fun getTexture(name: String) = textures.computeIfAbsent(name) { initTexture(it, glGenTextures()) }
+
+    private fun initTexture(path: String, tex: Int): Int {
         glBindTexture(GL_TEXTURE_2D, tex)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, if (maxMipmap == -1) filter else mipmapFilter)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter)
@@ -60,9 +61,9 @@ object TextureManager {
         if (maxMipmap != -1) {
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, maxMipmap)
         }
-        val image = ImageIO.read(resourceGetter(key) ?: run {
+        val image = ImageIO.read(resourceGetter(path) ?: run {
             glDeleteTextures(tex)
-            throw IllegalArgumentException("Missing texture $key. Did you forget to create a virtual texture *before* it's used?")
+            throw IllegalArgumentException("Missing texture $path. Did you forget to create a virtual texture *before* it's used?")
         })
         var width = image.width
         var height = image.height
@@ -84,11 +85,14 @@ object TextureManager {
             }
         }
         MemoryUtil.memFree(rgba)
-        tex
+        return tex
     }
 
     fun unload() {
         textures.values.forEach { glDeleteTextures(it) }
         textures.clear()
+        virtualTexturesById.clear()
     }
+
+    fun loadAsVirtual(texture: String, name: String) = initTexture(texture, genVirtualTexture(name))
 }

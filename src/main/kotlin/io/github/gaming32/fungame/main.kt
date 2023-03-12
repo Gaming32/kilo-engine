@@ -66,7 +66,19 @@ abstract class KiloEngineApp {
     fun main() {
         init()
         registerEvents()
-        val skybox = loadSkybox()
+        val skybox = loadSkybox()?.let {
+            withValue(-1, TextureManager::maxMipmap, { TextureManager.maxMipmap = it }) {
+                withValue(GL_NEAREST, TextureManager::filter, { TextureManager.filter = it }) {
+                    TextureManager.loadAsVirtual(it.down, "skybox/down")
+                    TextureManager.loadAsVirtual(it.up, "skybox/up")
+                    TextureManager.loadAsVirtual(it.negativeZ, "skybox/negativeZ")
+                    TextureManager.loadAsVirtual(it.positiveZ, "skybox/positiveZ")
+                    TextureManager.loadAsVirtual(it.negativeX, "skybox/negativeX")
+                    TextureManager.loadAsVirtual(it.positiveX, "skybox/positiveX")
+                }
+            }
+            levelLoader.loadObj("/skybox.obj").toDisplayList()
+        } ?: DisplayList.EMPTY
         loadInitLevel()
         player = level.getComponent()
         playerBody = player.entity.body
@@ -394,17 +406,21 @@ abstract class KiloEngineApp {
         glfwSetErrorCallback(null)?.free()
     }
 
-    open fun loadSkybox() = DisplayList.EMPTY
+    open fun loadSkybox(): SkyboxTextures? = null
 
     abstract fun loadInitLevel()
 }
 
 fun main() = object : KiloEngineApp() {
-    override fun loadSkybox() = withValue(-1, TextureManager::maxMipmap, { TextureManager.maxMipmap = it }) {
-        withValue(GL_NEAREST, TextureManager::filter, { TextureManager.filter = it }) {
-            levelLoader.loadObj("/skybox/skybox.obj").toDisplayList()
-        }
-    }
+    override fun loadSkybox() = SkyboxTextures.relative(
+        "/example/skybox",
+        "down.png",
+        "up.png",
+        "negativeZ.png",
+        "positiveZ.png",
+        "negativeX.png",
+        "positiveX.png",
+    )
 
     override fun loadInitLevel() {
         levelLoader.loadLevel("/example/example.level.json5", level)
