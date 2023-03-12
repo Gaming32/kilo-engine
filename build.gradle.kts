@@ -13,7 +13,7 @@ val lwjglVersion = "3.3.1"
 val jomlVersion = "1.10.5"
 
 application {
-    mainClass.set("io.github.gaming32.fungame.MainKt")
+    mainClass.set("io.github.gaming32.fungame.ExampleMainKt")
 }
 
 java {

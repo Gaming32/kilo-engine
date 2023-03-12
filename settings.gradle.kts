@@ -1,3 +1,1 @@
-
-rootProject.name = "fun-3d-game"
-
+rootProject.name = "kilo-engine"
