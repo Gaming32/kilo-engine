@@ -1,7 +1,7 @@
 package io.github.gaming32.kiloengine
 
 import io.github.gaming32.kiloengine.entity.CameraComponent
-import io.github.gaming32.kiloengine.entity.PlayerComponent
+import io.github.gaming32.kiloengine.entity.Entity
 import io.github.gaming32.kiloengine.loader.LevelLoader
 import io.github.gaming32.kiloengine.loader.LevelLoaderImpl
 import io.github.gaming32.kiloengine.util.*
@@ -18,21 +18,14 @@ import org.lwjgl.opengl.GL11.*
 import org.lwjgl.opengl.GL13.GL_MULTISAMPLE
 import org.lwjgl.opengl.GL30.*
 import org.ode4j.math.DVector3
-import org.ode4j.ode.DBody
 import org.ode4j.ode.DContact.DSurfaceParameters
 import org.ode4j.ode.DContactGeomBuffer
 import org.ode4j.ode.OdeConstants.*
 import org.ode4j.ode.OdeHelper
-import java.text.DecimalFormat
 import kotlin.math.roundToLong
 
 abstract class KiloEngineGame {
     companion object {
-        private const val MOUSE_SPEED = 0.25
-        private const val MOVE_SPEED = 85.0
-        private const val JUMP_SPEED = 500.0
-        private const val WALL_JUMP_HORIZONTAL = 1500.0
-        private const val WALL_JUMP_VERTICAL = 500.0
         private const val PHYSICS_SPEED = 0.02
         private const val CONTACT_COUNT = 16
         private const val VERTICAL_DAMPING = 0.01
@@ -43,7 +36,6 @@ abstract class KiloEngineGame {
         val WALL_PARAMS = DSurfaceParameters().apply {
             mu = 3.0
         }
-        private val DEC_FORMAT = DecimalFormat("0.0")
     }
 
     init {
@@ -53,9 +45,6 @@ abstract class KiloEngineGame {
     val level = Level()
     private val windowSize = Vector2i()
     private val movementInput = Vector3d()
-    lateinit var player: PlayerComponent
-        private set
-    private lateinit var playerBody: DBody
     var wireframe = false
     private var window = 0L
     private var nanovg = 0L
@@ -80,13 +69,10 @@ abstract class KiloEngineGame {
             levelLoader.loadObj("/skybox.obj").toDisplayList()
         } ?: DisplayList.EMPTY
         loadInitLevel()
-        player = level.getComponent()
-        playerBody = player.entity.body
         var lastTime = glfwGetTime()
         var lastPhysicsTime = lastTime
         var fpsAverage = 0.0
         val contactJointGroup = OdeHelper.createJointGroup()
-        val force = DVector3()
         while (!glfwWindowShouldClose(window)) {
             glfwPollEvents()
 
@@ -100,23 +86,8 @@ abstract class KiloEngineGame {
                 lastPhysicsTime = time - 1.0
             }
             while (time - lastPhysicsTime > PHYSICS_SPEED) {
-                level.entities.toList().forEach { it.preTick() }
-                val adjustedMovementInput = Vector3d(movementInput).rotateY(
-                    toRadians(player.rotation.y.toDouble())
-                )
-                playerBody.addForce(adjustedMovementInput.x * MOVE_SPEED, 0.0, adjustedMovementInput.z * MOVE_SPEED)
-                if (movementInput.y > 0.0 && glfwGetTime() - player.lastJumpCollidedTime <= 0.1) {
-                    if (player.jumpNormal.y < 0.95) {
-                        playerBody.addForce(
-                            0.0,
-                            movementInput.y * (WALL_JUMP_VERTICAL - playerBody.linearVel.y),
-                            0.0
-                        )
-                        playerBody.addForce(DVector3(player.jumpNormal).scale(movementInput.y * WALL_JUMP_HORIZONTAL))
-                    } else {
-                        playerBody.addForce(0.0, movementInput.y * JUMP_SPEED, 0.0)
-                    }
-                }
+                level.entities.toList().forEach(Entity::preTick)
+                level.entities.toList().forEach { it.handleMovement(movementInput) }
                 movementInput.y = 0.0
                 level.entities.forEach { entity ->
                     entity.body.addForce(
@@ -125,7 +96,6 @@ abstract class KiloEngineGame {
                         entity.body.linearVel.z * -HORIZONTAL_DAMPING / PHYSICS_SPEED
                     )
                 }
-                force.set(playerBody.force)
                 val contactBuffer = DContactGeomBuffer(CONTACT_COUNT)
                 contactJointGroup.clear()
                 level.space.collide(null) { _, o1, o2 ->
@@ -147,7 +117,7 @@ abstract class KiloEngineGame {
                     }
                 }
                 level.world.quickStep(PHYSICS_SPEED)
-                level.entities.toList().forEach { it.tick() }
+                level.entities.toList().forEach(Entity::tick)
                 lastPhysicsTime += PHYSICS_SPEED
             }
 
@@ -243,33 +213,7 @@ abstract class KiloEngineGame {
             )
             nvgFontFace(nanovg, "minecraftia")
             nvgText(nanovg, 10f, 35f, "FPS: ${fpsAverage.roundToLong()}")
-            nvgText(
-                nanovg, 10f, 55f,
-                "X/Y/Z: " +
-                    "${DEC_FORMAT.format(playerBody.position.x)}/" +
-                    "${DEC_FORMAT.format(playerBody.position.y)}/" +
-                    DEC_FORMAT.format(playerBody.position.z)
-            )
-            nvgText(
-                nanovg, 10f, 75f,
-                "FX/FY/FZ: " +
-                    "${DEC_FORMAT.format(force.x)}/" +
-                    "${DEC_FORMAT.format(force.y)}/" +
-                    DEC_FORMAT.format(force.z)
-            )
-            nvgText(
-                nanovg, 10f, 95f,
-                "VX/VY/VZ: " +
-                    "${DEC_FORMAT.format(playerBody.linearVel.x)}/" +
-                    "${DEC_FORMAT.format(playerBody.linearVel.y)}/" +
-                    DEC_FORMAT.format(playerBody.linearVel.z)
-            )
-            nvgText(
-                nanovg, 10f, 115f,
-                "RY/RX: " +
-                    "${DEC_FORMAT.format(player.rotation.y)}/" +
-                    DEC_FORMAT.format(player.rotation.x)
-            )
+            level.entities.forEach { it.drawUi(nanovg) }
             nvgEndFrame(nanovg)
 
             glfwSwapBuffers(window)
@@ -327,13 +271,8 @@ abstract class KiloEngineGame {
                 lastMousePos.x != Double.POSITIVE_INFINITY &&
                 glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED
             ) {
-                player.rotation.y = normalizeDegrees(
-                    player.rotation.y - ((x - lastMousePos.x) * MOUSE_SPEED).toFloat()
-                )
-                player.rotation.x = clamp(
-                    -90f, 90f,
-                    player.rotation.x + ((y - lastMousePos.y) * MOUSE_SPEED).toFloat()
-                )
+                val event = MouseMoveEvent(x, y, x - lastMousePos.x, y - lastMousePos.y)
+                level.entities.forEach { it.mouseMoved(event) }
             }
             lastMousePos.set(x, y)
         }
