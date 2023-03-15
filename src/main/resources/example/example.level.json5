@@ -20,7 +20,11 @@
         "meshRenderer",
         {
           type: "meshCollider",
-          collision: "/example/example.collision.txt"
+          collision: {
+            Brick_Antique_01: "wall",
+            Brick_Basket: "floor",
+            Death_Plane: "death"
+          }
         }
       ]
     },

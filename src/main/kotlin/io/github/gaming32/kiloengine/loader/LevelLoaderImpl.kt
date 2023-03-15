@@ -7,8 +7,6 @@ import io.github.gaming32.kiloengine.Level
 import io.github.gaming32.kiloengine.SkyboxTextures
 import io.github.gaming32.kiloengine.entity.ComponentRegistry
 import io.github.gaming32.kiloengine.entity.Entity
-import io.github.gaming32.kiloengine.model.CollisionModel
-import io.github.gaming32.kiloengine.model.CollisionType
 import io.github.gaming32.kiloengine.model.Material
 import io.github.gaming32.kiloengine.model.Model
 import io.github.gaming32.kiloengine.util.ResourceGetter
@@ -19,7 +17,6 @@ import org.joml.Vector3f
 import org.ode4j.math.DVector3
 import org.quiltmc.json5.JsonReader
 import java.io.BufferedReader
-import java.util.*
 
 class LevelLoaderImpl(private val resourceGetter: () -> ResourceGetter) : LevelLoader {
     override fun loadObj(name: String) = textResource(name) { inp, parentDir ->
@@ -92,18 +89,6 @@ class LevelLoaderImpl(private val resourceGetter: () -> ResourceGetter) : LevelL
         }
         materials
     } ?: throw IllegalArgumentException("Missing material library: $name")
-
-    override fun loadCollision(model: Model, name: String) = textResource(name) { inp, _ ->
-        val collisions = IdentityHashMap<Material, CollisionType>()
-        for (line in parseLines(inp)) {
-            when (line[0]) {
-                "coltype" -> collisions[
-                    model.materials[line[1]] ?: throw IllegalArgumentException("Missing material: ${line[1]}")
-                ] = line[2]
-            }
-        }
-        CollisionModel(model, collisions)
-    } ?: throw IllegalArgumentException("Missing collision data: $name")
 
     override fun loadLevel(name: String, level: Level) = textResource(name) { inp, _ ->
         val json = JsonParser.parseReader(Gson5Reader(JsonReader.json5(inp))).asJsonObject
