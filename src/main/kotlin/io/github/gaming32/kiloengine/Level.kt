@@ -14,6 +14,8 @@ class Level {
     @PublishedApi
     internal val bodyToEntity = mutableMapOf<DBody, Entity>()
 
+    var skybox: SkyboxTextures? = null
+
     init {
         world.setGravity(0.0, -11.0, 0.0)
     }

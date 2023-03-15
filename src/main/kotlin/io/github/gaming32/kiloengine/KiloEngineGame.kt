@@ -55,7 +55,8 @@ abstract class KiloEngineGame {
     fun main() {
         init()
         registerEvents()
-        val skybox = skyboxTextures?.let {
+        loadInitLevel()
+        val skybox = level.skybox?.let {
             withValue(-1, TextureManager::maxMipmap, { TextureManager.maxMipmap = it }) {
                 withValue(GL_NEAREST, TextureManager::filter, { TextureManager.filter = it }) {
                     TextureManager.loadAsVirtual(it.down, "skybox/down")
@@ -68,7 +69,6 @@ abstract class KiloEngineGame {
             }
             levelLoader.loadObj("/skybox.obj").toDisplayList()
         } ?: DisplayList.EMPTY
-        loadInitLevel()
         var lastTime = glfwGetTime()
         var lastPhysicsTime = lastTime
         var fpsAverage = 0.0
@@ -344,8 +344,6 @@ abstract class KiloEngineGame {
         glfwTerminate()
         glfwSetErrorCallback(null)?.free()
     }
-
-    open val skyboxTextures: SkyboxTextures? = null
 
     abstract val title: String
 

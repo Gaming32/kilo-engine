@@ -4,6 +4,7 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import io.github.gaming32.gson5.Gson5Reader
 import io.github.gaming32.kiloengine.Level
+import io.github.gaming32.kiloengine.SkyboxTextures
 import io.github.gaming32.kiloengine.entity.ComponentRegistry
 import io.github.gaming32.kiloengine.entity.Entity
 import io.github.gaming32.kiloengine.model.CollisionModel
@@ -105,6 +106,7 @@ class LevelLoaderImpl(private val resourceGetter: () -> ResourceGetter) : LevelL
 
     override fun loadLevel(name: String, level: Level) = textResource(name) { inp, _ ->
         val json = JsonParser.parseReader(Gson5Reader(JsonReader.json5(inp))).asJsonObject
+        json["skybox"]?.asJsonObject?.let { level.skybox = SkyboxTextures.fromJson(it) }
         json["entities"]?.asJsonArray?.forEach { entityData ->
             entityData as JsonObject
             val position = entityData.remove("position")?.asJsonArray?.toDVector3() ?: DVector3()
