@@ -19,7 +19,7 @@ import org.ode4j.ode.DContactGeom
 import java.text.DecimalFormat
 import kotlin.math.atan2
 
-class PlayerComponent(
+open class PlayerComponent(
     entity: Entity, private val startRotation: Vector2fc
 ) : BaseComponent<PlayerComponent>(Type, entity) {
     companion object Type : ComponentType<PlayerComponent>() {

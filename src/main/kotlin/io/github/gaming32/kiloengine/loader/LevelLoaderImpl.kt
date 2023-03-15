@@ -94,6 +94,7 @@ class LevelLoaderImpl(private val resourceGetter: () -> ResourceGetter) : LevelL
         val json = JsonParser.parseReader(Gson5Reader(JsonReader.json5(inp))).asJsonObject
         json["skybox"]?.asJsonObject?.let { level.skybox = SkyboxTextures.fromJson(it) }
         json["sunPosition"]?.asJsonArray?.let { level.sunPosition = it.toVector3f() }
+        json["gravity"]?.asJsonArray?.let { level.world.setGravity(it.toDVector3()) }
         json["entities"]?.asJsonArray?.forEach { entityData ->
             entityData as JsonObject
             val position = entityData.remove("position")?.asJsonArray?.toDVector3() ?: DVector3()
