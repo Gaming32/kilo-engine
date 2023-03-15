@@ -1,7 +1,6 @@
 package io.github.gaming32.kiloengine
 
 import io.github.gaming32.kiloengine.entity.CameraComponent
-import io.github.gaming32.kiloengine.entity.Entity
 import io.github.gaming32.kiloengine.loader.LevelLoader
 import io.github.gaming32.kiloengine.loader.LevelLoaderImpl
 import io.github.gaming32.kiloengine.util.*
@@ -86,8 +85,8 @@ abstract class KiloEngineGame {
                 lastPhysicsTime = time - 1.0
             }
             while (time - lastPhysicsTime > PHYSICS_SPEED) {
-                level.entities.toList().forEach(Entity::preTick)
-                level.entities.toList().forEach { it.handleMovement(movementInput) }
+                level.invokeEvent(EventType.PRE_TICK)
+                level.invokeEvent(EventType.HANDLE_MOVEMENT, movementInput)
                 movementInput.y = 0.0
                 level.entities.forEach { entity ->
                     entity.body.addForce(
@@ -117,7 +116,7 @@ abstract class KiloEngineGame {
                     }
                 }
                 level.world.quickStep(PHYSICS_SPEED)
-                level.entities.toList().forEach(Entity::tick)
+                level.invokeEvent(EventType.TICK)
                 lastPhysicsTime += PHYSICS_SPEED
             }
 
@@ -190,7 +189,7 @@ abstract class KiloEngineGame {
                         )
                     )
                 }
-                level.entities.forEach { it.draw() }
+                level.invokeEvent(EventType.DRAW)
             }
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0)
@@ -215,7 +214,7 @@ abstract class KiloEngineGame {
             )
             nvgFontFace(nanovg, "minecraftia")
             nvgText(nanovg, 10f, 35f, "FPS: ${fpsAverage.roundToLong()}")
-            level.entities.forEach { it.drawUi(nanovg) }
+            level.invokeEvent(EventType.DRAW_UI, nanovg)
             nvgEndFrame(nanovg)
 
             glfwSwapBuffers(window)
@@ -273,8 +272,7 @@ abstract class KiloEngineGame {
                 lastMousePos.x != Double.POSITIVE_INFINITY &&
                 glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED
             ) {
-                val event = MouseMoveEvent(x, y, x - lastMousePos.x, y - lastMousePos.y)
-                level.entities.forEach { it.mouseMoved(event) }
+                level.invokeEvent(EventType.MOUSE_MOVED, MouseMoveEvent(x, y, x - lastMousePos.x, y - lastMousePos.y))
             }
             lastMousePos.set(x, y)
         }

@@ -1,9 +1,7 @@
 package io.github.gaming32.kiloengine.entity
 
 import io.github.gaming32.kiloengine.Level
-import io.github.gaming32.kiloengine.MouseMoveEvent
 import io.github.gaming32.kiloengine.model.CollisionType
-import org.joml.Vector3d
 import org.ode4j.math.DVector3C
 import org.ode4j.ode.DBody
 import org.ode4j.ode.DContact.DSurfaceParameters
@@ -23,6 +21,7 @@ class Entity(val level: Level, position: DVector3C) {
 
     fun addComponent(component: BaseComponent<*>) {
         components += component
+        level.calculateEvents(component)
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -65,18 +64,6 @@ class Entity(val level: Level, position: DVector3C) {
         }
         return result
     }
-
-    fun preTick() = components.forEach(BaseComponent<*>::preTick)
-
-    fun tick() = components.forEach(BaseComponent<*>::tick)
-
-    fun draw() = components.forEach(BaseComponent<*>::draw)
-
-    fun handleMovement(movementInput: Vector3d) = components.forEach { it.handleMovement(movementInput) }
-
-    fun drawUi(nanovg: Long) = components.forEach { it.drawUi(nanovg) }
-
-    fun mouseMoved(event: MouseMoveEvent) = components.forEach { it.mouseMoved(event) }
 
     fun destroy() {
         components.forEach(BaseComponent<*>::destroy)

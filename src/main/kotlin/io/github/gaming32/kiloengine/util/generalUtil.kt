@@ -76,3 +76,17 @@ fun unreachable(): Nothing {
 }
 
 operator fun <T, R> ((T) -> R?).plus(other: (T) -> R?): (T) -> R? = { invoke(it) ?: other(it) }
+
+inline fun <reified T> Any?.cast() = this as T
+
+val Class<*>.wrapperType get() = when (this) {
+    Nothing::class.javaPrimitiveType -> Nothing::class.javaObjectType
+    Byte::class.javaPrimitiveType -> Byte::class.javaObjectType
+    Short::class.javaPrimitiveType -> Short::class.javaObjectType
+    Char::class.javaPrimitiveType -> Char::class.javaObjectType
+    Int::class.javaPrimitiveType -> Int::class.javaObjectType
+    Float::class.javaPrimitiveType -> Float::class.javaObjectType
+    Long::class.javaPrimitiveType -> Long::class.javaObjectType
+    Double::class.javaPrimitiveType -> Double::class.javaObjectType
+    else -> this
+}

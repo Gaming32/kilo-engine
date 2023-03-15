@@ -10,8 +10,13 @@ import io.github.gaming32.kiloengine.util.Destroyable
 import org.joml.Vector3d
 import org.ode4j.ode.DContact
 import org.ode4j.ode.DContactGeom
+import java.lang.invoke.MethodHandles
 
 abstract class BaseComponent<T : BaseComponent<T>>(val type: ComponentType<T>, val entity: Entity) : Destroyable {
+    companion object {
+        internal val LOOKUP = MethodHandles.lookup()
+    }
+
     abstract class ComponentType<T : BaseComponent<T>> {
         abstract fun create(entity: Entity, loader: LevelLoader, data: JsonObject): T
     }
