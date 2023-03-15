@@ -1,7 +1,7 @@
 package io.github.gaming32.kiloengine.entity
 
 import com.google.gson.JsonObject
-import io.github.gaming32.kiloengine.loader.LevelLoader
+import io.github.gaming32.kiloengine.loader.SceneLoader
 import io.github.gaming32.kiloengine.model.CollisionModel
 import io.github.gaming32.kiloengine.model.CollisionType
 import io.github.gaming32.kiloengine.model.Material
@@ -16,7 +16,7 @@ class MeshColliderComponent(
     entity: Entity, val model: CollisionModel
 ) : BaseComponent<MeshColliderComponent>(Type, entity) {
     companion object Type : ComponentType<MeshColliderComponent>() {
-        override fun create(entity: Entity, loader: LevelLoader, data: JsonObject) = MeshColliderComponent(
+        override fun create(entity: Entity, loader: SceneLoader, data: JsonObject) = MeshColliderComponent(
             entity,
             entity.getComponent<MeshComponent>().model.let { model ->
                 CollisionModel(
@@ -34,7 +34,7 @@ class MeshColliderComponent(
     private val collisionMeshes: Map<DGeom, CollisionType> =
         model.toMultiTriMeshData().entries.associate { (collision, mesh) ->
             val geom = OdeHelper.createTriMesh(
-                entity.level.space, mesh,
+                entity.scene.space, mesh,
                 { _, _, _ -> 1 },
                 { _, _, _, _ -> },
                 { _, _, _, _, _ -> 1 }

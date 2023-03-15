@@ -13,7 +13,7 @@ import java.lang.invoke.LambdaMetafactory
 import java.lang.invoke.MethodType
 import java.util.function.Consumer
 
-class Level {
+class Scene {
     val world: DWorld = OdeHelper.createWorld()
     val space: DSpace = OdeHelper.createSimpleSpace()
 

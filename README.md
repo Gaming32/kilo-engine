@@ -34,8 +34,8 @@ dependencies {
 fun main() = object : KiloEngineGame {
     override val title get() = "My Game"
     
-    override fun loadInitLevel() {
-        levelLoader.loadLevel("/my_game/my_level.level.json5", level)
+    override fun loadInitScene() {
+        sceneLoader.loadScene("/my_game/my_scene.scene.json5", scene)
     }
 }.main()
 ```
@@ -58,8 +58,8 @@ public class MyGame extends KiloEngineGame {
     }
     
     @Override
-    public void loadInitLevel() {
-        getLevelLoader().loadLevel("/my_game/my_level.level.json5", getLevel());
+    public void loadInitScene() {
+        getSceneLoader().loadScene("/my_game/my_scene.scene.json5", getScene());
     }
 }
 ```

@@ -3,7 +3,7 @@ package io.github.gaming32.kiloengine.loader
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import io.github.gaming32.gson5.Gson5Reader
-import io.github.gaming32.kiloengine.Level
+import io.github.gaming32.kiloengine.Scene
 import io.github.gaming32.kiloengine.SkyboxTextures
 import io.github.gaming32.kiloengine.entity.ComponentRegistry
 import io.github.gaming32.kiloengine.entity.Entity
@@ -18,7 +18,7 @@ import org.ode4j.math.DVector3
 import org.quiltmc.json5.JsonReader
 import java.io.BufferedReader
 
-class LevelLoaderImpl(private val resourceGetter: () -> ResourceGetter) : LevelLoader {
+class SceneLoaderImpl(private val resourceGetter: () -> ResourceGetter) : SceneLoader {
     override fun loadObj(name: String) = textResource(name) { inp, parentDir ->
         val verts = mutableListOf<Vector3f>()
         val normals = mutableListOf<Vector3f>()
@@ -90,17 +90,17 @@ class LevelLoaderImpl(private val resourceGetter: () -> ResourceGetter) : LevelL
         materials
     } ?: throw IllegalArgumentException("Missing material library: $name")
 
-    override fun loadLevel(name: String, level: Level) = textResource(name) { inp, _ ->
+    override fun loadScene(name: String, scene: Scene) = textResource(name) { inp, _ ->
         val json = JsonParser.parseReader(Gson5Reader(JsonReader.json5(inp))).asJsonObject
-        json["skybox"]?.asJsonObject?.let { level.skybox = SkyboxTextures.fromJson(it) }
-        json["sunPosition"]?.asJsonArray?.let { level.sunPosition = it.toVector3f() }
-        json["gravity"]?.asJsonArray?.let { level.world.setGravity(it.toDVector3()) }
+        json["skybox"]?.asJsonObject?.let { scene.skybox = SkyboxTextures.fromJson(it) }
+        json["sunPosition"]?.asJsonArray?.let { scene.sunPosition = it.toVector3f() }
+        json["gravity"]?.asJsonArray?.let { scene.world.setGravity(it.toDVector3()) }
         json["entities"]?.asJsonArray?.forEach { entityData ->
             entityData as JsonObject
             val position = entityData.remove("position")?.asJsonArray?.toDVector3() ?: DVector3()
             val kinematic = entityData.remove("kinematic")?.asBoolean ?: false
             val componentsData = entityData.remove("components")?.asJsonArray?.asList() ?: listOf()
-            val entity = Entity(level, position)
+            val entity = Entity(scene, position)
             if (kinematic) {
                 entity.body.setKinematic()
             }
@@ -115,8 +115,8 @@ class LevelLoaderImpl(private val resourceGetter: () -> ResourceGetter) : LevelL
                 }
             }
         }
-        level
-    } ?: throw IllegalArgumentException("Missing level: $name")
+        scene
+    } ?: throw IllegalArgumentException("Missing scene: $name")
 
     private fun parseVertex(
         verts: List<Vector3f>,

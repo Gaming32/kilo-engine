@@ -3,7 +3,7 @@ package io.github.gaming32.kiloengine.entity
 import com.google.gson.JsonObject
 import io.github.gaming32.kiloengine.KiloEngineGame
 import io.github.gaming32.kiloengine.MouseMoveEvent
-import io.github.gaming32.kiloengine.loader.LevelLoader
+import io.github.gaming32.kiloengine.loader.SceneLoader
 import io.github.gaming32.kiloengine.model.CollisionType
 import io.github.gaming32.kiloengine.model.CollisionTypes
 import io.github.gaming32.kiloengine.util.Destroyable
@@ -18,7 +18,7 @@ abstract class BaseComponent<T : BaseComponent<T>>(val type: ComponentType<T>, v
     }
 
     abstract class ComponentType<T : BaseComponent<T>> {
-        abstract fun create(entity: Entity, loader: LevelLoader, data: JsonObject): T
+        abstract fun create(entity: Entity, loader: SceneLoader, data: JsonObject): T
     }
 
     init {

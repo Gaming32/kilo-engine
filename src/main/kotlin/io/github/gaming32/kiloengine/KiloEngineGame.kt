@@ -1,8 +1,8 @@
 package io.github.gaming32.kiloengine
 
 import io.github.gaming32.kiloengine.entity.CameraComponent
-import io.github.gaming32.kiloengine.loader.LevelLoader
-import io.github.gaming32.kiloengine.loader.LevelLoaderImpl
+import io.github.gaming32.kiloengine.loader.SceneLoader
+import io.github.gaming32.kiloengine.loader.SceneLoaderImpl
 import io.github.gaming32.kiloengine.util.*
 import org.joml.*
 import org.joml.Math.*
@@ -41,21 +41,21 @@ abstract class KiloEngineGame {
         OdeHelper.initODE()
     }
 
-    val level = Level()
+    val scene = Scene()
     private val windowSize = Vector2i()
     private val movementInput = Vector3d()
     var wireframe = false
     private var window = 0L
     private var nanovg = 0L
     private var clearParams = GL_DEPTH_BUFFER_BIT
-    lateinit var levelLoader: LevelLoader
+    lateinit var sceneLoader: SceneLoader
         private set
 
     fun main() {
         init()
         registerEvents()
-        loadInitLevel()
-        val skybox = level.skybox?.let {
+        loadInitScene()
+        val skybox = scene.skybox?.let {
             withValue(-1, TextureManager::maxMipmap, { TextureManager.maxMipmap = it }) {
                 withValue(GL_NEAREST, TextureManager::filter, { TextureManager.filter = it }) {
                     TextureManager.loadAsVirtual(it.down, "skybox/down")
@@ -66,7 +66,7 @@ abstract class KiloEngineGame {
                     TextureManager.loadAsVirtual(it.positiveX, "skybox/positiveX")
                 }
             }
-            levelLoader.loadObj("/skybox.obj").toDisplayList()
+            sceneLoader.loadObj("/skybox.obj").toDisplayList()
         } ?: DisplayList.EMPTY
         var lastTime = glfwGetTime()
         var lastPhysicsTime = lastTime
@@ -85,10 +85,10 @@ abstract class KiloEngineGame {
                 lastPhysicsTime = time - 1.0
             }
             while (time - lastPhysicsTime > PHYSICS_SPEED) {
-                level.invokeEvent(EventType.PRE_TICK)
-                level.invokeEvent(EventType.HANDLE_MOVEMENT, movementInput)
+                scene.invokeEvent(EventType.PRE_TICK)
+                scene.invokeEvent(EventType.HANDLE_MOVEMENT, movementInput)
                 movementInput.y = 0.0
-                level.entities.forEach { entity ->
+                scene.entities.forEach { entity ->
                     entity.body.addForce(
                         entity.body.linearVel.x * -HORIZONTAL_DAMPING / PHYSICS_SPEED,
                         entity.body.linearVel.y * -VERTICAL_DAMPING / PHYSICS_SPEED,
@@ -97,33 +97,33 @@ abstract class KiloEngineGame {
                 }
                 val contactBuffer = DContactGeomBuffer(CONTACT_COUNT)
                 contactJointGroup.clear()
-                level.space.collide(null) { _, o1, o2 ->
+                scene.space.collide(null) { _, o1, o2 ->
                     repeat(OdeHelper.collide(o1, o2, CONTACT_COUNT, contactBuffer)) {
                         val contact = contactBuffer[it]
-                        val e1 = level.getEntityByBody(contact.g1.body)
-                        val e2 = level.getEntityByBody(contact.g2.body)
+                        val e1 = scene.getEntityByBody(contact.g1.body)
+                        val e2 = scene.getEntityByBody(contact.g2.body)
                         if (e1 == null || e2 == null) return@repeat
                         var surfaceParams = e1.collideWithEntity(e2, contact, true)
                         val surfaceParams2 = e2.collideWithEntity(e1, contact, false)
                         surfaceParams = surfaceParams ?: surfaceParams2
                         if (surfaceParams == null) return@repeat
                         val joint = OdeHelper.createContactJoint(
-                            level.world,
+                            scene.world,
                             contactJointGroup,
                             DContact(contact, surfaceParams)
                         )
                         joint.attach(contact.g1.body, contact.g2.body)
                     }
                 }
-                level.world.quickStep(PHYSICS_SPEED)
-                level.invokeEvent(EventType.TICK)
+                scene.world.quickStep(PHYSICS_SPEED)
+                scene.invokeEvent(EventType.TICK)
                 lastPhysicsTime += PHYSICS_SPEED
             }
 
             // 3D Mode
             glEnable(GL_CULL_FACE)
 
-            for (camera in level.getComponents<CameraComponent>()) {
+            for (camera in scene.getComponents<CameraComponent>()) {
                 val aspect: Float
                 if (camera.renderArea != null) {
                     glBindFramebuffer(GL_FRAMEBUFFER, 0)
@@ -174,11 +174,11 @@ abstract class KiloEngineGame {
 
                 glClear(GL_DEPTH_BUFFER_BIT)
 
-                // Level
+                // Scene
                 glEnable(GL_DEPTH_TEST)
                 val position = DVector3(camera.entity.body.position).add(camera.offset)
                 glTranslatef(-position.x.toFloat(), -position.y.toFloat(), -position.z.toFloat())
-                level.sunPosition?.let {
+                scene.sunPosition?.let {
                     glEnable(GL_LIGHTING)
                     glLightfv(
                         GL_LIGHT0, GL_POSITION, floatArrayOf(
@@ -189,7 +189,7 @@ abstract class KiloEngineGame {
                         )
                     )
                 }
-                level.invokeEvent(EventType.DRAW)
+                scene.invokeEvent(EventType.DRAW)
             }
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0)
@@ -214,7 +214,7 @@ abstract class KiloEngineGame {
             )
             nvgFontFace(nanovg, "minecraftia")
             nvgText(nanovg, 10f, 35f, "FPS: ${fpsAverage.roundToLong()}")
-            level.invokeEvent(EventType.DRAW_UI, nanovg)
+            scene.invokeEvent(EventType.DRAW_UI, nanovg)
             nvgEndFrame(nanovg)
 
             glfwSwapBuffers(window)
@@ -262,7 +262,7 @@ abstract class KiloEngineGame {
         glMaterialfv(GL_FRONT, GL_AMBIENT, floatArrayOf(1f, 1f, 1f, 1f))
         glLineWidth(10f)
 
-        levelLoader = LevelLoaderImpl(TextureManager::resourceGetter)
+        sceneLoader = SceneLoaderImpl(TextureManager::resourceGetter)
     }
 
     private fun registerEvents() {
@@ -272,7 +272,7 @@ abstract class KiloEngineGame {
                 lastMousePos.x != Double.POSITIVE_INFINITY &&
                 glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED
             ) {
-                level.invokeEvent(EventType.MOUSE_MOVED, MouseMoveEvent(x, y, x - lastMousePos.x, y - lastMousePos.y))
+                scene.invokeEvent(EventType.MOUSE_MOVED, MouseMoveEvent(x, y, x - lastMousePos.x, y - lastMousePos.y))
             }
             lastMousePos.set(x, y)
         }
@@ -336,7 +336,7 @@ abstract class KiloEngineGame {
     }
 
     private fun quit() {
-        level.destroy()
+        scene.destroy()
         OdeHelper.closeODE()
         TextureManager.unload()
         glfwFreeCallbacks(window)
@@ -347,5 +347,5 @@ abstract class KiloEngineGame {
 
     abstract val title: String
 
-    abstract fun loadInitLevel()
+    abstract fun loadInitScene()
 }
