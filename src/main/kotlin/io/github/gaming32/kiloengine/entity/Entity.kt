@@ -21,6 +21,7 @@ class Entity(val level: Level, position: DVector3C) {
 
     fun addComponent(component: BaseComponent<*>) {
         components += component
+        level.calculateEvents(component)
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -64,14 +65,8 @@ class Entity(val level: Level, position: DVector3C) {
         return result
     }
 
-    fun preTick() = components.forEach(BaseComponent<*>::preTick)
-
-    fun tick() = components.forEach(BaseComponent<*>::tick)
-
     fun destroy() {
         components.forEach(BaseComponent<*>::destroy)
         body.destroy()
     }
-
-    fun draw() = components.forEach(BaseComponent<*>::draw)
 }

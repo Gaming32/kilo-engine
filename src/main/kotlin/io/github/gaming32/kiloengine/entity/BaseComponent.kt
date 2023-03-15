@@ -2,14 +2,21 @@ package io.github.gaming32.kiloengine.entity
 
 import com.google.gson.JsonObject
 import io.github.gaming32.kiloengine.KiloEngineGame
+import io.github.gaming32.kiloengine.MouseMoveEvent
 import io.github.gaming32.kiloengine.loader.LevelLoader
 import io.github.gaming32.kiloengine.model.CollisionType
 import io.github.gaming32.kiloengine.model.CollisionTypes
 import io.github.gaming32.kiloengine.util.Destroyable
+import org.joml.Vector3d
 import org.ode4j.ode.DContact
 import org.ode4j.ode.DContactGeom
+import java.lang.invoke.MethodHandles
 
 abstract class BaseComponent<T : BaseComponent<T>>(val type: ComponentType<T>, val entity: Entity) : Destroyable {
+    companion object {
+        internal val LOOKUP = MethodHandles.lookup()
+    }
+
     abstract class ComponentType<T : BaseComponent<T>> {
         abstract fun create(entity: Entity, loader: LevelLoader, data: JsonObject): T
     }
@@ -40,4 +47,10 @@ abstract class BaseComponent<T : BaseComponent<T>>(val type: ComponentType<T>, v
     open fun tick() = Unit
 
     open fun draw() = Unit
+
+    open fun handleMovement(movementInput: Vector3d) = Unit
+
+    open fun drawUi(nanovg: Long) = Unit
+
+    open fun mouseMoved(event: MouseMoveEvent) = Unit
 }

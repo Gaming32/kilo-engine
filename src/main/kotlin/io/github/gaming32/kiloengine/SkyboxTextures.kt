@@ -1,5 +1,8 @@
 package io.github.gaming32.kiloengine
 
+import com.google.gson.JsonObject
+import io.github.gaming32.kiloengine.util.getElement
+
 data class SkyboxTextures(
     val down: String,
     val up: String,
@@ -26,5 +29,27 @@ data class SkyboxTextures(
             "$base/$negativeX",
             "$base/$positiveX",
         )
+
+        @JvmStatic
+        fun fromJson(obj: JsonObject) = if (obj.has("base")) {
+            relative(
+                obj.getElement("base").asString,
+                obj.getElement("down").asString,
+                obj.getElement("up").asString,
+                obj.getElement("negativeZ").asString,
+                obj.getElement("positiveZ").asString,
+                obj.getElement("negativeX").asString,
+                obj.getElement("positiveX").asString,
+            )
+        } else {
+            SkyboxTextures(
+                obj.getElement("down").asString,
+                obj.getElement("up").asString,
+                obj.getElement("negativeZ").asString,
+                obj.getElement("positiveZ").asString,
+                obj.getElement("negativeX").asString,
+                obj.getElement("positiveX").asString,
+            )
+        }
     }
 }

@@ -1,4 +1,14 @@
 {
+  skybox: {
+    base: "/example/skybox",
+    down:  "down.png",
+    up: "up.png",
+    negativeZ:  "negativeZ.png",
+    positiveZ: "positiveZ.png",
+    negativeX:  "negativeX.png",
+    positiveX: "positiveX.png"
+  },
+  sunPosition: [-12.9, 30, 17.1],
   entities: [
     {
       kinematic: true,

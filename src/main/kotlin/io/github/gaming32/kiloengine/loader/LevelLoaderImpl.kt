@@ -4,6 +4,7 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import io.github.gaming32.gson5.Gson5Reader
 import io.github.gaming32.kiloengine.Level
+import io.github.gaming32.kiloengine.SkyboxTextures
 import io.github.gaming32.kiloengine.entity.ComponentRegistry
 import io.github.gaming32.kiloengine.entity.Entity
 import io.github.gaming32.kiloengine.model.CollisionModel
@@ -13,6 +14,7 @@ import io.github.gaming32.kiloengine.model.Model
 import io.github.gaming32.kiloengine.util.ResourceGetter
 import io.github.gaming32.kiloengine.util.simpleParentDir
 import io.github.gaming32.kiloengine.util.toDVector3
+import io.github.gaming32.kiloengine.util.toVector3f
 import org.joml.Vector3f
 import org.ode4j.math.DVector3
 import org.quiltmc.json5.JsonReader
@@ -105,6 +107,8 @@ class LevelLoaderImpl(private val resourceGetter: () -> ResourceGetter) : LevelL
 
     override fun loadLevel(name: String, level: Level) = textResource(name) { inp, _ ->
         val json = JsonParser.parseReader(Gson5Reader(JsonReader.json5(inp))).asJsonObject
+        json["skybox"]?.asJsonObject?.let { level.skybox = SkyboxTextures.fromJson(it) }
+        json["sunPosition"]?.asJsonArray?.let { level.sunPosition = it.toVector3f() }
         json["entities"]?.asJsonArray?.forEach { entityData ->
             entityData as JsonObject
             val position = entityData.remove("position")?.asJsonArray?.toDVector3() ?: DVector3()
