@@ -1,5 +1,5 @@
 # kilo-engine
-Simple 3D game engine
+_A Simple 3D Game Engine_
 
 ## Installation
 ### Gradle Kotlin
