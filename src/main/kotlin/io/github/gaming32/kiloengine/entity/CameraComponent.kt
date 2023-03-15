@@ -13,7 +13,7 @@ import org.lwjgl.system.MemoryUtil.NULL
 import org.ode4j.math.DVector3
 import org.ode4j.math.DVector3C
 
-class CameraComponent(
+class CameraComponent @JvmOverloads constructor(
     entity: Entity,
     val offset: DVector3C = DVector3(),
     val renderArea: Pair<Vector2f, Vector2f>? = Vector2f(0f, 0f) to Vector2f(1f, 1f),

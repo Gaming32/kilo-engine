@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    application
+    `java-library`
     kotlin("jvm") version "1.8.10"
     `maven-publish`
 }
@@ -12,17 +12,13 @@ version = "0.1-SNAPSHOT"
 val lwjglVersion = "3.3.1"
 val jomlVersion = "1.10.5"
 
-application {
-    mainClass.set("io.github.gaming32.fungame.ExampleMainKt")
-}
-
 java {
     withSourcesJar()
 }
 
 tasks.withType<Jar> {
     manifest {
-        attributes["Main-Class"] = application.mainClass.get()
+        attributes["Main-Class"] = "io.github.gaming32.fungame.ExampleMainKt"
         attributes["Multi-Release"] = true
     }
 }
@@ -35,10 +31,10 @@ repositories {
 }
 
 dependencies {
-    implementation(platform("org.lwjgl:lwjgl-bom:$lwjglVersion"))
+    api(platform("org.lwjgl:lwjgl-bom:$lwjglVersion"))
 
     for (library in listOf("lwjgl", "lwjgl-glfw", "lwjgl-nanovg", "lwjgl-opengl")) {
-        implementation("org.lwjgl", library)
+        api("org.lwjgl", library)
         for (natives in listOf(
             "linux", "linux-arm64", "linux-arm32",
             "macos", "macos-arm64",
@@ -48,15 +44,15 @@ dependencies {
         }
     }
 
-    implementation("org.joml", "joml", jomlVersion)
+    api("org.joml", "joml", jomlVersion)
 
-    implementation("com.github.rkalla:imgscalr:8ed3644d1e")
+    api("com.github.rkalla:imgscalr:8ed3644d1e")
 
-    implementation("org.ode4j:core:0.4.0")
+    api("org.ode4j:core:0.4.0")
 
-    implementation("org.quiltmc:quilt-json5:1.0.2")
-    implementation("com.google.code.gson:gson:2.10")
-    implementation("io.github.gaming32:gson5-delegate:1.0.0")
+    api("org.quiltmc:quilt-json5:1.0.2")
+    api("com.google.code.gson:gson:2.10")
+    api("io.github.gaming32:gson5-delegate:1.0.0")
 }
 
 tasks.withType<KotlinCompile> {
