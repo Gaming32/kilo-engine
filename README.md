@@ -2,6 +2,7 @@
 Simple 3D game engine
 
 ## Installation
+
 ### Gradle Kotlin
 Add the following repositories to your `build.gradle.kts`:
 ```kotlin
@@ -17,50 +18,50 @@ This way, if the version you seek is available as a snapshot, but not as a relea
 
 Now add the following dependency:
 ```kotlin
-val kiloEngineVersion = "YOUR_VERSION_HERE"
+val kiloEngineVersion = "0.1-SNAPSHOT"
 
 dependencies {
     implementation("io.github.gaming32:kilo-engine:${kiloEngineVersion}")
 }
 ```
-This is up-to-date with version `0.1-SNPASHOT`.
-### Kotlin
+
+## Basic example
+
+<details>
+<summary>Kotlin</summary>
+
 ```kotlin
-/// game.kts ///
-
-import io.github.gaming32.kiloengine.KiloEngineGame
-
-fun main() = object : KiloEngineGame() {
-    override val title get() = "Your Game Name Here"
-
+fun main() = object : KiloEngineGame {
+    override val title get() = "My Game"
+    
     override fun loadInitLevel() {
-        levelLoader.loadLevel("/example/example.level.json5", level)
-        // replace this with your level location
+        levelLoader.loadLevel("/my_game/my_level.level.json5", level)
     }
 }.main()
 ```
-### Java
+
+</details>
+
+<details>
+<summary>Java</summary>
+
 ```java
-/// Game.java ///
-
-import io.github.gaming32.kiloengine.KiloEngineGame;
-import org.jetbrains.annotations.NotNull; // <- optional
-
-public final class Game extends KiloEngineGame {
-    @NotNull
-    @Override
-    public String getTitle() {
-        return "Your Game Name";
+public class MyGame extends KiloEngineGame {
+    public static void main(String[] args) {
+        new MyGame().main();
     }
-
+    
+    @Override
+    @NotNull
+    public String getTitle() {
+        return "My Game";
+    }
+    
     @Override
     public void loadInitLevel() {
-        getLevelLoader().loadLevel("example/example.level.json5", getLevel());
-        // replace this with your level name
-    }
-
-    public static void main(String[] args) {
-        new Game().main();
+        getLevelLoader().loadLevel("/my_game/my_level.level.json5", getLevel());
     }
 }
 ```
+
+</details>
