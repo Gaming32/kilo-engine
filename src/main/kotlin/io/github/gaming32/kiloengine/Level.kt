@@ -124,6 +124,7 @@ class Level {
             }
             if (callable != null) {
                 eventList += callable
+                break
             }
             type = type.superclass
         }
