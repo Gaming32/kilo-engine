@@ -64,5 +64,3 @@ public final class Game extends KiloEngineGame {
     }
 }
 ```
-
-Just checking
