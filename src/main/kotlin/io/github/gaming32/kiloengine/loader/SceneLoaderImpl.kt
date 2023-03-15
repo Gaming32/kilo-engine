@@ -3,13 +3,13 @@ package io.github.gaming32.kiloengine.loader
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import io.github.gaming32.gson5.Gson5Reader
+import io.github.gaming32.kiloengine.ResourceGetter
 import io.github.gaming32.kiloengine.Scene
 import io.github.gaming32.kiloengine.SkyboxTextures
 import io.github.gaming32.kiloengine.entity.ComponentRegistry
 import io.github.gaming32.kiloengine.entity.Entity
 import io.github.gaming32.kiloengine.model.Material
 import io.github.gaming32.kiloengine.model.Model
-import io.github.gaming32.kiloengine.util.ResourceGetter
 import io.github.gaming32.kiloengine.util.simpleParentDir
 import io.github.gaming32.kiloengine.util.toDVector3
 import io.github.gaming32.kiloengine.util.toVector3f

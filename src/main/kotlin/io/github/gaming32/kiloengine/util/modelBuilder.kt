@@ -1,5 +1,6 @@
 package io.github.gaming32.kiloengine.util
 
+import io.github.gaming32.kiloengine.TextureManager
 import org.joml.Vector2f
 import org.joml.Vector3f
 import org.lwjgl.opengl.GL11.*

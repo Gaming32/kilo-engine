@@ -1,6 +1,7 @@
 package io.github.gaming32.kiloengine.entity
 
 import com.google.gson.JsonObject
+import io.github.gaming32.kiloengine.TextureManager
 import io.github.gaming32.kiloengine.loader.SceneLoader
 import io.github.gaming32.kiloengine.util.*
 import org.joml.Vector2d

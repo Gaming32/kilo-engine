@@ -67,7 +67,7 @@ abstract class KiloEngineGame {
                 }
             }
             sceneLoader.loadObj("/skybox.obj").toDisplayList()
-        } ?: DisplayList.EMPTY
+        }
         var lastTime = glfwGetTime()
         var lastPhysicsTime = lastTime
         var fpsAverage = 0.0
@@ -165,14 +165,16 @@ abstract class KiloEngineGame {
                 glRotatef(camera.rotation.y, 0f, 1f, 0f)
 
                 // Skybox
-                glDisable(GL_DEPTH_TEST)
-                glDisable(GL_LIGHTING)
+                if (skybox != null) {
+                    glDisable(GL_DEPTH_TEST)
+                    glDisable(GL_LIGHTING)
 
-                if (camera.fov != null) {
-                    skybox.draw()
+                    if (camera.fov != null) {
+                        skybox.draw()
+                    }
+
+                    glClear(GL_DEPTH_BUFFER_BIT)
                 }
-
-                glClear(GL_DEPTH_BUFFER_BIT)
 
                 // Scene
                 glEnable(GL_DEPTH_TEST)
@@ -219,7 +221,7 @@ abstract class KiloEngineGame {
 
             glfwSwapBuffers(window)
         }
-        skybox.close()
+        skybox?.close()
         contactJointGroup.destroy()
         quit()
     }
@@ -262,7 +264,7 @@ abstract class KiloEngineGame {
         glMaterialfv(GL_FRONT, GL_AMBIENT, floatArrayOf(1f, 1f, 1f, 1f))
         glLineWidth(10f)
 
-        sceneLoader = SceneLoaderImpl(TextureManager::resourceGetter)
+        sceneLoader = SceneLoaderImpl(Resources::resourceGetter)
     }
 
     private fun registerEvents() {

@@ -26,6 +26,7 @@ class Scene {
     private var eventsDirty = false
     private val events = buildMap {
         EventType.EVENT_TYPES.forEach { eventType ->
+            @Suppress("RemoveExplicitTypeArguments") // The explicit type arguments are required
             put(eventType, mutableListOf<EventInvoker>())
         }
     }
