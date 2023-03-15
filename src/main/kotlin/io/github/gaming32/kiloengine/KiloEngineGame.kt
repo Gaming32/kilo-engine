@@ -177,17 +177,19 @@ abstract class KiloEngineGame {
 
                 // Level
                 glEnable(GL_DEPTH_TEST)
-                glEnable(GL_LIGHTING)
                 val position = DVector3(camera.entity.body.position).add(camera.offset)
                 glTranslatef(-position.x.toFloat(), -position.y.toFloat(), -position.z.toFloat())
-                glLightfv(
-                    GL_LIGHT0, GL_POSITION, floatArrayOf(
-                        position.x.toFloat() - 12.9f,
-                        position.y.toFloat() + 30f,
-                        position.z.toFloat() + 17.1f,
-                        0f
+                level.sunPosition?.let {
+                    glEnable(GL_LIGHTING)
+                    glLightfv(
+                        GL_LIGHT0, GL_POSITION, floatArrayOf(
+                            position.x.toFloat() + it.x,
+                            position.y.toFloat() + it.y,
+                            position.z.toFloat() + it.z,
+                            0f
+                        )
                     )
-                )
+                }
                 level.entities.forEach { it.draw() }
             }
 

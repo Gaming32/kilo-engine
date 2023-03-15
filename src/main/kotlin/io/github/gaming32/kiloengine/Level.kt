@@ -2,6 +2,7 @@ package io.github.gaming32.kiloengine
 
 import io.github.gaming32.kiloengine.entity.BaseComponent
 import io.github.gaming32.kiloengine.entity.Entity
+import org.joml.Vector3f
 import org.ode4j.ode.DBody
 import org.ode4j.ode.DSpace
 import org.ode4j.ode.DWorld
@@ -15,6 +16,7 @@ class Level {
     internal val bodyToEntity = mutableMapOf<DBody, Entity>()
 
     var skybox: SkyboxTextures? = null
+    var sunPosition: Vector3f? = null
 
     init {
         world.setGravity(0.0, -11.0, 0.0)
