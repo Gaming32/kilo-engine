@@ -12,16 +12,20 @@ data class Model(val tris: List<Tri>, val materials: Map<String, Material>) : Dr
         }
     }
 
-    data class Vertex(
+    data class Vertex @JvmOverloads constructor(
         val position: Vector3f,
         val normal: Vector3f? = null,
-        val uv: UV? = null
+        val uv: UV? = null,
+        val color: Material.Color = Material.Color.DEFAULT
     ) : Drawable {
         override fun draw(builder: ModelBuilder) {
             uv?.draw(builder)
             normal?.let { builder.normal(it) }
+            builder.color(color.r, color.g, color.b)
             builder.vertex(position)
         }
+
+        fun scale(scale: Float) = copy(position = Vector3f(position).mul(scale))
     }
 
     data class Tri(val a: Vertex, val b: Vertex, val c: Vertex, val material: Material? = null) : Drawable {
@@ -34,6 +38,8 @@ data class Model(val tris: List<Tri>, val materials: Map<String, Material>) : Dr
             c.draw(builder)
             builder.draw()
         }
+
+        fun scale(scale: Float) = copy(a = a.scale(scale), b = b.scale(scale), c = c.scale(scale))
     }
 
     companion object {
@@ -45,4 +51,6 @@ data class Model(val tris: List<Tri>, val materials: Map<String, Material>) : Dr
             it.draw(builder)
         }
     }
+
+    fun scale(scale: Float) = copy(tris = tris.map { it.scale(scale) })
 }

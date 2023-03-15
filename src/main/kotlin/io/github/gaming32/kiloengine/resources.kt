@@ -7,7 +7,7 @@ typealias ResourceGetter = (String) -> InputStream?
 
 object Resources {
     @JvmStatic
-    var resourceGetter: ResourceGetter = object {}::class.java::getResourceAsStream
+    var resourceGetter: ResourceGetter = javaClass::getResourceAsStream
 
     @JvmStatic
     fun addResourceGetter(getter: ResourceGetter) {

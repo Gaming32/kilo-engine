@@ -21,6 +21,7 @@ import java.io.BufferedReader
 class SceneLoaderImpl(private val resourceGetter: () -> ResourceGetter) : SceneLoader {
     override fun loadObj(name: String) = textResource(name) { inp, parentDir ->
         val verts = mutableListOf<Vector3f>()
+        val vertColors = mutableListOf<Material.Color>()
         val normals = mutableListOf<Vector3f>()
         val uvs = mutableListOf<Model.UV>()
         val tris = mutableListOf<Model.Tri>()
@@ -30,11 +31,22 @@ class SceneLoaderImpl(private val resourceGetter: () -> ResourceGetter) : SceneL
             when (line[0]) {
                 "mtllib" -> materials += loadMaterialLibrary(parentDir + line[1])
                 "usemtl" -> material = materials[line[1]]
-                "v" -> verts += Vector3f(
-                    line[1].toFloat(),
-                    line[2].toFloat(),
-                    line[3].toFloat()
-                )
+                "v" -> {
+                    verts += Vector3f(
+                        line[1].toFloat(),
+                        line[2].toFloat(),
+                        line[3].toFloat()
+                    )
+                    vertColors += if (line.size > 4) {
+                        Material.Color(
+                            line[4].toFloat(),
+                            line[4].toFloat(),
+                            line[4].toFloat()
+                        )
+                    } else {
+                        Material.Color.DEFAULT
+                    }
+                }
                 "vn" -> normals += Vector3f(
                     line[1].toFloat(),
                     line[2].toFloat(),
@@ -47,9 +59,9 @@ class SceneLoaderImpl(private val resourceGetter: () -> ResourceGetter) : SceneL
                 "f" -> {
                     for (i in 2 until line.size - 1) {
                         tris += Model.Tri(
-                            parseVertex(verts, normals, uvs, line[1]),
-                            parseVertex(verts, normals, uvs, line[i]),
-                            parseVertex(verts, normals, uvs, line[i + 1]),
+                            parseVertex(verts, vertColors, normals, uvs, line[1]),
+                            parseVertex(verts, vertColors, normals, uvs, line[i]),
+                            parseVertex(verts, vertColors, normals, uvs, line[i + 1]),
                             material
                         )
                     }
@@ -120,13 +132,15 @@ class SceneLoaderImpl(private val resourceGetter: () -> ResourceGetter) : SceneL
 
     private fun parseVertex(
         verts: List<Vector3f>,
+        vertColors: List<Material.Color>,
         normals: List<Vector3f>,
         uvs: List<Model.UV>,
         vertex: String
     ): Model.Vertex {
         val parts = vertex.split("/")
+        val vertIndex = parts[0].toInt() - 1
         return Model.Vertex(
-            verts[parts[0].toInt() - 1],
+            verts[vertIndex],
             if (parts.size > 2 && parts[2].isNotEmpty()) {
                 normals[parts[2].toInt() - 1]
             } else {
@@ -136,7 +150,8 @@ class SceneLoaderImpl(private val resourceGetter: () -> ResourceGetter) : SceneL
                 uvs[parts[1].toInt() - 1]
             } else {
                 null
-            }
+            },
+            vertColors[vertIndex]
         )
     }
 
