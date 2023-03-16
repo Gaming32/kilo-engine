@@ -59,10 +59,7 @@ object TextureManager {
         }
         val image = ImageIO.read(Resources.getResource(path) ?: run {
             GL11.glDeleteTextures(tex)
-
-            if (path.startsWith('/'))
-                throw IllegalArgumentException("Missing texture $path. Did you forget to create a virtual texture *before* it's used?")
-            else throw IllegalArgumentException("Missing texture $path. Note file paths must begin with a '/'.")
+            throw IllegalArgumentException("Missing texture $path. Did you forget to create a virtual texture *before* it's used?")
         })
         var width = image.width
         var height = image.height

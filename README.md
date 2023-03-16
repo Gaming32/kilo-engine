@@ -87,7 +87,7 @@ Scene Json5 syntax is simple. Here's a brief example:
 ```json5
 {
   // if you want to remove the skybox:
-  skybox: false,
+  skybox: null,
   
   // otherwise:
   skybox: { // Skybox is optional. See above.
