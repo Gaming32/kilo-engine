@@ -79,6 +79,8 @@ operator fun <T, R> ((T) -> R?).plus(other: (T) -> R?): (T) -> R? = { invoke(it)
 
 inline fun <reified T> Any?.cast() = this as T
 
+inline fun <reified T> Any?.castOrNull() = this as? T
+
 val Class<*>.wrapperType get() = when (this) {
     Nothing::class.javaPrimitiveType -> Nothing::class.javaObjectType
     Byte::class.javaPrimitiveType -> Byte::class.javaObjectType

@@ -54,7 +54,7 @@ abstract class KiloEngineGame {
         init()
         registerEvents()
         loadInitScene()
-        val skybox = scene.skybox?.let {
+        val cubemapSkybox = scene.skybox.castOrNull<Skybox.Cubemap>()?.let {
             withValue(-1, TextureManager::maxMipmap, { TextureManager.maxMipmap = it }) {
                 withValue(GL_NEAREST, TextureManager::filter, { TextureManager.filter = it }) {
                     TextureManager.loadAsVirtual(it.down, "skybox/down")
@@ -66,6 +66,10 @@ abstract class KiloEngineGame {
                 }
             }
             sceneLoader.loadObj("/skybox.obj").toDisplayList()
+        }
+        scene.skybox.castOrNull<Skybox.SolidColor>()?.let {
+            glClearColor(it.r, it.g, it.b, 1f)
+            clearParams = GL_DEPTH_BUFFER_BIT or GL_COLOR_BUFFER_BIT
         }
         var lastTime = glfwGetTime()
         var lastPhysicsTime = lastTime
@@ -164,12 +168,12 @@ abstract class KiloEngineGame {
                 glRotatef(camera.rotation.y, 0f, 1f, 0f)
 
                 // Skybox
-                if (skybox != null) {
+                if (cubemapSkybox != null) {
                     glDisable(GL_DEPTH_TEST)
                     glDisable(GL_LIGHTING)
 
                     if (camera.fov != null) {
-                        skybox.draw()
+                        cubemapSkybox.draw()
                     }
 
                     glClear(GL_DEPTH_BUFFER_BIT)
@@ -220,7 +224,7 @@ abstract class KiloEngineGame {
 
             glfwSwapBuffers(window)
         }
-        skybox?.close()
+        cubemapSkybox?.close()
         contactJointGroup.destroy()
         quit()
     }
@@ -329,7 +333,11 @@ abstract class KiloEngineGame {
                     } else {
                         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
                         glLineWidth(10f)
-                        clearParams = GL_DEPTH_BUFFER_BIT
+                        clearParams = GL_DEPTH_BUFFER_BIT or if (scene.skybox is Skybox.SolidColor) {
+                            GL_COLOR_BUFFER_BIT
+                        } else {
+                            0
+                        }
                     }
                 }
             }
