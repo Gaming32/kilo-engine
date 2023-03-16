@@ -1,7 +1,8 @@
 package io.github.gaming32.kiloengine.entity
 
 import com.google.gson.JsonObject
-import io.github.gaming32.kiloengine.loader.LevelLoader
+import io.github.gaming32.kiloengine.TextureManager
+import io.github.gaming32.kiloengine.loader.SceneLoader
 import io.github.gaming32.kiloengine.util.*
 import org.joml.Vector2d
 import org.joml.Vector2f
@@ -12,7 +13,7 @@ import org.lwjgl.system.MemoryUtil.NULL
 import org.ode4j.math.DVector3
 import org.ode4j.math.DVector3C
 
-class CameraComponent(
+class CameraComponent @JvmOverloads constructor(
     entity: Entity,
     val offset: DVector3C = DVector3(),
     val renderArea: Pair<Vector2f, Vector2f>? = Vector2f(0f, 0f) to Vector2f(1f, 1f),
@@ -23,7 +24,7 @@ class CameraComponent(
     val orthoRange: Pair<Vector2d, Vector2d> = Vector2d(-10.0, -10.0) to Vector2d(10.0, 10.0)
 ) : BaseComponent<CameraComponent>(Type, entity) {
     companion object Type : ComponentType<CameraComponent>() {
-        override fun create(entity: Entity, loader: LevelLoader, data: JsonObject) = CameraComponent(
+        override fun create(entity: Entity, loader: SceneLoader, data: JsonObject) = CameraComponent(
             entity,
             data["offset"]?.asJsonArray?.toDVector3() ?: DVector3(),
             if (data["textureOut"] != null) {

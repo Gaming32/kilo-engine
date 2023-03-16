@@ -1,6 +1,6 @@
 package io.github.gaming32.kiloengine.entity
 
-import io.github.gaming32.kiloengine.Level
+import io.github.gaming32.kiloengine.Scene
 import io.github.gaming32.kiloengine.model.CollisionType
 import org.ode4j.math.DVector3C
 import org.ode4j.ode.DBody
@@ -8,20 +8,20 @@ import org.ode4j.ode.DContact.DSurfaceParameters
 import org.ode4j.ode.DContactGeom
 import org.ode4j.ode.OdeHelper
 
-class Entity(val level: Level, position: DVector3C) {
-    val body: DBody = OdeHelper.createBody(level.world)
+class Entity(val scene: Scene, position: DVector3C) {
+    val body: DBody = OdeHelper.createBody(scene.world)
 
     @PublishedApi
     internal val components = mutableListOf<BaseComponent<*>>()
 
     init {
         body.position = position
-        level.addEntity(this)
+        scene.addEntity(this)
     }
 
     fun addComponent(component: BaseComponent<*>) {
         components += component
-        level.calculateEvents(component)
+        scene.calculateEvents(component)
     }
 
     @Suppress("UNCHECKED_CAST")

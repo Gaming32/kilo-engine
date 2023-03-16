@@ -2,7 +2,7 @@ package io.github.gaming32.kiloengine.entity
 
 import com.google.gson.JsonObject
 import io.github.gaming32.kiloengine.MouseMoveEvent
-import io.github.gaming32.kiloengine.loader.LevelLoader
+import io.github.gaming32.kiloengine.loader.SceneLoader
 import io.github.gaming32.kiloengine.model.CollisionType
 import io.github.gaming32.kiloengine.model.CollisionTypes
 import io.github.gaming32.kiloengine.util.*
@@ -19,7 +19,7 @@ import org.ode4j.ode.DContactGeom
 import java.text.DecimalFormat
 import kotlin.math.atan2
 
-class PlayerComponent(
+open class PlayerComponent(
     entity: Entity, private val startRotation: Vector2fc
 ) : BaseComponent<PlayerComponent>(Type, entity) {
     companion object Type : ComponentType<PlayerComponent>() {
@@ -33,7 +33,7 @@ class PlayerComponent(
 
         private val UI_DEC_FORMAT = DecimalFormat("0.0")
 
-        override fun create(entity: Entity, loader: LevelLoader, data: JsonObject) =
+        override fun create(entity: Entity, loader: SceneLoader, data: JsonObject) =
             PlayerComponent(entity, data["rotation"]?.asJsonArray?.toVector2f() ?: Vector2f())
     }
 

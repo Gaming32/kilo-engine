@@ -1,32 +1,40 @@
 package io.github.gaming32.kiloengine.entity
 
 import com.google.gson.JsonObject
-import io.github.gaming32.kiloengine.loader.LevelLoader
+import io.github.gaming32.kiloengine.loader.SceneLoader
 import io.github.gaming32.kiloengine.model.CollisionModel
 import io.github.gaming32.kiloengine.model.CollisionType
+import io.github.gaming32.kiloengine.model.Material
 import io.github.gaming32.kiloengine.util.getElement
 import org.ode4j.ode.DContact
 import org.ode4j.ode.DContactGeom
 import org.ode4j.ode.DGeom
 import org.ode4j.ode.OdeHelper
+import java.util.*
 
 class MeshColliderComponent(
     entity: Entity, val model: CollisionModel
 ) : BaseComponent<MeshColliderComponent>(Type, entity) {
     companion object Type : ComponentType<MeshColliderComponent>() {
-        override fun create(entity: Entity, loader: LevelLoader, data: JsonObject) = MeshColliderComponent(
+        override fun create(entity: Entity, loader: SceneLoader, data: JsonObject) = MeshColliderComponent(
             entity,
-            loader.loadCollision(
-                entity.getComponent<MeshComponent>().model,
-                data.getElement("collision").asString
-            )
+            entity.getComponent<MeshComponent>().model.let { model ->
+                CollisionModel(
+                    model,
+                    IdentityHashMap<Material, String>().apply {
+                        data.getElement("collision").asJsonObject.asMap().forEach { (key, value) ->
+                            put(model.materials[key], value.asString)
+                        }
+                    }
+                )
+            }
         )
     }
 
     private val collisionMeshes: Map<DGeom, CollisionType> =
         model.toMultiTriMeshData().entries.associate { (collision, mesh) ->
             val geom = OdeHelper.createTriMesh(
-                entity.level.space, mesh,
+                entity.scene.space, mesh,
                 { _, _, _ -> 1 },
                 { _, _, _, _ -> },
                 { _, _, _, _, _ -> 1 }
