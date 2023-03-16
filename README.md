@@ -3,27 +3,87 @@ _A Simple 3D Game Engine_
 
 ## Installation
 
-### Gradle Kotlin
-Add the following repositories to your `build.gradle.kts`:
+<details open>
+<summary>Gradle Kotlin</summary>
+
 ```kotlin
+// build.gradle.kts
+
 repositories {
     mavenCentral()
-    maven("https://maven.quiltmc.org/repository/release")
     maven("https://maven.jemnetworks.com/releases")
-    maven("https://jitpack.io")
     maven("https://maven.jemnetworks.com/snapshots")
+    maven("https://maven.quiltmc.org/repository/release")
+    maven("https://jitpack.io")
 }
-```
-This way, if the version you seek is available as a snapshot, but not as a release, you'll still be able to download it.
-
-Now add the following dependency:
-```kotlin
-val kiloEngineVersion = "0.1-SNAPSHOT"
 
 dependencies {
-    implementation("io.github.gaming32:kilo-engine:${kiloEngineVersion}")
+    implementation("io.github.gaming32:kilo-engine:0.1-SNAPSHOT")
 }
 ```
+
+</details>
+
+<details>
+<summary>Gradle Groovy</summary>
+
+```groovy
+// build.gradle
+
+repositories {
+    mavenCentral()
+    maven { url = "https://maven.jemnetworks.com/releases" }
+    maven { url = "https://maven.jemnetworks.com/snapshots" }
+    maven { url = "https://maven.quiltmc.org/repository/release" }
+    maven { url = "https://jitpack.io" }
+}
+
+dependencies {
+    implementation "io.github.gaming32:kilo-engine:0.1-SNAPSHOT"
+}
+```
+
+</details>
+
+<details>
+<summary>Maven</summary>
+
+```xml
+<!-- pom.xml -->
+
+<repositories>
+  <repository>
+    <id>gaming32</id>
+    <name>Gaming32</name>
+    <url>https://maven.jemnetworks.com/releases</url>
+  </repository>
+  <repository>
+    <id>gaming32-snapshots</id>
+    <name>Gaming32 Snapshots</name>
+    <url>https://maven.jemnetworks.com/snapshots</url>
+  </repository>
+  <repository>
+    <id>quiltmc</id>
+    <name>QuiltMC</name>
+    <url>https://maven.quiltmc.org/repository/release</url>
+  </repository>
+  <repository>
+    <id>jitpack.io</id>
+    <name>Jitpack</name>
+    <url>https://jitpack.io</url>
+  </repository>
+</repositories>
+
+<dependencies>
+  <dependency>
+    <groupId>io.github.gaming32</groupId>
+    <artifactId>kilo-engine</artifactId>
+    <version>0.1-SNAPSHOT</version>
+  </dependency>
+</dependencies>
+```
+
+</details>
 
 ## Basic example
 
