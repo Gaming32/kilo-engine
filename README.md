@@ -87,6 +87,11 @@ Scene Json5 syntax is simple. Here's a brief example:
 ```json5
 {
   skybox: { // Skybox is optional. See above.
+    
+    // if you want to use a single texture, use the following:
+    all: "/example/skybox/down.png",
+    
+    // otherwise, use this for multiple textures:
     base: "/example/skybox", // *Optional* base path for the paths in this object
     down: "down.png", // Because `base` is specified, this will load from `/example/skybox/down.png`.
     up: "up.png",
