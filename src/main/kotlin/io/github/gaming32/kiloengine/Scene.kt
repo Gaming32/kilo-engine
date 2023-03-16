@@ -20,7 +20,7 @@ class Scene {
     @PublishedApi
     internal val bodyToEntity = mutableMapOf<DBody, Entity>()
 
-    var skybox: SkyboxTextures? = null
+    var skybox: SkyboxTextures? = SkyboxTextures.DEFAULT
     var sunPosition: Vector3f? = null
 
     private var eventsDirty = false

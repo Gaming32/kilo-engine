@@ -1,0 +1,18 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="true" type="JetRunConfigurationType" nameIsGenerated="true">
+    <option name="MAIN_CLASS_NAME" value="io.github.gaming32.kiloengine.ExampleMainKt" />
+    <module name="kilo-engine.main" />
+    <shortenClasspath name="NONE" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+  <configuration default="false" name="ExampleScene" type="JetRunConfigurationType">
+    <option name="MAIN_CLASS_NAME" value="io.github.gaming32.kiloengine.ExampleMainKt" />
+    <module name="kilo-engine.main" />
+    <shortenClasspath name="NONE" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

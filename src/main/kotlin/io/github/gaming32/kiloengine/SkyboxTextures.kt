@@ -12,6 +12,8 @@ data class SkyboxTextures(
     val positiveX: String,
 ) {
     companion object {
+        val DEFAULT = singular("/skybox.png")
+
         @JvmStatic
         fun relative(
             base: String,
@@ -31,6 +33,9 @@ data class SkyboxTextures(
         )
 
         @JvmStatic
+        fun singular(all : String) = SkyboxTextures(all, all, all, all, all, all)
+
+        @JvmStatic
         fun fromJson(obj: JsonObject) = if (obj.has("base")) {
             relative(
                 obj.getElement("base").asString,
@@ -41,6 +46,8 @@ data class SkyboxTextures(
                 obj.getElement("negativeX").asString,
                 obj.getElement("positiveX").asString,
             )
+        } else if (obj.has("all")) {
+            singular(obj.getElement("all").asString)
         } else {
             SkyboxTextures(
                 obj.getElement("down").asString,
