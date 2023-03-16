@@ -12,6 +12,8 @@ data class SkyboxTextures(
     val positiveX: String,
 ) {
     companion object {
+        val DEFAULT = singular("/skybox.png")
+
         @JvmStatic
         fun relative(
             base: String,

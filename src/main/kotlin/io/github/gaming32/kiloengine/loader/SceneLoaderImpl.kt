@@ -104,7 +104,20 @@ class SceneLoaderImpl(private val resourceGetter: () -> ResourceGetter) : SceneL
 
     override fun loadScene(name: String, scene: Scene) = textResource(name) { inp, _ ->
         val json = JsonParser.parseReader(Gson5Reader(JsonReader.json5(inp))).asJsonObject
-        json["skybox"]?.asJsonObject?.let { scene.skybox = SkyboxTextures.fromJson(it) }
+        val skybox = json["skybox"]
+
+        if (skybox?.isJsonObject == true) {
+            skybox.asJsonObject?.let { scene.skybox = SkyboxTextures.fromJson(it) }
+        } else {
+            try {
+                if (!skybox.asBoolean)
+                    scene.skybox = null
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
         json["sunPosition"]?.asJsonArray?.let { scene.sunPosition = it.toVector3f() }
         json["gravity"]?.asJsonArray?.let { scene.world.setGravity(it.toDVector3()) }
         json["entities"]?.asJsonArray?.forEach { entityData ->

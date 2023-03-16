@@ -77,7 +77,7 @@ A game in Kilo Engine is made up of "scenes" (well actually just one at this poi
 
 Scenes can be constructed purely through using code, but it is preferred to specify the initial data of scenes through `.scene.json5` files. You can load scenes from Json5 files using `sceneLoader#loadScene`.
 
-Scenes, however, have a bit more to them than just entities. Specifically, they can also have a skybox and a sun. The skybox is a cubemap defining the sides. However, a skybox is optional. Please do note, however, that a skybox should almost *always* be specified for outdoor scenes, as the color buffer is never cleared, so the sky without a skybox will just be the previous frame. The sun position indicates a position for the sun. The sun will be a directional light from its position to `(0, 0, 0)`. If the sun's position is not specified, no lighting will be automatically applied.
+Scenes, however, have a bit more to them than just entities. Specifically, they can also have a skybox and a sun. The skybox is a cubemap defining the sides. However, a skybox is optional, and although one will be provided by default - you can remove it. Please do note, however, that a skybox should almost *always* be specified for outdoor scenes, as the color buffer is never cleared, so the sky without a skybox will just be the previous frame. The sun position indicates a position for the sun. The sun will be a directional light from its position to `(0, 0, 0)`. If the sun's position is not specified, no lighting will be automatically applied.
 
 Scene Json5 syntax is simple. Here's a brief example:
 
@@ -86,6 +86,10 @@ Scene Json5 syntax is simple. Here's a brief example:
 
 ```json5
 {
+  // if you want to remove the skybox:
+  skybox: false,
+  
+  // otherwise:
   skybox: { // Skybox is optional. See above.
     
     // if you want to use a single texture, use the following:
