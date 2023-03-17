@@ -1,13 +1,11 @@
 package io.github.gaming32.kiloengine
 
 import io.github.gaming32.kiloengine.entity.CameraComponent
+import io.github.gaming32.kiloengine.entity.PlayerComponent
 import io.github.gaming32.kiloengine.loader.SceneLoader
 import io.github.gaming32.kiloengine.loader.SceneLoaderImpl
 import io.github.gaming32.kiloengine.util.*
-import org.joml.Math
-import org.joml.Vector2d
-import org.joml.Vector2i
-import org.joml.Vector3d
+import org.joml.*
 import org.lwjgl.glfw.Callbacks.glfwFreeCallbacks
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.glfw.GLFWErrorCallback
@@ -35,6 +33,12 @@ abstract class KiloEngineGame {
         val WALL_PARAMS = DSurfaceParameters().apply {
             mu = 3.0
         }
+
+        @JvmField
+        val EDITOR_MODE = System.getProperty("kilo.editor").toBoolean()
+        val EDITOR_DEBUG_COLOR = Vector3f(50 / 255f, 168 / 255f, 113 / 255f)
+        private const val EDITOR_MOVE_SPEED = 0.35f
+        private const val EDITOR_LOOK_SPEED = 0.2f
     }
 
     init {
@@ -49,6 +53,9 @@ abstract class KiloEngineGame {
     private val matrices = MatrixStacks(16)
     lateinit var sceneLoader: SceneLoader
         private set
+
+    private val editorCameraPos = Vector3f()
+    private val editorCameraRot = Vector2f()
 
     // Handles
     private var window = 0L
@@ -83,6 +90,12 @@ abstract class KiloEngineGame {
         var lastTime = glfwGetTime()
         var lastPhysicsTime = lastTime
         var fpsAverage = 0.0
+        if (EDITOR_MODE) {
+            scene.getComponentOrNull<PlayerComponent>()?.let {
+                editorCameraPos.set(it.entity.body.position.toVector3f())
+                editorCameraRot.set(it.rotation)
+            }
+        }
         val contactJointGroup = OdeHelper.createJointGroup()
         while (!glfwWindowShouldClose(window)) {
             glfwPollEvents()
@@ -97,99 +110,140 @@ abstract class KiloEngineGame {
                 lastPhysicsTime = time - 1.0
             }
             while (time - lastPhysicsTime > PHYSICS_SPEED) {
-                scene.invokeEvent(EventType.PRE_TICK)
-                scene.invokeEvent(EventType.HANDLE_MOVEMENT, movementInput)
-                movementInput.y = 0.0
-                scene.entities.forEach { entity ->
-                    entity.body.addForce(
-                        entity.body.linearVel.x * -HORIZONTAL_DAMPING / PHYSICS_SPEED,
-                        entity.body.linearVel.y * -VERTICAL_DAMPING / PHYSICS_SPEED,
-                        entity.body.linearVel.z * -HORIZONTAL_DAMPING / PHYSICS_SPEED
-                    )
-                }
-                val contactBuffer = DContactGeomBuffer(CONTACT_COUNT)
-                contactJointGroup.clear()
-                scene.space.collide(null) { _, o1, o2 ->
-                    repeat(OdeHelper.collide(o1, o2, CONTACT_COUNT, contactBuffer)) {
-                        val contact = contactBuffer[it]
-                        val e1 = scene.getEntityByBody(contact.g1.body)
-                        val e2 = scene.getEntityByBody(contact.g2.body)
-                        if (e1 == null || e2 == null) return@repeat
-                        var surfaceParams = e1.collideWithEntity(e2, contact, true)
-                        val surfaceParams2 = e2.collideWithEntity(e1, contact, false)
-                        surfaceParams = surfaceParams ?: surfaceParams2
-                        if (surfaceParams == null) return@repeat
-                        val joint = OdeHelper.createContactJoint(
-                            scene.world,
-                            contactJointGroup,
-                            DContact(contact, surfaceParams)
-                        )
-                        joint.attach(contact.g1.body, contact.g2.body)
+                val mouseLocked = glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED
+                if (EDITOR_MODE) {
+                    if (mouseLocked) {
+                        editorCameraPos += movementInput.toVector3f()
+                            .rotateX(Math.toRadians(editorCameraRot.x))
+                            .rotateY(Math.toRadians(editorCameraRot.y))
+                            .mul(EDITOR_MOVE_SPEED)
                     }
+                    movementInput.y = 0.0
+                } else {
+                    scene.invokeEvent(EventType.PRE_TICK)
+                    if (mouseLocked) {
+                        scene.invokeEvent(EventType.HANDLE_MOVEMENT, movementInput)
+                    }
+                    movementInput.y = 0.0
+                    scene.entities.forEach { entity ->
+                        entity.body.addForce(
+                            entity.body.linearVel.x * -HORIZONTAL_DAMPING / PHYSICS_SPEED,
+                            entity.body.linearVel.y * -VERTICAL_DAMPING / PHYSICS_SPEED,
+                            entity.body.linearVel.z * -HORIZONTAL_DAMPING / PHYSICS_SPEED
+                        )
+                    }
+                    val contactBuffer = DContactGeomBuffer(CONTACT_COUNT)
+                    contactJointGroup.clear()
+                    scene.space.collide(null) { _, o1, o2 ->
+                        repeat(OdeHelper.collide(o1, o2, CONTACT_COUNT, contactBuffer)) {
+                            val contact = contactBuffer[it]
+                            val e1 = scene.getEntityByBody(contact.g1.body)
+                            val e2 = scene.getEntityByBody(contact.g2.body)
+                            if (e1 == null || e2 == null) return@repeat
+                            var surfaceParams = e1.collideWithEntity(e2, contact, true)
+                            val surfaceParams2 = e2.collideWithEntity(e1, contact, false)
+                            surfaceParams = surfaceParams ?: surfaceParams2
+                            if (surfaceParams == null) return@repeat
+                            val joint = OdeHelper.createContactJoint(
+                                scene.world,
+                                contactJointGroup,
+                                DContact(contact, surfaceParams)
+                            )
+                            joint.attach(contact.g1.body, contact.g2.body)
+                        }
+                    }
+                    scene.world.quickStep(PHYSICS_SPEED)
+                    scene.invokeEvent(EventType.TICK)
                 }
-                scene.world.quickStep(PHYSICS_SPEED)
-                scene.invokeEvent(EventType.TICK)
                 lastPhysicsTime += PHYSICS_SPEED
             }
 
             // 3D Mode
             glEnable(GL_CULL_FACE)
 
-            for (camera in scene.getComponents<CameraComponent>()) {
-                val aspect: Float
-                if (camera.renderArea != null) {
-                    glBindFramebuffer(GL_FRAMEBUFFER, 0)
-                    val w = (camera.renderArea.second.x - camera.renderArea.first.x) * windowSize.x
-                    val h = (camera.renderArea.second.y - camera.renderArea.first.y) * windowSize.y
-                    glViewport(
-                        (camera.renderArea.first.x * windowSize.x).toInt(),
-                        (camera.renderArea.first.y * windowSize.y).toInt(),
-                        w.toInt(), h.toInt()
-                    )
-                    aspect = w / h
-                } else if (camera.textureResolution != null) {
-                    glViewport(0, 0, camera.textureResolution.x, camera.textureResolution.y)
-                    glBindFramebuffer(GL_FRAMEBUFFER, camera.framebuffer)
-                    aspect = camera.textureResolution.x.toFloat() / camera.textureResolution.y
-                } else {
-                    unreachable()
-                }
+            if (EDITOR_MODE) {
+                glBindFramebuffer(GL_FRAMEBUFFER, 0)
+                glViewport(0, 0, windowSize.x, windowSize.y)
+
                 matrices.projection.clear()
-                if (camera.fov == null) {
-                    matrices.projection.ortho(
-                        camera.orthoRange.first.x.toFloat(),
-                        camera.orthoRange.second.x.toFloat(),
-                        camera.orthoRange.first.y.toFloat(),
-                        camera.orthoRange.second.y.toFloat(),
-                        0.01f, 1000f
-                    )
-                } else {
-                    matrices.projection.perspective(Math.toRadians(camera.fov!!), aspect, 0.01f, 1000f)
-                }
+                matrices.projection.perspective(
+                    Math.toRadians(80f),
+                    windowSize.x / windowSize.y.toFloat(),
+                    0.01f, 1000f
+                )
+
                 glClear(clearParams)
 
-                // Rotate camera
                 matrices.model.clear()
-                matrices.model.rotateX(Math.toRadians(camera.rotation.x))
-                matrices.model.rotateZ(Math.toRadians(camera.rotation.z))
-                matrices.model.rotateY(Math.toRadians(camera.rotation.y))
+                matrices.model.rotateX(Math.toRadians(editorCameraRot.x))
+                matrices.model.rotateY(Math.toRadians(180 - editorCameraRot.y))
 
-                // Skybox
                 if (cubemapSkybox != null) {
                     glDisable(GL_DEPTH_TEST)
-
-                    if (camera.fov != null) {
-                        cubemapSkybox.draw(matrices)
-                    }
-
+                    cubemapSkybox.draw(matrices)
                     glClear(GL_DEPTH_BUFFER_BIT)
                 }
 
-                // Scene
                 glEnable(GL_DEPTH_TEST)
-                val position = DVector3(camera.entity.body.position).add(camera.offset)
-                matrices.model.translate(-position.x.toFloat(), -position.y.toFloat(), -position.z.toFloat())
+                matrices.model.translate(-editorCameraPos.x, -editorCameraPos.y, -editorCameraPos.z)
                 scene.invokeEvent(EventType.DRAW, matrices)
+            } else {
+                for (camera in scene.getComponents<CameraComponent>()) {
+                    val aspect: Float
+                    if (camera.renderArea != null) {
+                        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+                        val w = (camera.renderArea.second.x - camera.renderArea.first.x) * windowSize.x
+                        val h = (camera.renderArea.second.y - camera.renderArea.first.y) * windowSize.y
+                        glViewport(
+                            (camera.renderArea.first.x * windowSize.x).toInt(),
+                            (camera.renderArea.first.y * windowSize.y).toInt(),
+                            w.toInt(), h.toInt()
+                        )
+                        aspect = w / h
+                    } else if (camera.textureResolution != null) {
+                        glViewport(0, 0, camera.textureResolution.x, camera.textureResolution.y)
+                        glBindFramebuffer(GL_FRAMEBUFFER, camera.framebuffer)
+                        aspect = camera.textureResolution.x.toFloat() / camera.textureResolution.y
+                    } else {
+                        unreachable()
+                    }
+                    matrices.projection.clear()
+                    if (camera.fov == null) {
+                        matrices.projection.ortho(
+                            camera.orthoRange.first.x.toFloat(),
+                            camera.orthoRange.second.x.toFloat(),
+                            camera.orthoRange.first.y.toFloat(),
+                            camera.orthoRange.second.y.toFloat(),
+                            0.01f, 1000f
+                        )
+                    } else {
+                        matrices.projection.perspective(Math.toRadians(camera.fov!!), aspect, 0.01f, 1000f)
+                    }
+                    glClear(clearParams)
+
+                    // Rotate camera
+                    matrices.model.clear()
+                    matrices.model.rotateX(Math.toRadians(camera.rotation.x))
+                    matrices.model.rotateZ(Math.toRadians(camera.rotation.z))
+                    matrices.model.rotateY(Math.toRadians(camera.rotation.y))
+
+                    // Skybox
+                    if (cubemapSkybox != null) {
+                        glDisable(GL_DEPTH_TEST)
+
+                        if (camera.fov != null) {
+                            cubemapSkybox.draw(matrices)
+                        }
+
+                        glClear(GL_DEPTH_BUFFER_BIT)
+                    }
+
+                    // Scene
+                    glEnable(GL_DEPTH_TEST)
+                    val position = DVector3(camera.entity.body.position).add(camera.offset)
+                    matrices.model.translate(-position.x.toFloat(), -position.y.toFloat(), -position.z.toFloat())
+                    scene.invokeEvent(EventType.DRAW, matrices)
+                }
             }
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0)
@@ -316,25 +370,40 @@ abstract class KiloEngineGame {
                 lastMousePos.x != Double.POSITIVE_INFINITY &&
                 glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED
             ) {
-                scene.invokeEvent(EventType.MOUSE_MOVED, MouseMoveEvent(x, y, x - lastMousePos.x, y - lastMousePos.y))
+                val event = MouseMoveEvent(x, y, x - lastMousePos.x, y - lastMousePos.y)
+                if (EDITOR_MODE) {
+                    editorCameraRot.y = normalizeDegrees(
+                        editorCameraRot.y - (event.relX * EDITOR_LOOK_SPEED).toFloat()
+                    )
+                    editorCameraRot.x = Math.clamp(
+                        -90f, 90f,
+                        editorCameraRot.x + (event.relY * EDITOR_LOOK_SPEED).toFloat()
+                    )
+                } else {
+                    scene.invokeEvent(EventType.MOUSE_MOVED, event)
+                }
             }
             lastMousePos.set(x, y)
         }
 
         glfwSetMouseButtonCallback(window) { _, _, action, _ ->
             if (action == GLFW_PRESS) {
-                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED)
+                if (EDITOR_MODE) {
+                } else {
+                    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED)
+                }
             }
         }
 
         glfwSetKeyCallback(window) { _, key, _, action, _ ->
             if (action == GLFW_REPEAT) return@glfwSetKeyCallback
             val press = action == GLFW_PRESS
-            if (glfwGetInputMode(window, GLFW_CURSOR) != GLFW_CURSOR_DISABLED) {
-                return@glfwSetKeyCallback
+            if (press && EDITOR_MODE && key == GLFW_KEY_SPACE) {
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED)
             }
+            val mouseLocked = glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED
             when (key) {
-                GLFW_KEY_ESCAPE -> if (press) {
+                GLFW_KEY_ESCAPE -> if (press && !EDITOR_MODE) {
                     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL)
                     movementInput.x = 0.0
                     movementInput.z = 0.0
@@ -359,10 +428,16 @@ abstract class KiloEngineGame {
                 } else {
                     movementInput.x++
                 }
-                GLFW_KEY_SPACE -> if (press) {
+                GLFW_KEY_SPACE -> if (EDITOR_MODE) {
+                    if (!press) {
+                        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL)
+                        movementInput.x = 0.0
+                        movementInput.z = 0.0
+                    }
+                } else if (press && mouseLocked) {
                     movementInput.y = 1.0
                 }
-                GLFW_KEY_F3 -> if (press) {
+                GLFW_KEY_F3 -> if (press && (mouseLocked || EDITOR_MODE)) {
                     wireframe = !wireframe
                     @Suppress("LiftReturnOrAssignment")
                     if (wireframe) {

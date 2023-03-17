@@ -8,10 +8,16 @@ import io.github.gaming32.kiloengine.loader.SceneLoader
 import io.github.gaming32.kiloengine.model.CollisionType
 import io.github.gaming32.kiloengine.model.CollisionTypes
 import io.github.gaming32.kiloengine.util.Destroyable
+import io.github.gaming32.kiloengine.util.x
+import io.github.gaming32.kiloengine.util.y
+import io.github.gaming32.kiloengine.util.z
 import org.joml.Vector3d
 import org.ode4j.ode.DContact
 import org.ode4j.ode.DContactGeom
 import java.lang.invoke.MethodHandles
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 
 abstract class BaseComponent<T : BaseComponent<T>>(val type: ComponentType<T>, val entity: Entity) : Destroyable {
     companion object {
@@ -25,6 +31,18 @@ abstract class BaseComponent<T : BaseComponent<T>>(val type: ComponentType<T>, v
     init {
         @Suppress("LeakingThis")
         entity.addComponent(this)
+    }
+
+    @OptIn(ExperimentalContracts::class)
+    protected inline fun drawPositioned(matrices: MatrixStacks, action: () -> Unit) {
+        contract {
+            callsInPlace(action, InvocationKind.EXACTLY_ONCE)
+        }
+        matrices.model.pushMatrix()
+        val position = entity.body.position
+        matrices.model.translate(position.x.toFloat(), position.y.toFloat(), position.z.toFloat())
+        action()
+        matrices.model.popMatrix()
     }
 
     open fun collideWithMesh(collision: CollisionType, contact: DContactGeom, selfIsG1: Boolean): DContact.DSurfaceParameters? =

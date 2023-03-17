@@ -1,6 +1,8 @@
 package io.github.gaming32.kiloengine.entity
 
 import com.google.gson.JsonObject
+import io.github.gaming32.kiloengine.KiloEngineGame
+import io.github.gaming32.kiloengine.MatrixStacks
 import io.github.gaming32.kiloengine.MouseMoveEvent
 import io.github.gaming32.kiloengine.loader.SceneLoader
 import io.github.gaming32.kiloengine.model.CollisionType
@@ -48,7 +50,59 @@ open class PlayerComponent(
 
     val uiForce = DVector3()
 
-    override fun destroy() = Unit
+    private val _editorModel = lazy {
+        val capsule = entity.getComponentOrNull<CapsuleColliderComponent>() ?: return@lazy null
+        buildDisplayList {
+            texture("/white.png")
+
+            position(-capsule.radius.toFloat(), -capsule.length.toFloat() / 2, 0f)
+                .color(KiloEngineGame.EDITOR_DEBUG_COLOR)
+                .next()
+            position(-capsule.radius.toFloat(), capsule.length.toFloat() / 2, 0f)
+                .color(KiloEngineGame.EDITOR_DEBUG_COLOR)
+                .next()
+            position(capsule.radius.toFloat(), capsule.length.toFloat() / 2, 0f)
+                .color(KiloEngineGame.EDITOR_DEBUG_COLOR)
+                .next()
+
+            position(-capsule.radius.toFloat(), -capsule.length.toFloat() / 2, 0f)
+                .color(KiloEngineGame.EDITOR_DEBUG_COLOR)
+                .next()
+            position(capsule.radius.toFloat(), capsule.length.toFloat() / 2, 0f)
+                .color(KiloEngineGame.EDITOR_DEBUG_COLOR)
+                .next()
+            position(capsule.radius.toFloat(), -capsule.length.toFloat() / 2, 0f)
+                .color(KiloEngineGame.EDITOR_DEBUG_COLOR)
+                .next()
+
+            position(capsule.radius.toFloat(), -capsule.length.toFloat() / 2, 0f)
+                .color(KiloEngineGame.EDITOR_DEBUG_COLOR)
+                .next()
+            position(capsule.radius.toFloat(), capsule.length.toFloat() / 2, 0f)
+                .color(KiloEngineGame.EDITOR_DEBUG_COLOR)
+                .next()
+            position(-capsule.radius.toFloat(), capsule.length.toFloat() / 2, 0f)
+                .color(KiloEngineGame.EDITOR_DEBUG_COLOR)
+                .next()
+
+            position(capsule.radius.toFloat(), -capsule.length.toFloat() / 2, 0f)
+                .color(KiloEngineGame.EDITOR_DEBUG_COLOR)
+                .next()
+            position(-capsule.radius.toFloat(), capsule.length.toFloat() / 2, 0f)
+                .color(KiloEngineGame.EDITOR_DEBUG_COLOR)
+                .next()
+            position(-capsule.radius.toFloat(), -capsule.length.toFloat() / 2, 0f)
+                .color(KiloEngineGame.EDITOR_DEBUG_COLOR)
+                .next()
+        }
+    }
+    private val editorModel by _editorModel
+
+    override fun destroy() {
+        if (_editorModel.isInitialized()) {
+            editorModel?.destroy()
+        }
+    }
 
     fun kill() {
         entity.body.position = startPosition
@@ -168,5 +222,14 @@ open class PlayerComponent(
             -90f, 90f,
             rotation.x + (event.relY * MOUSE_SPEED).toFloat()
         )
+    }
+
+    override fun draw(matrices: MatrixStacks) {
+        if (!KiloEngineGame.EDITOR_MODE) return
+        editorModel?.let {
+            drawPositioned(matrices) {
+                it.draw(matrices)
+            }
+        }
     }
 }

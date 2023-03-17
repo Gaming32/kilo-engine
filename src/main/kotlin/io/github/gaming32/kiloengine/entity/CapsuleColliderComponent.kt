@@ -9,7 +9,7 @@ import org.joml.Matrix3d
 import org.ode4j.ode.OdeHelper
 
 class CapsuleColliderComponent(
-    entity: Entity, radius: Double, length: Double
+    entity: Entity, val radius: Double, val length: Double
 ) : BaseComponent<CapsuleColliderComponent>(Type, entity) {
     companion object Type : ComponentType<CapsuleColliderComponent>() {
         val Z_FORWARD = Matrix3d().rotateX(Math.PI / 2).toDMatrix3()

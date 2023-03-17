@@ -9,7 +9,10 @@ import org.ode4j.math.DVector3
 
 inline operator fun Vector3f.minusAssign(v: Vector3fc) { sub(v) }
 
+inline operator fun Vector3f.plusAssign(v: Vector3fc) { add(v) }
+
 inline operator fun Vector3d.minusAssign(v: Vector3fc) { add(v) }
+
 
 fun Matrix3d.toDMatrix3() = DMatrix3(
     m00(), m01(), m02(),
@@ -18,6 +21,8 @@ fun Matrix3d.toDMatrix3() = DMatrix3(
 )
 
 fun Vector3d.toDVector3() = DVector3(x, y, z)
+
+fun Vector3d.toVector3f() = Vector3f(x.toFloat(), y.toFloat(), z.toFloat())
 
 fun JsonArray.toVector2f() = Vector2f(this[0].asFloat, this[1].asFloat)
 

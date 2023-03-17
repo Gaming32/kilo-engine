@@ -39,7 +39,7 @@ class DisplayList(buffer: FloatBuffer, private val textures: IntArray, private v
         }
     }
 
-    fun draw(matrices: MatrixStacks? = null) {
+    fun draw(matrices: MatrixStacks?) {
         ensureOpen()
         if (matrices != null) {
             MemoryStack.stackPush().use {
