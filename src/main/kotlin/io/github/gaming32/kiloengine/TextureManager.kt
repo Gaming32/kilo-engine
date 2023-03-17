@@ -64,43 +64,46 @@ object TextureManager {
         var width = image.width
         var height = image.height
         val rgba = MemoryUtil.memAlloc(width * height * 4).order(ByteOrder.BIG_ENDIAN)
-        for (pixel in image.getRGB(0, 0, width, height, null, 0, width)) {
-            rgba.putInt((pixel shl 8) or (pixel ushr 24))
-        }
-        rgba.flip()
-        GL11.glTexImage2D(
-            GL11.GL_TEXTURE_2D,
-            0,
-            GL11.GL_RGBA,
-            width,
-            height,
-            0,
-            GL11.GL_RGBA,
-            GL11.GL_UNSIGNED_BYTE,
-            rgba
-        )
-        if (maxMipmap != -1) {
-            for (i in 1..maxMipmap) {
-                width /= 2
-                height /= 2
-                for (pixel in Scalr.resize(image, width, height).getRGB(0, 0, width, height, null, 0, width)) {
-                    rgba.putInt((pixel shl 8) or (pixel ushr 24))
-                }
-                rgba.flip()
-                GL11.glTexImage2D(
-                    GL11.GL_TEXTURE_2D,
-                    i,
-                    GL11.GL_RGBA,
-                    width,
-                    height,
-                    0,
-                    GL11.GL_RGBA,
-                    GL11.GL_UNSIGNED_BYTE,
-                    rgba
-                )
+        try {
+            for (pixel in image.getRGB(0, 0, width, height, null, 0, width)) {
+                rgba.putInt((pixel shl 8) or (pixel ushr 24))
             }
+            rgba.flip()
+            GL11.glTexImage2D(
+                GL11.GL_TEXTURE_2D,
+                0,
+                GL11.GL_RGBA,
+                width,
+                height,
+                0,
+                GL11.GL_RGBA,
+                GL11.GL_UNSIGNED_BYTE,
+                rgba
+            )
+            if (maxMipmap != -1) {
+                for (i in 1..maxMipmap) {
+                    width /= 2
+                    height /= 2
+                    for (pixel in Scalr.resize(image, width, height).getRGB(0, 0, width, height, null, 0, width)) {
+                        rgba.putInt((pixel shl 8) or (pixel ushr 24))
+                    }
+                    rgba.flip()
+                    GL11.glTexImage2D(
+                        GL11.GL_TEXTURE_2D,
+                        i,
+                        GL11.GL_RGBA,
+                        width,
+                        height,
+                        0,
+                        GL11.GL_RGBA,
+                        GL11.GL_UNSIGNED_BYTE,
+                        rgba
+                    )
+                }
+            }
+        } finally {
+            MemoryUtil.memFree(rgba)
         }
-        MemoryUtil.memFree(rgba)
         return tex
     }
 

@@ -2,7 +2,6 @@ package io.github.gaming32.kiloengine.model
 
 import io.github.gaming32.kiloengine.util.Drawable
 import io.github.gaming32.kiloengine.util.ModelBuilder
-import org.lwjgl.opengl.GL11.GL_TEXTURE_2D
 
 sealed class Material : Drawable {
     data class Color(val r: Float, val g: Float, val b: Float, val a: Float = 1f) : Material() {
@@ -12,7 +11,6 @@ sealed class Material : Drawable {
         }
 
         override fun draw(builder: ModelBuilder) {
-            builder.disable(GL_TEXTURE_2D)
             builder.color(r, g, b, a)
         }
 
@@ -22,7 +20,6 @@ sealed class Material : Drawable {
     data class Texture(val path: String, val color: Color = Color.DEFAULT) : Material() {
         override fun draw(builder: ModelBuilder) {
             builder.color(color.r, color.g, color.b, color.a)
-            builder.enable(GL_TEXTURE_2D)
             builder.texture(path)
         }
 

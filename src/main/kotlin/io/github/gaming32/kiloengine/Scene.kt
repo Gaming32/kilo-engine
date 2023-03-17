@@ -4,7 +4,6 @@ import io.github.gaming32.kiloengine.entity.BaseComponent
 import io.github.gaming32.kiloengine.entity.Entity
 import io.github.gaming32.kiloengine.util.cast
 import io.github.gaming32.kiloengine.util.wrapperType
-import org.joml.Vector3f
 import org.ode4j.ode.DBody
 import org.ode4j.ode.DSpace
 import org.ode4j.ode.DWorld
@@ -21,7 +20,6 @@ class Scene {
     internal val bodyToEntity = mutableMapOf<DBody, Entity>()
 
     var skybox: Skybox = Skybox.None
-    var sunPosition: Vector3f? = null
 
     private var eventsDirty = false
     private val events = buildMap {

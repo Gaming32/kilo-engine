@@ -4,6 +4,7 @@ import io.github.gaming32.kiloengine.entity.CameraComponent
 import io.github.gaming32.kiloengine.loader.SceneLoader
 import io.github.gaming32.kiloengine.loader.SceneLoaderImpl
 import io.github.gaming32.kiloengine.util.*
+import org.joml.Math
 import org.joml.Vector2d
 import org.joml.Vector2i
 import org.joml.Vector3d
@@ -20,7 +21,6 @@ import org.ode4j.math.DVector3
 import org.ode4j.ode.DContact.DSurfaceParameters
 import org.ode4j.ode.DContactGeomBuffer
 import org.ode4j.ode.OdeHelper
-import kotlin.math.roundToLong
 
 abstract class KiloEngineGame {
     companion object {
@@ -44,11 +44,19 @@ abstract class KiloEngineGame {
     private val windowSize = Vector2i()
     private val movementInput = Vector3d()
     var wireframe = false
-    private var window = 0L
-    private var nanovg = 0L
     private var clearParams = GL_DEPTH_BUFFER_BIT
+    private val matrices = MatrixStacks(16)
     lateinit var sceneLoader: SceneLoader
         private set
+
+    // Handles
+    private var window = 0L
+    private var nanovg = 0L
+    private var vao = 0
+    private var vbo = 0
+    private var vertexShader = 0
+    private var fragmentShader = 0
+    private var shaderProgram = 0
 
     fun main() {
         init()
@@ -145,35 +153,32 @@ abstract class KiloEngineGame {
                 } else {
                     unreachable()
                 }
-                glMatrixMode(GL_PROJECTION)
-                glLoadIdentity()
+                matrices.projection.clear()
                 if (camera.fov == null) {
-                    glOrtho(
-                        camera.orthoRange.first.x,
-                        camera.orthoRange.second.x,
-                        camera.orthoRange.first.y,
-                        camera.orthoRange.second.y,
-                        0.01, 1000.0
+                    matrices.projection.ortho(
+                        camera.orthoRange.first.x.toFloat(),
+                        camera.orthoRange.second.x.toFloat(),
+                        camera.orthoRange.first.y.toFloat(),
+                        camera.orthoRange.second.y.toFloat(),
+                        0.01f, 1000f
                     )
                 } else {
-                    gluPerspective(camera.fov!!, aspect, 0.01f, 1000f)
+                    matrices.projection.perspective(Math.toRadians(camera.fov!!), aspect, 0.01f, 1000f)
                 }
                 glClear(clearParams)
 
                 // Rotate camera
-                glMatrixMode(GL_MODELVIEW)
-                glLoadIdentity()
-                glRotatef(camera.rotation.x, 1f, 0f, 0f)
-                glRotatef(camera.rotation.z, 0f, 0f, 1f)
-                glRotatef(camera.rotation.y, 0f, 1f, 0f)
+                matrices.model.clear()
+                matrices.model.rotateX(Math.toRadians(camera.rotation.x))
+                matrices.model.rotateZ(Math.toRadians(camera.rotation.z))
+                matrices.model.rotateY(Math.toRadians(camera.rotation.y))
 
                 // Skybox
                 if (cubemapSkybox != null) {
                     glDisable(GL_DEPTH_TEST)
-                    glDisable(GL_LIGHTING)
 
                     if (camera.fov != null) {
-                        cubemapSkybox.draw()
+                        cubemapSkybox.draw(matrices)
                     }
 
                     glClear(GL_DEPTH_BUFFER_BIT)
@@ -182,45 +187,33 @@ abstract class KiloEngineGame {
                 // Scene
                 glEnable(GL_DEPTH_TEST)
                 val position = DVector3(camera.entity.body.position).add(camera.offset)
-                glTranslatef(-position.x.toFloat(), -position.y.toFloat(), -position.z.toFloat())
-                scene.sunPosition?.let {
-                    glEnable(GL_LIGHTING)
-                    glLightfv(
-                        GL_LIGHT0, GL_POSITION, floatArrayOf(
-                            position.x.toFloat() + it.x,
-                            position.y.toFloat() + it.y,
-                            position.z.toFloat() + it.z,
-                            0f
-                        )
-                    )
-                }
-                scene.invokeEvent(EventType.DRAW)
+                matrices.model.translate(-position.x.toFloat(), -position.y.toFloat(), -position.z.toFloat())
+                scene.invokeEvent(EventType.DRAW, matrices)
             }
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0)
             glViewport(0, 0, windowSize.x, windowSize.y)
 
             // HUD
-            glMatrixMode(GL_PROJECTION)
-            glLoadIdentity()
-            glOrtho(0.0, windowSize.x.toDouble(), windowSize.y.toDouble(), 0.0, 1.0, 3.0)
-            glMatrixMode(GL_MODELVIEW)
-            glLoadIdentity()
-            glTranslatef(0f, 0f, -2f)
-            glDisable(GL_LIGHTING)
+            matrices.projection.clear()
+            matrices.projection.ortho(0f, windowSize.x.toFloat(), windowSize.y.toFloat(), 0f, 1f, 3f)
+            matrices.model.clear()
+            matrices.model.translate(0f, 0f, -2f)
             glDisable(GL_DEPTH_TEST)
 
-            val widthArray = IntArray(1)
-            glfwGetFramebufferSize(window, widthArray, null)
-            nvgBeginFrame(
-                nanovg,
-                windowSize.x.toFloat(), windowSize.y.toFloat(),
-                widthArray[0].toFloat() / windowSize.x
-            )
-            nvgFontFace(nanovg, "minecraftia")
-            nvgText(nanovg, 10f, 35f, "FPS: ${fpsAverage.roundToLong()}")
-            scene.invokeEvent(EventType.DRAW_UI, nanovg)
-            nvgEndFrame(nanovg)
+//            val widthArray = IntArray(1)
+//            glfwGetFramebufferSize(window, widthArray, null)
+//            nvgBeginFrame(
+//                nanovg,
+//                windowSize.x.toFloat(), windowSize.y.toFloat(),
+//                widthArray[0].toFloat() / windowSize.x
+//            )
+//            nvgFontFace(nanovg, "minecraftia")
+//            nvgText(nanovg, 10f, 35f, "FPS: ${fpsAverage.roundToLong()}")
+//            scene.invokeEvent(EventType.DRAW_UI, nanovg)
+//            nvgEndFrame(nanovg)
+//            glBindVertexArray(vao)
+//            glBindBuffer(GL_ARRAY_BUFFER, vbo)
 
             glfwSwapBuffers(window)
         }
@@ -236,6 +229,10 @@ abstract class KiloEngineGame {
         }
 
         glfwDefaultWindowHints()
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3)
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2)
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE)
+//        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE)
         glfwWindowHint(GLFW_SAMPLES, 4)
 //        glfwWindowHint(GLFW_DECORATED, GLFW_FALSE)
 
@@ -262,10 +259,42 @@ abstract class KiloEngineGame {
         glEnable(GL_MULTISAMPLE)
 
         glClearColor(0f, 0f, 0f, 1f)
-        glShadeModel(GL_SMOOTH)
-        glEnable(GL_LIGHT0)
-        glMaterialfv(GL_FRONT, GL_AMBIENT, floatArrayOf(1f, 1f, 1f, 1f))
         glLineWidth(10f)
+
+        vao = glGenVertexArrays()
+        glBindVertexArray(vao)
+
+        vbo = glGenBuffers()
+        glBindBuffer(GL_ARRAY_BUFFER, vbo)
+
+        vertexShader = getShader(GL_VERTEX_SHADER, "/shader.vert")
+        fragmentShader = getShader(GL_FRAGMENT_SHADER, "/vertexcolor.frag")
+
+        shaderProgram = glCreateProgram()
+        glAttachShader(shaderProgram, vertexShader)
+        glAttachShader(shaderProgram, fragmentShader)
+        glBindFragDataLocation(shaderProgram, 0, "fragColor")
+        glLinkProgram(shaderProgram)
+
+        glGetProgrami(shaderProgram, GL_LINK_STATUS).let {
+            if (it != GL_TRUE) {
+                throw RuntimeException(glGetProgramInfoLog(shaderProgram))
+            }
+        }
+        glUseProgram(shaderProgram)
+
+        matrices.uniModel = glGetUniformLocation(shaderProgram, "model")
+        matrices.uniProjection = glGetUniformLocation(shaderProgram, "projection")
+
+        glGetAttribLocation(shaderProgram, "position").let {
+            glEnableVertexAttribArray(it)
+            glVertexAttribPointer(it, 3, GL_FLOAT, false, 11 * 4, 0)
+        }
+
+        glGetAttribLocation(shaderProgram, "color").let {
+            glEnableVertexAttribArray(it)
+            glVertexAttribPointer(it, 3, GL_FLOAT, false, 11 * 4, 8 * 4)
+        }
 
         sceneLoader = SceneLoaderImpl(Resources::resourceGetter)
     }
@@ -350,6 +379,11 @@ abstract class KiloEngineGame {
         TextureManager.unload()
         glfwFreeCallbacks(window)
         glfwDestroyWindow(window)
+        glDeleteVertexArrays(vao)
+        glDeleteBuffers(vbo)
+        glDeleteShader(vertexShader)
+        glDeleteShader(fragmentShader)
+        glDeleteProgram(shaderProgram)
         glfwTerminate()
         glfwSetErrorCallback(null)?.free()
     }

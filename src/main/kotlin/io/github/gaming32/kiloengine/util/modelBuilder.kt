@@ -1,48 +1,68 @@
 package io.github.gaming32.kiloengine.util
 
-import io.github.gaming32.kiloengine.TextureManager
 import org.joml.Vector2f
 import org.joml.Vector3f
-import org.lwjgl.opengl.GL11.*
+import java.nio.FloatBuffer
 
 class ModelBuilder {
-    fun begin(mode: Int) = apply { glBegin(mode) }
+    @PublishedApi
+    internal data class ModelVertex(
+        val position: Vector3f = Vector3f(),
+        val normal: Vector3f = Vector3f(),
+        val uv: Vector2f = Vector2f(),
+        val color: Vector3f = Vector3f(),
+    ) {
+        fun store(buffer: FloatBuffer) {
+            val pos = buffer.position()
+            position.get(pos, buffer)
+            normal.get(pos + 3, buffer)
+            uv.get(pos + 6, buffer)
+            color.get(pos + 8, buffer)
+            buffer.position(pos + 11)
+        }
+    }
 
-    fun vertex(x: Float, y: Float) = apply { glVertex2f(x, y) }
+    @PublishedApi
+    internal val elements = mutableListOf<ModelVertex>()
 
-    fun vertex(v: Vector2f) = vertex(v.x, v.y)
+    init {
+        elements += ModelVertex()
+    }
 
-    fun vertex(x: Float, y: Float, z: Float) = apply { glVertex3f(x, y, z) }
+    fun position(x: Float, y: Float) = position(x, y, 0f)
 
-    fun vertex(v: Vector3f) = vertex(v.x, v.y, v.z)
+    fun position(v: Vector2f) = position(v.x, v.y, 0f)
 
-    fun normal(x: Float, y: Float, z: Float) = apply { glNormal3f(x, y, z) }
+    fun position(x: Float, y: Float, z: Float) = apply { elements.last().position.set(x, y, z) }
 
-    fun normal(v: Vector3f) = normal(v.x, v.y, v.z)
+    fun position(v: Vector3f) = apply { elements.last().position.set(v) }
 
-    fun uv(u: Float, v: Float) = apply { glTexCoord2f(u, v) }
+    fun normal(x: Float, y: Float, z: Float) = apply { elements.last().normal.set(x, y, z) }
 
-    fun uv(v: Vector2f) = uv(v.x, v.y)
+    fun normal(v: Vector3f) = apply { elements.last().normal.set(v) }
 
-    fun color(r: Float, g: Float, b: Float) = apply { glColor3f(r, g, b) }
+    fun uv(u: Float, v: Float) = apply { elements.last().uv.set(u, v) }
 
-    fun color(r: Float, g: Float, b: Float, a: Float) = apply { glColor4f(r, g, b, a) }
+    fun uv(v: Vector2f) = apply { elements.last().uv.set(v) }
 
-    fun disable(target: Int) = apply { glDisable(target) }
+    fun color(r: Float, g: Float, b: Float) = apply { elements.last().color.set(r, g, b) }
 
-    fun enable(target: Int) = apply { glEnable(target) }
+    fun color(v: Vector3f) = apply { elements.last().color.set(v) }
 
-    fun texture(name: String) = apply { glBindTexture(GL_TEXTURE_2D, TextureManager.getTexture(name)) }
+    fun color(r: Float, g: Float, b: Float, a: Float) = apply {
+        if (a == 1f) {
+            color(r, g, b)
+        } else {
+            throw UnsupportedOperationException("Alpha not supported yet")
+        }
+    }
 
-    fun draw() = apply { glEnd() }
+    fun texture(name: String) = apply {
+        // TODO: "Implement texture()"
+//        glBindTexture(GL_TEXTURE_2D, TextureManager.getTexture(name))
+    }
 
-    inline fun draw(mode: Int, action: ModelBuilder.() -> Unit) {
-        begin(mode)
-        action()
-        draw()
+    fun next() = apply {
+        elements += ModelVertex()
     }
 }
-
-inline fun buildModel(builder: ModelBuilder.() -> Unit) = ModelBuilder().builder()
-
-inline fun drawModel(mode: Int, action: ModelBuilder.() -> Unit) = ModelBuilder().draw(mode, action)

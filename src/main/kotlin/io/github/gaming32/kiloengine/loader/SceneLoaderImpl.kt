@@ -12,7 +12,6 @@ import io.github.gaming32.kiloengine.model.Material
 import io.github.gaming32.kiloengine.model.Model
 import io.github.gaming32.kiloengine.util.simpleParentDir
 import io.github.gaming32.kiloengine.util.toDVector3
-import io.github.gaming32.kiloengine.util.toVector3f
 import org.joml.Vector3f
 import org.ode4j.math.DVector3
 import org.quiltmc.json5.JsonReader
@@ -105,7 +104,6 @@ class SceneLoaderImpl(private val resourceGetter: () -> ResourceGetter) : SceneL
     override fun loadScene(name: String, scene: Scene) = textResource(name) { inp, _ ->
         val json = JsonParser.parseReader(Gson5Reader(JsonReader.json5(inp))).asJsonObject
         json["skybox"]?.let { scene.skybox = Skybox.fromJson(it) }
-        json["sunPosition"]?.asJsonArray?.let { scene.sunPosition = it.toVector3f() }
         json["gravity"]?.asJsonArray?.let { scene.world.setGravity(it.toDVector3()) }
         json["entities"]?.asJsonArray?.forEach { entityData ->
             entityData as JsonObject

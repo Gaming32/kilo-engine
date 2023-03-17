@@ -8,7 +8,6 @@
     negativeX: "negativeX.png",
     positiveX: "positiveX.png"
   },
-  sunPosition: [-12.9, 30, 17.1],
   entities: [
     {
       kinematic: true,
