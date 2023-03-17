@@ -34,13 +34,9 @@ fun loadFont(nanovg: Long, name: String): Int {
     val baos = ByteArrayOutputStream()
     Resources.getResource("/$name.ttf")?.use { it.copyTo(baos) }
     val memory = MemoryUtil.memAlloc(baos.size())
-    try {
-        memory.put(baos.toByteArray())
-        memory.flip()
-        return nvgCreateFontMem(nanovg, name, memory, 1)
-    } finally {
-        MemoryUtil.memFree(memory)
-    }
+    memory.put(baos.toByteArray())
+    memory.flip()
+    return nvgCreateFontMem(nanovg, name, memory, 1)
 }
 
 fun <K, V> Map<K, V>.invert(): Map<V, K> {

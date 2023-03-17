@@ -12,8 +12,8 @@ import org.lwjgl.glfw.Callbacks.glfwFreeCallbacks
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.glfw.GLFWErrorCallback
 import org.lwjgl.nanovg.NanoVG.*
-import org.lwjgl.nanovg.NanoVGGL2.NVG_ANTIALIAS
-import org.lwjgl.nanovg.NanoVGGL2.nvgCreate
+import org.lwjgl.nanovg.NanoVGGL3.NVG_ANTIALIAS
+import org.lwjgl.nanovg.NanoVGGL3.nvgCreate
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL13.GL_MULTISAMPLE
 import org.lwjgl.opengl.GL30.*
@@ -21,6 +21,7 @@ import org.ode4j.math.DVector3
 import org.ode4j.ode.DContact.DSurfaceParameters
 import org.ode4j.ode.DContactGeomBuffer
 import org.ode4j.ode.OdeHelper
+import kotlin.math.roundToLong
 
 abstract class KiloEngineGame {
     companion object {
@@ -201,19 +202,21 @@ abstract class KiloEngineGame {
             matrices.model.translate(0f, 0f, -2f)
             glDisable(GL_DEPTH_TEST)
 
-//            val widthArray = IntArray(1)
-//            glfwGetFramebufferSize(window, widthArray, null)
-//            nvgBeginFrame(
-//                nanovg,
-//                windowSize.x.toFloat(), windowSize.y.toFloat(),
-//                widthArray[0].toFloat() / windowSize.x
-//            )
-//            nvgFontFace(nanovg, "minecraftia")
-//            nvgText(nanovg, 10f, 35f, "FPS: ${fpsAverage.roundToLong()}")
-//            scene.invokeEvent(EventType.DRAW_UI, nanovg)
-//            nvgEndFrame(nanovg)
-//            glBindVertexArray(vao)
-//            glBindBuffer(GL_ARRAY_BUFFER, vbo)
+            val widthArray = IntArray(1)
+            glfwGetFramebufferSize(window, widthArray, null)
+            nvgBeginFrame(
+                nanovg,
+                windowSize.x.toFloat(), windowSize.y.toFloat(),
+                widthArray[0].toFloat() / windowSize.x
+            )
+            nvgFontFace(nanovg, "minecraftia")
+            nvgText(nanovg, 10f, 35f, "FPS: ${fpsAverage.roundToLong()}")
+            scene.invokeEvent(EventType.DRAW_UI, nanovg)
+            nvgEndFrame(nanovg)
+
+            glUseProgram(shaderProgram)
+            glBindVertexArray(vao)
+            glBindBuffer(GL_ARRAY_BUFFER, vbo)
 
             glfwSwapBuffers(window)
         }

@@ -80,8 +80,10 @@ inline fun buildDisplayList(builder: ModelBuilder.() -> Unit): DisplayList {
             val element = modelBuilder.elements[i]
             val newTexture = element.texture
             if (newTexture != currentTexture) {
-                textures.add(currentTexture)
-                vertexCounts.add(currentVertexCount)
+                if (currentVertexCount > 0) {
+                    textures.add(currentTexture)
+                    vertexCounts.add(currentVertexCount)
+                }
                 currentTexture = newTexture
                 currentVertexCount = 0
             }
