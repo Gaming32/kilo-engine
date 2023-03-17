@@ -11,7 +11,7 @@ internal class EventType<T>(
     companion object {
         val PRE_TICK = EventType<Nothing?>("preTick")
         val TICK = EventType<Nothing?>("tick")
-        val DRAW = EventType<Nothing?>("draw")
+        val DRAW = EventType("draw", MatrixStacks::class.java)
         val HANDLE_MOVEMENT = EventType("handleMovement", Vector3d::class.java)
         val DRAW_UI = EventType("drawUi", Long::class.javaPrimitiveType)
         val MOUSE_MOVED = EventType("mouseMoved", MouseMoveEvent::class.java)

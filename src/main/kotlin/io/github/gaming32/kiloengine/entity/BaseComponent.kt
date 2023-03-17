@@ -2,6 +2,7 @@ package io.github.gaming32.kiloengine.entity
 
 import com.google.gson.JsonObject
 import io.github.gaming32.kiloengine.KiloEngineGame
+import io.github.gaming32.kiloengine.MatrixStacks
 import io.github.gaming32.kiloengine.MouseMoveEvent
 import io.github.gaming32.kiloengine.loader.SceneLoader
 import io.github.gaming32.kiloengine.model.CollisionType
@@ -46,7 +47,7 @@ abstract class BaseComponent<T : BaseComponent<T>>(val type: ComponentType<T>, v
 
     open fun tick() = Unit
 
-    open fun draw() = Unit
+    open fun draw(matrices: MatrixStacks) = Unit
 
     open fun handleMovement(movementInput: Vector3d) = Unit
 

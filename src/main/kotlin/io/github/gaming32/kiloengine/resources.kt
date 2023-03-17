@@ -15,5 +15,11 @@ object Resources {
     }
 
     @JvmStatic
+    fun addOverridingGetter(getter: ResourceGetter, vararg files: String) {
+        val next = resourceGetter
+        resourceGetter = { (if (it in files) getter else next)(it) }
+    }
+
+    @JvmStatic
     fun getResource(path: String) = resourceGetter(path)
 }

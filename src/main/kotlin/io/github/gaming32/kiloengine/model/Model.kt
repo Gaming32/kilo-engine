@@ -3,7 +3,6 @@ package io.github.gaming32.kiloengine.model
 import io.github.gaming32.kiloengine.util.Drawable
 import io.github.gaming32.kiloengine.util.ModelBuilder
 import org.joml.Vector3f
-import org.lwjgl.opengl.GL11.GL_TRIANGLES
 
 data class Model(val tris: List<Tri>, val materials: Map<String, Material>) : Drawable {
     data class UV(val u: Float, val v: Float) : Drawable {
@@ -22,7 +21,8 @@ data class Model(val tris: List<Tri>, val materials: Map<String, Material>) : Dr
             uv?.draw(builder)
             normal?.let { builder.normal(it) }
             builder.color(color.r, color.g, color.b)
-            builder.vertex(position)
+            builder.position(position)
+            builder.next()
         }
 
         fun scale(scale: Float) = copy(position = Vector3f(position).mul(scale))
@@ -32,11 +32,9 @@ data class Model(val tris: List<Tri>, val materials: Map<String, Material>) : Dr
         override fun draw(builder: ModelBuilder) {
             if (material?.isFullyTransparent == true) return
             material?.draw(builder)
-            builder.begin(GL_TRIANGLES)
             a.draw(builder)
             b.draw(builder)
             c.draw(builder)
-            builder.draw()
         }
 
         fun scale(scale: Float) = copy(a = a.scale(scale), b = b.scale(scale), c = c.scale(scale))

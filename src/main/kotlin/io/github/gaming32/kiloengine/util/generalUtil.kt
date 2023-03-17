@@ -2,7 +2,9 @@ package io.github.gaming32.kiloengine.util
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
+import io.github.gaming32.kiloengine.Resources
 import org.lwjgl.nanovg.NanoVG.nvgCreateFontMem
+import org.lwjgl.opengl.GL20.*
 import org.lwjgl.system.MemoryUtil
 import java.io.ByteArrayOutputStream
 import kotlin.math.PI
@@ -30,7 +32,7 @@ inline fun <T, R> withValue(value: T, get: () -> T, set: (T) -> Unit, action: ()
 
 fun loadFont(nanovg: Long, name: String): Int {
     val baos = ByteArrayOutputStream()
-    object {}::class.java.getResourceAsStream("/$name.ttf")?.use { it.copyTo(baos) }
+    Resources.getResource("/$name.ttf")?.use { it.copyTo(baos) }
     val memory = MemoryUtil.memAlloc(baos.size())
     memory.put(baos.toByteArray())
     memory.flip()
@@ -92,3 +94,13 @@ val Class<*>.wrapperType get() = when (this) {
     Double::class.javaPrimitiveType -> Double::class.javaObjectType
     else -> this
 }
+
+fun getShader(type: Int, file: String) = Resources.getResource(file)?.use {
+    val shader = glCreateShader(type)
+    glShaderSource(shader, it.reader().readText())
+    glCompileShader(shader)
+    if (glGetShaderi(shader, GL_COMPILE_STATUS) != GL_TRUE) {
+        throw RuntimeException(glGetShaderInfoLog(shader))
+    }
+    shader
+} ?: throw IllegalArgumentException("Cannot find shader file $file")
