@@ -268,7 +268,7 @@ abstract class KiloEngineGame {
         glBindBuffer(GL_ARRAY_BUFFER, vbo)
 
         vertexShader = getShader(GL_VERTEX_SHADER, "/shader.vert")
-        fragmentShader = getShader(GL_FRAGMENT_SHADER, "/vertexcolor.frag")
+        fragmentShader = getShader(GL_FRAGMENT_SHADER, "/texture.frag")
 
         shaderProgram = glCreateProgram()
         glAttachShader(shaderProgram, vertexShader)
@@ -291,10 +291,17 @@ abstract class KiloEngineGame {
             glVertexAttribPointer(it, 3, GL_FLOAT, false, 11 * 4, 0)
         }
 
+        glGetAttribLocation(shaderProgram, "texcoord").let {
+            glEnableVertexAttribArray(it)
+            glVertexAttribPointer(it, 2, GL_FLOAT, false, 11 * 4, 6 * 4)
+        }
+
         glGetAttribLocation(shaderProgram, "color").let {
             glEnableVertexAttribArray(it)
             glVertexAttribPointer(it, 3, GL_FLOAT, false, 11 * 4, 8 * 4)
         }
+
+        glUniform1i(glGetUniformLocation(shaderProgram, "texImage"), 0)
 
         sceneLoader = SceneLoaderImpl(Resources::resourceGetter)
     }

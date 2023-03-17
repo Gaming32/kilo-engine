@@ -1,6 +1,6 @@
 #version 150 core
 
-in vec2 position;
+in vec3 position;
 in vec3 color;
 in vec2 texcoord;
 
@@ -14,5 +14,5 @@ void main() {
     vertexColor = color;
     textureCoord = texcoord;
     mat4 mvp = projection * model;
-    gl_Position = mvp * vec4(position, 0.0, 1.0);
+    gl_Position = mvp * vec4(position, 1.0);
 }

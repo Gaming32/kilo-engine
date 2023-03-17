@@ -1,5 +1,6 @@
 package io.github.gaming32.kiloengine.util
 
+import io.github.gaming32.kiloengine.TextureManager
 import org.joml.Vector2f
 import org.joml.Vector3f
 import java.nio.FloatBuffer
@@ -11,6 +12,7 @@ class ModelBuilder {
         val normal: Vector3f = Vector3f(),
         val uv: Vector2f = Vector2f(),
         val color: Vector3f = Vector3f(),
+        var texture: Int = 0
     ) {
         fun store(buffer: FloatBuffer) {
             val pos = buffer.position()
@@ -58,11 +60,11 @@ class ModelBuilder {
     }
 
     fun texture(name: String) = apply {
-        // TODO: "Implement texture()"
-//        glBindTexture(GL_TEXTURE_2D, TextureManager.getTexture(name))
+        elements.last().texture = TextureManager.getTexture(name)
     }
 
     fun next() = apply {
-        elements += ModelVertex()
+        // Inherit the texture from the previous vertex
+        elements += ModelVertex(texture = elements.last().texture)
     }
 }

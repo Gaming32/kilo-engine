@@ -10,7 +10,7 @@ import java.nio.FloatBuffer
 @PublishedApi
 internal const val VERTEX_SIZE = 11
 
-class DisplayList(buffer: FloatBuffer, private val vertexCount: Int) : Destroyable {
+class DisplayList(buffer: FloatBuffer, private val textures: IntArray, private val vertexCounts: IntArray) : Destroyable {
     private class DisplayListRef(val buffer: FloatBuffer) : Runnable {
         var open = true
 
@@ -30,6 +30,7 @@ class DisplayList(buffer: FloatBuffer, private val vertexCount: Int) : Destroyab
 
     init {
         CLEANER.register(this, list)
+        require(textures.size == vertexCounts.size) { "textures and vertexCounts must be the same size" }
     }
 
     private fun ensureOpen() {
@@ -40,7 +41,6 @@ class DisplayList(buffer: FloatBuffer, private val vertexCount: Int) : Destroyab
 
     fun draw(matrices: MatrixStacks? = null) {
         ensureOpen()
-        glBufferData(GL_ARRAY_BUFFER, list.buffer, GL_STATIC_DRAW)
         if (matrices != null) {
             MemoryStack.stackPush().use {
                 val buffer = it.mallocFloat(16)
@@ -52,7 +52,14 @@ class DisplayList(buffer: FloatBuffer, private val vertexCount: Int) : Destroyab
                 glUniformMatrix4fv(matrices.uniProjection, false, buffer)
             }
         }
-        glDrawArrays(GL_TRIANGLES, 0, vertexCount)
+        glBufferData(GL_ARRAY_BUFFER, list.buffer, GL_STREAM_DRAW)
+        var vertex = 0
+        for (i in textures.indices) {
+            glActiveTexture(GL_TEXTURE0)
+            glBindTexture(GL_TEXTURE_2D, textures[i])
+            glDrawArrays(GL_TRIANGLES, vertex, vertexCounts[i])
+            vertex += vertexCounts[i]
+        }
     }
 
     override fun destroy() = list.run()
@@ -63,16 +70,31 @@ inline fun buildDisplayList(builder: ModelBuilder.() -> Unit): DisplayList {
     modelBuilder.builder()
     val vertexCount = modelBuilder.elements.size - 1
 
+    val textures = mutableListOf<Int>()
+    val vertexCounts = mutableListOf<Int>()
     val buffer = MemoryUtil.memAllocFloat(vertexCount * VERTEX_SIZE)
     try {
+        var currentTexture = 0
+        var currentVertexCount = 0
         for (i in 0 until vertexCount) {
-            modelBuilder.elements[i].store(buffer)
+            val element = modelBuilder.elements[i]
+            val newTexture = element.texture
+            if (newTexture != currentTexture) {
+                textures.add(currentTexture)
+                vertexCounts.add(currentVertexCount)
+                currentTexture = newTexture
+                currentVertexCount = 0
+            }
+            element.store(buffer)
+            currentVertexCount++
         }
+        textures.add(currentTexture)
+        vertexCounts.add(currentVertexCount)
         buffer.flip()
     } catch (t: Throwable) {
         MemoryUtil.memFree(buffer)
         throw t
     }
 
-    return DisplayList(buffer, vertexCount)
+    return DisplayList(buffer, textures.toIntArray(), vertexCounts.toIntArray())
 }
