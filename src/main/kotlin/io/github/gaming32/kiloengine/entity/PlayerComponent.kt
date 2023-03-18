@@ -149,28 +149,28 @@ open class PlayerComponent(
 
     override fun drawUi(nanovg: Long) {
         nvgText(
-            nanovg, 10f, 55f,
+            nanovg, 10f, 75f,
             "X/Y/Z: " +
                 "${UI_DEC_FORMAT.format(entity.body.position.x)}/" +
                 "${UI_DEC_FORMAT.format(entity.body.position.y)}/" +
                 UI_DEC_FORMAT.format(entity.body.position.z)
         )
         nvgText(
-            nanovg, 10f, 75f,
+            nanovg, 10f, 95f,
             "FX/FY/FZ: " +
                 "${UI_DEC_FORMAT.format(uiForce.x)}/" +
                 "${UI_DEC_FORMAT.format(uiForce.y)}/" +
                 UI_DEC_FORMAT.format(uiForce.z)
         )
         nvgText(
-            nanovg, 10f, 95f,
+            nanovg, 10f, 115f,
             "VX/VY/VZ: " +
                 "${UI_DEC_FORMAT.format(entity.body.linearVel.x)}/" +
                 "${UI_DEC_FORMAT.format(entity.body.linearVel.y)}/" +
                 UI_DEC_FORMAT.format(entity.body.linearVel.z)
         )
         nvgText(
-            nanovg, 10f, 115f,
+            nanovg, 10f, 135f,
             "RY/RX: " +
                 "${UI_DEC_FORMAT.format(rotation.y)}/" +
                 UI_DEC_FORMAT.format(rotation.x)

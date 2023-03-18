@@ -7,16 +7,20 @@ import org.lwjgl.system.MemoryUtil
 import java.lang.ref.Cleaner
 import java.nio.FloatBuffer
 
-@PublishedApi
-internal const val VERTEX_SIZE = 11
+private const val VERTEX_SIZE = 11
 
 class DisplayList(buffer: FloatBuffer, private val textures: IntArray, private val vertexCounts: IntArray) : Destroyable {
     private class DisplayListRef(val buffer: FloatBuffer) : Runnable {
         var open = true
 
+        init {
+            totalTriCount += buffer.capacity() / VERTEX_SIZE / 3
+        }
+
         override fun run() {
             if (open) {
                 open = false
+                totalTriCount -= buffer.capacity() / VERTEX_SIZE / 3
                 MemoryUtil.memFree(buffer)
             }
         }
@@ -24,6 +28,9 @@ class DisplayList(buffer: FloatBuffer, private val textures: IntArray, private v
 
     companion object {
         private val CLEANER = Cleaner.create()
+
+        var totalTriCount = 0
+            private set
     }
 
     private val list = DisplayListRef(buffer)

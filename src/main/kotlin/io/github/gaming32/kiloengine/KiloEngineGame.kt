@@ -272,7 +272,10 @@ abstract class KiloEngineGame {
             )
             nvgFontFace(nanovg, "minecraftia")
             nvgText(nanovg, 10f, 35f, "FPS: ${fpsAverage.roundToLong()}")
-            scene.invokeEvent(EventType.DRAW_UI, nanovg)
+            nvgText(nanovg, 10f, 55f, "Tri Count: ${DisplayList.totalTriCount}")
+            if (!EDITOR_MODE) {
+                scene.invokeEvent(EventType.DRAW_UI, nanovg)
+            }
             nvgEndFrame(nanovg)
 
             glUseProgram(shaderProgram)
