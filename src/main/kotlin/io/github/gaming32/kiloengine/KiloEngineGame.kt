@@ -21,6 +21,7 @@ import org.ode4j.ode.DContact.DSurfaceParameters
 import org.ode4j.ode.DContactGeomBuffer
 import org.ode4j.ode.OdeHelper
 import kotlin.math.roundToLong
+import kotlin.math.sin
 
 abstract class KiloEngineGame {
     companion object {
@@ -180,8 +181,8 @@ abstract class KiloEngineGame {
                 glClear(clearParams)
 
                 matrices.model.clear()
-                matrices.model.rotateX(Math.toRadians(editorCameraRot.x))
-                matrices.model.rotateY(Math.toRadians(180 - editorCameraRot.y))
+                    .rotateX(Math.toRadians(editorCameraRot.x))
+                    .rotateY(Math.toRadians(180 - editorCameraRot.y))
 
                 if (cubemapSkybox != null) {
                     glDisable(GL_DEPTH_TEST)
@@ -398,30 +399,25 @@ abstract class KiloEngineGame {
             if (action == GLFW_PRESS) {
                 if (EDITOR_MODE) {
                     if (glfwGetInputMode(window, GLFW_CURSOR) != GLFW_CURSOR_DISABLED) {
-                        // From https://sibaku.github.io/computer-graphics/2017/01/10/Camera-Ray-Generation.html
-                        val pInv = Matrix4f(matrices.projection).invert()
-                        val vInv = Matrix4f(matrices.model).invert()
-
-                        val px = Vector2f(
-                            lastMousePos.x.toFloat() / windowSize.x,
-                            1f - lastMousePos.y.toFloat() / windowSize.y
+                        // From https://gamedev.stackexchange.com/a/55499/121681
+                        val relX = ((2 - lastMousePos.x * 2 / windowSize.x) - 1).toFloat()
+                        val relY = ((2 - lastMousePos.y * 2 / windowSize.y) - 1).toFloat()
+                        val dir = Vector3f(
+                            relX * sin(Math.toRadians(EDITOR_FOV)) * windowSize.x / windowSize.y,
+                            relY * sin(Math.toRadians(EDITOR_FOV)),
+                            1f
+                        ).normalize().mul(
+                            Matrix3f()
+                                .rotateY(Math.toRadians(editorCameraRot.y))
+                                .rotateX(Math.toRadians(editorCameraRot.x))
                         )
 
-                        val pxNDS = px * 2f - 1f
-
-                        val pointNDS = Vector3f(pxNDS, -1f)
-
-                        val pointNDSH = Vector4f(pointNDS, 1f)
-                        val dirEye = pInv * pointNDSH
-
-                        dirEye.w = 0f
-
-                        val dirWorld = (vInv * dirEye).xyz
-
-                        println(scene.raycast(
+                        val result = scene.raycast(
                             editorCameraPos.toDVector3(),
-                            dirWorld.add(editorCameraPos).normalize(VIEW_FAR).toDVector3()
-                        ))
+                            dir.normalize(VIEW_FAR).add(editorCameraPos).toDVector3()
+                        )
+
+                        println(result)
                     }
                 } else {
                     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED)
