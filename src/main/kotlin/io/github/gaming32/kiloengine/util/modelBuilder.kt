@@ -23,32 +23,31 @@ class ModelBuilder {
         }
     }
 
-    private val _elements = mutableListOf<ModelVertex>()
-    val elements: List<ModelVertex> = _elements
+    val elements = mutableListOf<ModelVertex>()
 
     init {
-        _elements += ModelVertex()
+        elements += ModelVertex()
     }
 
     fun position(x: Float, y: Float) = position(x, y, 0f)
 
     fun position(v: Vector2f) = position(v.x, v.y, 0f)
 
-    fun position(x: Float, y: Float, z: Float) = apply { _elements.last().position.set(x, y, z) }
+    fun position(x: Float, y: Float, z: Float) = apply { elements.last().position.set(x, y, z) }
 
-    fun position(v: Vector3f) = apply { _elements.last().position.set(v) }
+    fun position(v: Vector3f) = apply { elements.last().position.set(v) }
 
-    fun normal(x: Float, y: Float, z: Float) = apply { _elements.last().normal.set(x, y, z) }
+    fun normal(x: Float, y: Float, z: Float) = apply { elements.last().normal.set(x, y, z) }
 
-    fun normal(v: Vector3f) = apply { _elements.last().normal.set(v) }
+    fun normal(v: Vector3f) = apply { elements.last().normal.set(v) }
 
-    fun uv(u: Float, v: Float) = apply { _elements.last().uv.set(u, v) }
+    fun uv(u: Float, v: Float) = apply { elements.last().uv.set(u, v) }
 
-    fun uv(v: Vector2f) = apply { _elements.last().uv.set(v) }
+    fun uv(v: Vector2f) = apply { elements.last().uv.set(v) }
 
-    fun color(r: Float, g: Float, b: Float) = apply { _elements.last().color.set(r, g, b) }
+    fun color(r: Float, g: Float, b: Float) = apply { elements.last().color.set(r, g, b) }
 
-    fun color(v: Vector3f) = apply { _elements.last().color.set(v) }
+    fun color(v: Vector3f) = apply { elements.last().color.set(v) }
 
     fun color(r: Float, g: Float, b: Float, a: Float) = apply {
         if (a == 1f) {
@@ -59,11 +58,11 @@ class ModelBuilder {
     }
 
     fun texture(name: String) = apply {
-        _elements.last().texture = TextureManager.getTexture(name)
+        elements.last().texture = TextureManager.getTexture(name)
     }
 
     fun next() = apply {
         // Inherit the texture from the previous vertex
-        _elements += ModelVertex(texture = _elements.last().texture)
+        elements += ModelVertex(texture = elements.last().texture)
     }
 }

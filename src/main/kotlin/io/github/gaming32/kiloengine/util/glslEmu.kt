@@ -10,6 +10,8 @@ inline operator fun Vector2f.times(other: Float) = Vector2f(this).mul(other)!!
 
 inline operator fun Vector2f.minus(other: Float) = Vector2f(this).sub(other, other)!!
 
+inline operator fun Vector3f.plus(other: Vector3f) = Vector3f(this).add(other)!!
+
 inline fun Vector3f(xy: Vector2f, z: Float) = Vector3f(xy.x, xy.y, z)
 
 inline fun Vector4f(xyz: Vector3f, w: Float) = Vector4f(xyz.x, xyz.y, xyz.z, w)

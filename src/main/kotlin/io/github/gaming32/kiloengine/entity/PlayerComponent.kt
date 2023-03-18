@@ -8,11 +8,9 @@ import io.github.gaming32.kiloengine.TextureManager
 import io.github.gaming32.kiloengine.loader.SceneLoader
 import io.github.gaming32.kiloengine.model.CollisionType
 import io.github.gaming32.kiloengine.model.CollisionTypes
+import io.github.gaming32.kiloengine.model.capsule
 import io.github.gaming32.kiloengine.util.*
-import org.joml.Math
-import org.joml.Vector2f
-import org.joml.Vector2fc
-import org.joml.Vector3d
+import org.joml.*
 import org.lwjgl.glfw.GLFW.glfwGetTime
 import org.lwjgl.nanovg.NanoVG.nvgText
 import org.ode4j.math.DMatrix3
@@ -57,49 +55,8 @@ open class PlayerComponent(
             TextureManager.withoutMipmaps {
                 texture("/white.png")
             }
-
-            val radius = capsule.radius.toFloat()
-            val halfHeight = capsule.length.toFloat() / 2 + radius
-
-            position(-radius, -halfHeight, 0f)
-                .color(KiloEngineGame.EDITOR_DEBUG_COLOR)
-                .next()
-            position(-radius, halfHeight, 0f)
-                .color(KiloEngineGame.EDITOR_DEBUG_COLOR)
-                .next()
-            position(radius, halfHeight, 0f)
-                .color(KiloEngineGame.EDITOR_DEBUG_COLOR)
-                .next()
-
-            position(-radius, -halfHeight, 0f)
-                .color(KiloEngineGame.EDITOR_DEBUG_COLOR)
-                .next()
-            position(radius, halfHeight, 0f)
-                .color(KiloEngineGame.EDITOR_DEBUG_COLOR)
-                .next()
-            position(radius, -halfHeight, 0f)
-                .color(KiloEngineGame.EDITOR_DEBUG_COLOR)
-                .next()
-
-            position(radius, -halfHeight, 0f)
-                .color(KiloEngineGame.EDITOR_DEBUG_COLOR)
-                .next()
-            position(radius, halfHeight, 0f)
-                .color(KiloEngineGame.EDITOR_DEBUG_COLOR)
-                .next()
-            position(-radius, halfHeight, 0f)
-                .color(KiloEngineGame.EDITOR_DEBUG_COLOR)
-                .next()
-
-            position(radius, -halfHeight, 0f)
-                .color(KiloEngineGame.EDITOR_DEBUG_COLOR)
-                .next()
-            position(-radius, halfHeight, 0f)
-                .color(KiloEngineGame.EDITOR_DEBUG_COLOR)
-                .next()
-            position(-radius, -halfHeight, 0f)
-                .color(KiloEngineGame.EDITOR_DEBUG_COLOR)
-                .next()
+            color(KiloEngineGame.EDITOR_DEBUG_COLOR)
+            capsule(Vector3f(), capsule.length.toFloat(), capsule.radius.toFloat(), 16)
         }
     }
     private val editorModel by _editorModel
