@@ -6,8 +6,7 @@ import org.joml.Vector3f
 import java.nio.FloatBuffer
 
 class ModelBuilder {
-    @PublishedApi
-    internal data class ModelVertex(
+    data class ModelVertex(
         val position: Vector3f = Vector3f(),
         val normal: Vector3f = Vector3f(),
         val uv: Vector2f = Vector2f(),
@@ -24,32 +23,32 @@ class ModelBuilder {
         }
     }
 
-    @PublishedApi
-    internal val elements = mutableListOf<ModelVertex>()
+    private val _elements = mutableListOf<ModelVertex>()
+    val elements: List<ModelVertex> = _elements
 
     init {
-        elements += ModelVertex()
+        _elements += ModelVertex()
     }
 
     fun position(x: Float, y: Float) = position(x, y, 0f)
 
     fun position(v: Vector2f) = position(v.x, v.y, 0f)
 
-    fun position(x: Float, y: Float, z: Float) = apply { elements.last().position.set(x, y, z) }
+    fun position(x: Float, y: Float, z: Float) = apply { _elements.last().position.set(x, y, z) }
 
-    fun position(v: Vector3f) = apply { elements.last().position.set(v) }
+    fun position(v: Vector3f) = apply { _elements.last().position.set(v) }
 
-    fun normal(x: Float, y: Float, z: Float) = apply { elements.last().normal.set(x, y, z) }
+    fun normal(x: Float, y: Float, z: Float) = apply { _elements.last().normal.set(x, y, z) }
 
-    fun normal(v: Vector3f) = apply { elements.last().normal.set(v) }
+    fun normal(v: Vector3f) = apply { _elements.last().normal.set(v) }
 
-    fun uv(u: Float, v: Float) = apply { elements.last().uv.set(u, v) }
+    fun uv(u: Float, v: Float) = apply { _elements.last().uv.set(u, v) }
 
-    fun uv(v: Vector2f) = apply { elements.last().uv.set(v) }
+    fun uv(v: Vector2f) = apply { _elements.last().uv.set(v) }
 
-    fun color(r: Float, g: Float, b: Float) = apply { elements.last().color.set(r, g, b) }
+    fun color(r: Float, g: Float, b: Float) = apply { _elements.last().color.set(r, g, b) }
 
-    fun color(v: Vector3f) = apply { elements.last().color.set(v) }
+    fun color(v: Vector3f) = apply { _elements.last().color.set(v) }
 
     fun color(r: Float, g: Float, b: Float, a: Float) = apply {
         if (a == 1f) {
@@ -60,11 +59,11 @@ class ModelBuilder {
     }
 
     fun texture(name: String) = apply {
-        elements.last().texture = TextureManager.getTexture(name)
+        _elements.last().texture = TextureManager.getTexture(name)
     }
 
     fun next() = apply {
         // Inherit the texture from the previous vertex
-        elements += ModelVertex(texture = elements.last().texture)
+        _elements += ModelVertex(texture = _elements.last().texture)
     }
 }

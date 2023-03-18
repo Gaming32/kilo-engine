@@ -68,8 +68,12 @@ class DisplayList(buffer: FloatBuffer, private val textures: IntArray, private v
 inline fun buildDisplayList(builder: ModelBuilder.() -> Unit): DisplayList {
     val modelBuilder = ModelBuilder()
     modelBuilder.builder()
-    val vertexCount = modelBuilder.elements.size - 1
+    return finishDisplayList(modelBuilder)
+}
 
+@PublishedApi
+internal fun finishDisplayList(modelBuilder: ModelBuilder): DisplayList {
+    val vertexCount = modelBuilder.elements.size - 1
     val textures = mutableListOf<Int>()
     val vertexCounts = mutableListOf<Int>()
     val buffer = MemoryUtil.memAllocFloat(vertexCount * VERTEX_SIZE)

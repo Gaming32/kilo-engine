@@ -55,7 +55,7 @@ abstract class KiloEngineGame {
     private val movementInput = Vector3d()
     private var wireframe = false
     private var clearParams = GL_DEPTH_BUFFER_BIT
-    private val matrices = MatrixStacks(16)
+    private val matrices = MatrixStacks(32)
     lateinit var sceneLoader: SceneLoader
         private set
 
