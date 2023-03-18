@@ -3,11 +3,10 @@ package io.github.gaming32.kiloengine
 import io.github.gaming32.kiloengine.entity.BaseComponent
 import io.github.gaming32.kiloengine.entity.Entity
 import io.github.gaming32.kiloengine.util.cast
+import io.github.gaming32.kiloengine.util.unreachable
 import io.github.gaming32.kiloengine.util.wrapperType
-import org.ode4j.ode.DBody
-import org.ode4j.ode.DSpace
-import org.ode4j.ode.DWorld
-import org.ode4j.ode.OdeHelper
+import org.ode4j.math.DVector3
+import org.ode4j.ode.*
 import java.lang.invoke.LambdaMetafactory
 import java.lang.invoke.MethodType
 import java.util.function.Consumer
@@ -74,6 +73,37 @@ class Scene {
 
     inline fun <reified T : BaseComponent<T>> getComponents() =
         entities.asSequence().flatMap { it.getComponents<T>() }
+
+    // Based off of http://ode.org/wiki/index.php?title=Simple_ray_casting_query
+    fun raycast(start: DVector3, end: DVector3): Pair<Entity, DVector3>? {
+        val direction = DVector3(end).sub(start)
+        val length = direction.length()
+        direction.scale(1 / length)
+
+        val ray = OdeHelper.createRay(null, length)
+        ray.set(start, direction)
+
+        var hit: Pair<Entity, DVector3>? = null
+        var depth = Double.POSITIVE_INFINITY
+
+        val contactBuffer = DContactGeomBuffer(KiloEngineGame.CONTACT_COUNT)
+        ray.collide2(space, null) { _, geometry1, geometry2 ->
+            repeat(OdeHelper.collide(geometry1, geometry2, KiloEngineGame.CONTACT_COUNT, contactBuffer)) {
+                val contact = contactBuffer[it]
+                if (contact.depth < depth) {
+                    depth = contact.depth
+                    hit = bodyToEntity.getValue(when {
+                        geometry1 == ray -> geometry2
+                        geometry2 == ray -> geometry1
+                        else -> unreachable()
+                    }.body) to contact.pos
+                }
+            }
+        }
+
+        ray.destroy()
+        return hit
+    }
 
     private fun calculateEventTypes() {
         EventType.EVENT_TYPES.forEach { eventType ->

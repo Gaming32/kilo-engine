@@ -1,6 +1,7 @@
 package io.github.gaming32.kiloengine
 
 import io.github.gaming32.kiloengine.entity.CameraComponent
+import io.github.gaming32.kiloengine.entity.Entity
 import io.github.gaming32.kiloengine.entity.PlayerComponent
 import io.github.gaming32.kiloengine.loader.SceneLoader
 import io.github.gaming32.kiloengine.loader.SceneLoaderImpl
@@ -24,7 +25,7 @@ import kotlin.math.roundToLong
 abstract class KiloEngineGame {
     companion object {
         private const val PHYSICS_SPEED = 0.02
-        private const val CONTACT_COUNT = 16
+        const val CONTACT_COUNT = 32
         private const val VERTICAL_DAMPING = 0.01
         private const val HORIZONTAL_DAMPING = 0.17
         val SURFACE_PARAMS = DSurfaceParameters().apply {
@@ -33,12 +34,15 @@ abstract class KiloEngineGame {
         val WALL_PARAMS = DSurfaceParameters().apply {
             mu = 3.0
         }
+        private const val VIEW_NEAR = 0.01f
+        private const val VIEW_FAR = 1000f
 
         @JvmField
         val EDITOR_MODE = System.getProperty("kilo.editor").toBoolean()
         val EDITOR_DEBUG_COLOR = Vector3f(50 / 255f, 168 / 255f, 113 / 255f)
         private const val EDITOR_MOVE_SPEED = 0.35f
         private const val EDITOR_LOOK_SPEED = 0.2f
+        private const val EDITOR_FOV = 80f
     }
 
     init {
@@ -56,6 +60,7 @@ abstract class KiloEngineGame {
 
     private val editorCameraPos = Vector3f()
     private val editorCameraRot = Vector2f()
+    private val editorSelected: Entity? = null
 
     // Handles
     private var window = 0L
@@ -167,9 +172,9 @@ abstract class KiloEngineGame {
 
                 matrices.projection.clear()
                 matrices.projection.perspective(
-                    Math.toRadians(80f),
+                    Math.toRadians(EDITOR_FOV),
                     windowSize.x / windowSize.y.toFloat(),
-                    0.01f, 1000f
+                    VIEW_NEAR, VIEW_FAR
                 )
 
                 glClear(clearParams)
@@ -214,10 +219,13 @@ abstract class KiloEngineGame {
                             camera.orthoRange.second.x.toFloat(),
                             camera.orthoRange.first.y.toFloat(),
                             camera.orthoRange.second.y.toFloat(),
-                            0.01f, 1000f
+                            VIEW_NEAR, VIEW_FAR
                         )
                     } else {
-                        matrices.projection.perspective(Math.toRadians(camera.fov!!), aspect, 0.01f, 1000f)
+                        matrices.projection.perspective(
+                            Math.toRadians(camera.fov!!), aspect,
+                            VIEW_NEAR, VIEW_FAR
+                        )
                     }
                     glClear(clearParams)
 
@@ -365,7 +373,7 @@ abstract class KiloEngineGame {
 
     private fun registerEvents() {
         val lastMousePos = Vector2d(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY)
-        glfwSetCursorPosCallback(window) { _, x, y ->
+        glfwSetCursorPosCallback(window) { window, x, y ->
             if (
                 lastMousePos.x != Double.POSITIVE_INFINITY &&
                 glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED
@@ -386,16 +394,42 @@ abstract class KiloEngineGame {
             lastMousePos.set(x, y)
         }
 
-        glfwSetMouseButtonCallback(window) { _, _, action, _ ->
+        glfwSetMouseButtonCallback(window) { window, _, action, _ ->
             if (action == GLFW_PRESS) {
                 if (EDITOR_MODE) {
+                    if (glfwGetInputMode(window, GLFW_CURSOR) != GLFW_CURSOR_DISABLED) {
+                        // From https://sibaku.github.io/computer-graphics/2017/01/10/Camera-Ray-Generation.html
+                        val pInv = Matrix4f(matrices.projection).invert()
+                        val vInv = Matrix4f(matrices.model).invert()
+
+                        val px = Vector2f(
+                            lastMousePos.x.toFloat() / windowSize.x,
+                            1f - lastMousePos.y.toFloat() / windowSize.y
+                        )
+
+                        val pxNDS = px * 2f - 1f
+
+                        val pointNDS = Vector3f(pxNDS, -1f)
+
+                        val pointNDSH = Vector4f(pointNDS, 1f)
+                        val dirEye = pInv * pointNDSH
+
+                        dirEye.w = 0f
+
+                        val dirWorld = (vInv * dirEye).xyz
+
+                        println(scene.raycast(
+                            editorCameraPos.toDVector3(),
+                            dirWorld.add(editorCameraPos).normalize(VIEW_FAR).toDVector3()
+                        ))
+                    }
                 } else {
                     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED)
                 }
             }
         }
 
-        glfwSetKeyCallback(window) { _, key, _, action, _ ->
+        glfwSetKeyCallback(window) { window, key, _, action, _ ->
             if (action == GLFW_REPEAT) return@glfwSetKeyCallback
             val press = action == GLFW_PRESS
             if (press && EDITOR_MODE && key == GLFW_KEY_SPACE) {
