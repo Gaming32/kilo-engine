@@ -34,15 +34,16 @@ abstract class BaseComponent<T : BaseComponent<T>>(val type: ComponentType<T>, v
     }
 
     @OptIn(ExperimentalContracts::class)
-    protected inline fun drawPositioned(matrices: MatrixStacks, action: () -> Unit) {
+    protected inline fun <T> drawPositioned(matrices: MatrixStacks, action: () -> T): T {
         contract {
             callsInPlace(action, InvocationKind.EXACTLY_ONCE)
         }
         matrices.model.pushMatrix()
         val position = entity.body.position
         matrices.model.translate(position.x.toFloat(), position.y.toFloat(), position.z.toFloat())
-        action()
+        val result = action()
         matrices.model.popMatrix()
+        return result
     }
 
     open fun collideWithMesh(collision: CollisionType, contact: DContactGeom, selfIsG1: Boolean): DContact.DSurfaceParameters? =

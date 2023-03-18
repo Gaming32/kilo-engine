@@ -77,15 +77,13 @@ abstract class KiloEngineGame {
         registerEvents()
         loadInitScene()
         val cubemapSkybox = scene.skybox.castOrNull<Skybox.Cubemap>()?.let {
-            withValue(-1, TextureManager::maxMipmap, { TextureManager.maxMipmap = it }) {
-                withValue(GL_NEAREST, TextureManager::filter, { TextureManager.filter = it }) {
-                    TextureManager.loadAsVirtual(it.down, "skybox/down")
-                    TextureManager.loadAsVirtual(it.up, "skybox/up")
-                    TextureManager.loadAsVirtual(it.negativeZ, "skybox/negativeZ")
-                    TextureManager.loadAsVirtual(it.positiveZ, "skybox/positiveZ")
-                    TextureManager.loadAsVirtual(it.negativeX, "skybox/negativeX")
-                    TextureManager.loadAsVirtual(it.positiveX, "skybox/positiveX")
-                }
+            TextureManager.withoutMipmaps {
+                TextureManager.loadAsVirtual(it.down, "skybox/down")
+                TextureManager.loadAsVirtual(it.up, "skybox/up")
+                TextureManager.loadAsVirtual(it.negativeZ, "skybox/negativeZ")
+                TextureManager.loadAsVirtual(it.positiveZ, "skybox/positiveZ")
+                TextureManager.loadAsVirtual(it.negativeX, "skybox/negativeX")
+                TextureManager.loadAsVirtual(it.positiveX, "skybox/positiveX")
             }
             sceneLoader.loadObj("/skybox.obj").toDisplayList()
         }

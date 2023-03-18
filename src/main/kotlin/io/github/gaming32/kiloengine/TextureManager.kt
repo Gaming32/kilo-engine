@@ -6,6 +6,9 @@ import org.lwjgl.opengl.GL12.GL_TEXTURE_MAX_LEVEL
 import org.lwjgl.system.MemoryUtil
 import java.nio.ByteOrder
 import javax.imageio.ImageIO
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 
 object TextureManager {
     var maxMipmap = 4
@@ -114,4 +117,19 @@ object TextureManager {
     }
 
     fun loadAsVirtual(texture: String, name: String) = initTexture(texture, genVirtualTexture(name))
+
+    @OptIn(ExperimentalContracts::class)
+    inline fun <T> withoutMipmaps(action: () -> T): T {
+        contract {
+            callsInPlace(action, InvocationKind.EXACTLY_ONCE)
+        }
+        val oldMaxMipmap = maxMipmap
+        maxMipmap = -1
+        val oldFilter = filter
+        filter = GL_NEAREST
+        val result = action()
+        maxMipmap = oldMaxMipmap
+        filter = oldFilter
+        return result
+    }
 }

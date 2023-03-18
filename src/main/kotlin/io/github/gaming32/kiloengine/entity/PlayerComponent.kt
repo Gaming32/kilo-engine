@@ -4,6 +4,7 @@ import com.google.gson.JsonObject
 import io.github.gaming32.kiloengine.KiloEngineGame
 import io.github.gaming32.kiloengine.MatrixStacks
 import io.github.gaming32.kiloengine.MouseMoveEvent
+import io.github.gaming32.kiloengine.TextureManager
 import io.github.gaming32.kiloengine.loader.SceneLoader
 import io.github.gaming32.kiloengine.model.CollisionType
 import io.github.gaming32.kiloengine.model.CollisionTypes
@@ -53,7 +54,9 @@ open class PlayerComponent(
     private val _editorModel = lazy {
         val capsule = entity.getComponentOrNull<CapsuleColliderComponent>() ?: return@lazy null
         buildDisplayList {
-            texture("/white.png")
+            TextureManager.withoutMipmaps {
+                texture("/white.png")
+            }
 
             position(-capsule.radius.toFloat(), -capsule.length.toFloat() / 2, 0f)
                 .color(KiloEngineGame.EDITOR_DEBUG_COLOR)
