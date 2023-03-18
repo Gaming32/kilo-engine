@@ -82,6 +82,7 @@ class Scene {
 
         val ray = OdeHelper.createRay(null, length)
         ray.set(start, direction)
+        ray.closestHit = true
 
         var hit: Pair<Entity, DVector3>? = null
         var depth = Double.POSITIVE_INFINITY

@@ -10,7 +10,7 @@ class ModelBuilder {
         val position: Vector3f = Vector3f(),
         val normal: Vector3f = Vector3f(),
         val uv: Vector2f = Vector2f(),
-        val color: Vector3f = Vector3f(),
+        val color: Vector3f = Vector3f(1f, 1f, 1f),
         var texture: Int = 0
     ) {
         fun store(buffer: FloatBuffer) {
