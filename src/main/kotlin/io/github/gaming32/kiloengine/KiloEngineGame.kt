@@ -53,7 +53,7 @@ abstract class KiloEngineGame {
     val scene = Scene()
     private val windowSize = Vector2i()
     private val movementInput = Vector3d()
-    var wireframe = false
+    private var wireframe = false
     private var clearParams = GL_DEPTH_BUFFER_BIT
     private val matrices = MatrixStacks(16)
     lateinit var sceneLoader: SceneLoader
@@ -61,7 +61,7 @@ abstract class KiloEngineGame {
 
     private val editorCameraPos = Vector3f()
     private val editorCameraRot = Vector2f()
-    private val editorSelected: Entity? = null
+    private var editorSelected: Entity? = null
 
     // Handles
     private var window = 0L
@@ -412,12 +412,10 @@ abstract class KiloEngineGame {
                                 .rotateX(Math.toRadians(editorCameraRot.x))
                         )
 
-                        val result = scene.raycast(
+                        editorSelected = scene.raycast(
                             editorCameraPos.toDVector3(),
                             dir.normalize(VIEW_FAR).add(editorCameraPos).toDVector3()
-                        )
-
-                        println(result)
+                        )?.first
                     }
                 } else {
                     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED)
