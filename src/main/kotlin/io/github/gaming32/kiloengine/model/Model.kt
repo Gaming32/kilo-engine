@@ -2,7 +2,9 @@ package io.github.gaming32.kiloengine.model
 
 import io.github.gaming32.kiloengine.util.Drawable
 import io.github.gaming32.kiloengine.util.ModelBuilder
+import io.github.gaming32.kiloengine.util.invertInto
 import org.joml.Vector3f
+import java.util.*
 
 data class Model(val tris: List<Tri>, val materials: Map<String, Material>) : Drawable {
     data class UV(val u: Float, val v: Float) : Drawable {
@@ -51,4 +53,12 @@ data class Model(val tris: List<Tri>, val materials: Map<String, Material>) : Dr
     }
 
     fun scale(scale: Float) = copy(tris = tris.map { it.scale(scale) })
+
+    fun replaceMaterials(newMaterials: Map<String, Material>): Model {
+        val originals = materials.invertInto(IdentityHashMap())
+        return Model(
+            tris.map { it.copy(material = newMaterials[originals[it.material]] ?: it.material) },
+            materials + newMaterials
+        )
+    }
 }

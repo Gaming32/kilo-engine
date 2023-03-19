@@ -39,8 +39,9 @@ fun loadFont(nanovg: Long, name: String): Int {
     return nvgCreateFontMem(nanovg, name, memory, 1)
 }
 
-fun <K, V> Map<K, V>.invert(): Map<V, K> {
-    val result = mutableMapOf<V, K>()
+fun <K, V> Map<K, V>.invert(): Map<V, K> = invertInto(mutableMapOf())
+
+fun <K, V, R : MutableMap<V, K>> Map<K, V>.invertInto(result: R): R {
     forEach { (k, v) -> result[v] = k }
     return result
 }

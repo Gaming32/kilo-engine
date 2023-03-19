@@ -18,8 +18,6 @@ class Scene {
     @PublishedApi
     internal val bodyToEntity = mutableMapOf<DBody, Entity>()
 
-    var skybox: Skybox = Skybox.None
-
     private var eventsDirty = false
     private val events = buildMap {
         EventType.EVENT_TYPES.forEach { eventType ->

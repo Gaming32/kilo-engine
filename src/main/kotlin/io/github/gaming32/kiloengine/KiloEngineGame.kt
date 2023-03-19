@@ -54,7 +54,6 @@ abstract class KiloEngineGame {
     private val windowSize = Vector2i()
     private val movementInput = Vector3d()
     private var wireframe = false
-    private var clearParams = GL_DEPTH_BUFFER_BIT
     private val matrices = MatrixStacks(32)
     lateinit var sceneLoader: SceneLoader
         private set
@@ -76,21 +75,6 @@ abstract class KiloEngineGame {
         init()
         registerEvents()
         loadInitScene()
-        val cubemapSkybox = scene.skybox.castOrNull<Skybox.Cubemap>()?.let {
-            TextureManager.withoutMipmaps {
-                TextureManager.loadAsVirtual(it.down, "skybox/down")
-                TextureManager.loadAsVirtual(it.up, "skybox/up")
-                TextureManager.loadAsVirtual(it.negativeZ, "skybox/negativeZ")
-                TextureManager.loadAsVirtual(it.positiveZ, "skybox/positiveZ")
-                TextureManager.loadAsVirtual(it.negativeX, "skybox/negativeX")
-                TextureManager.loadAsVirtual(it.positiveX, "skybox/positiveX")
-            }
-            sceneLoader.loadObj("/skybox.obj").toDisplayList()
-        }
-        scene.skybox.castOrNull<Skybox.SolidColor>()?.let {
-            glClearColor(it.r, it.g, it.b, 1f)
-            clearParams = GL_DEPTH_BUFFER_BIT or GL_COLOR_BUFFER_BIT
-        }
         var lastTime = glfwGetTime()
         var lastPhysicsTime = lastTime
         var fpsAverage = 0.0
@@ -176,17 +160,11 @@ abstract class KiloEngineGame {
                     VIEW_NEAR, VIEW_FAR
                 )
 
-                glClear(clearParams)
+                glClear(GL_DEPTH_BUFFER_BIT or GL_COLOR_BUFFER_BIT)
 
                 matrices.model.clear()
                     .rotateX(Math.toRadians(editorCameraRot.x))
                     .rotateY(Math.toRadians(180 - editorCameraRot.y))
-
-                if (cubemapSkybox != null) {
-                    glDisable(GL_DEPTH_TEST)
-                    cubemapSkybox.draw(matrices)
-                    glClear(GL_DEPTH_BUFFER_BIT)
-                }
 
                 glEnable(GL_DEPTH_TEST)
                 matrices.model.translate(-editorCameraPos.x, -editorCameraPos.y, -editorCameraPos.z)
@@ -226,6 +204,12 @@ abstract class KiloEngineGame {
                             VIEW_NEAR, VIEW_FAR
                         )
                     }
+
+                    var clearParams = GL_DEPTH_BUFFER_BIT or if (wireframe) GL_COLOR_BUFFER_BIT else 0
+                    camera.skybox.castOrNull<Skybox.SolidColor>()?.let {
+                        glClearColor(it.r, it.g, it.b, 1f)
+                        clearParams = clearParams or GL_COLOR_BUFFER_BIT
+                    }
                     glClear(clearParams)
 
                     // Rotate camera
@@ -235,13 +219,9 @@ abstract class KiloEngineGame {
                     matrices.model.rotateY(Math.toRadians(camera.rotation.y))
 
                     // Skybox
-                    if (cubemapSkybox != null) {
+                    if (camera.cubemapSkybox != null) {
                         glDisable(GL_DEPTH_TEST)
-
-                        if (camera.fov != null) {
-                            cubemapSkybox.draw(matrices)
-                        }
-
+                        camera.cubemapSkybox.draw(matrices)
                         glClear(GL_DEPTH_BUFFER_BIT)
                     }
 
@@ -284,7 +264,6 @@ abstract class KiloEngineGame {
 
             glfwSwapBuffers(window)
         }
-        cubemapSkybox?.close()
         contactJointGroup.destroy()
         quit()
     }
@@ -468,19 +447,12 @@ abstract class KiloEngineGame {
                 }
                 GLFW_KEY_F3 -> if (press && (mouseLocked || EDITOR_MODE)) {
                     wireframe = !wireframe
-                    @Suppress("LiftReturnOrAssignment")
                     if (wireframe) {
                         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
                         glLineWidth(2f)
-                        clearParams = GL_DEPTH_BUFFER_BIT or GL_COLOR_BUFFER_BIT
                     } else {
                         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
                         glLineWidth(10f)
-                        clearParams = GL_DEPTH_BUFFER_BIT or if (scene.skybox is Skybox.SolidColor) {
-                            GL_COLOR_BUFFER_BIT
-                        } else {
-                            0
-                        }
                     }
                 }
             }
