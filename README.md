@@ -2,6 +2,8 @@
 _A Simple 3D Game Engine_
 
 ## Installation
+***Warning:** snpashot versions are a subject to constant, breaking changes, without a version number change. For that reason, a dependency refresh might break your code if you use a snapshot version of the engine. It is recommended to users of snapshot versions (currently there are no public release versions) to keep track of this `README` page and this respository's commit history.*
+
 
 <details open>
 <summary>Gradle Kotlin</summary>
