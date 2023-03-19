@@ -18,12 +18,12 @@ class MeshColliderComponent(
     companion object Type : ComponentType<MeshColliderComponent>() {
         override fun create(entity: Entity, loader: SceneLoader, data: JsonObject) = MeshColliderComponent(
             entity,
-            entity.getComponent<MeshComponent>().model.let { model ->
+            entity.getComponent<MeshComponent>().mesh.let { model ->
                 CollisionModel(
                     model,
                     IdentityHashMap<Material, String>().apply {
                         data.getElement("collision").asJsonObject.asMap().forEach { (key, value) ->
-                            put(model.materials[key], value.asString)
+                            put(model.getMaterials()[key], value.asString)
                         }
                     }
                 )

@@ -10,7 +10,7 @@ class MeshRendererComponent(entity: Entity) : BaseComponent<MeshRendererComponen
             MeshRendererComponent(entity)
     }
 
-    private val displayList = entity.getComponent<MeshComponent>().model.toDisplayList()
+    private val displayList = entity.getComponent<MeshComponent>().mesh.toDisplayList()
 
     override fun destroy() = displayList.destroy()
 

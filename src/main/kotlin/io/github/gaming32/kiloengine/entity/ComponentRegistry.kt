@@ -18,5 +18,6 @@ object ComponentRegistry {
         register("meshCollider", MeshColliderComponent)
         register("meshRenderer", MeshRendererComponent)
         register("player", PlayerComponent)
+        register("proceduralMesh", ProceduralMeshComponent)
     }
 }

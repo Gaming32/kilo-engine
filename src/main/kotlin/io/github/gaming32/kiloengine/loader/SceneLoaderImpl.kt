@@ -8,6 +8,7 @@ import io.github.gaming32.kiloengine.Scene
 import io.github.gaming32.kiloengine.entity.ComponentRegistry
 import io.github.gaming32.kiloengine.entity.Entity
 import io.github.gaming32.kiloengine.model.Material
+import io.github.gaming32.kiloengine.model.Mesh
 import io.github.gaming32.kiloengine.model.Model
 import io.github.gaming32.kiloengine.util.simpleParentDir
 import io.github.gaming32.kiloengine.util.toDVector3
@@ -17,12 +18,12 @@ import org.quiltmc.json5.JsonReader
 import java.io.BufferedReader
 
 class SceneLoaderImpl(private val resourceGetter: () -> ResourceGetter) : SceneLoader {
-    override fun loadObj(name: String) = textResource(name) { inp, parentDir ->
+    override fun loadOBJ(name: String) = textResource(name) { inp, parentDir ->
         val verts = mutableListOf<Vector3f>()
         val vertColors = mutableListOf<Material.Color>()
         val normals = mutableListOf<Vector3f>()
-        val uvs = mutableListOf<Model.UV>()
-        val tris = mutableListOf<Model.Tri>()
+        val uvs = mutableListOf<Mesh.UV>()
+        val trises = mutableListOf<Mesh.Triangle>()
         val materials = mutableMapOf<String, Material>()
         var material: Material? = null
         for (line in parseLines(inp)) {
@@ -50,13 +51,13 @@ class SceneLoaderImpl(private val resourceGetter: () -> ResourceGetter) : SceneL
                     line[2].toFloat(),
                     line[3].toFloat()
                 )
-                "vt" -> uvs += Model.UV(
+                "vt" -> uvs += Mesh.UV(
                     line[1].toFloat(),
                     1f - line[2].toFloat()
                 )
                 "f" -> {
                     for (i in 2 until line.size - 1) {
-                        tris += Model.Tri(
+                        trises += Mesh.Triangle(
                             parseVertex(verts, vertColors, normals, uvs, line[1]),
                             parseVertex(verts, vertColors, normals, uvs, line[i]),
                             parseVertex(verts, vertColors, normals, uvs, line[i + 1]),
@@ -66,7 +67,7 @@ class SceneLoaderImpl(private val resourceGetter: () -> ResourceGetter) : SceneL
                 }
             }
         }
-        Model(tris, materials)
+        Model(trises, materials)
     } ?: throw IllegalArgumentException("Missing OBJ model: $name")
 
     override fun loadMaterialLibrary(name: String) = textResource(name) { inp, parentDir ->
@@ -130,12 +131,12 @@ class SceneLoaderImpl(private val resourceGetter: () -> ResourceGetter) : SceneL
         verts: List<Vector3f>,
         vertColors: List<Material.Color>,
         normals: List<Vector3f>,
-        uvs: List<Model.UV>,
+        uvs: List<Mesh.UV>,
         vertex: String
-    ): Model.Vertex {
+    ): Mesh.Vertex {
         val parts = vertex.split("/")
         val vertIndex = parts[0].toInt() - 1
-        return Model.Vertex(
+        return Mesh.Vertex(
             verts[vertIndex],
             if (parts.size > 2 && parts[2].isNotEmpty()) {
                 normals[parts[2].toInt() - 1]

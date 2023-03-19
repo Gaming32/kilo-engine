@@ -5,7 +5,7 @@ import io.github.gaming32.kiloengine.model.Material
 import io.github.gaming32.kiloengine.model.Model
 
 interface SceneLoader {
-    fun loadObj(name: String): Model
+    fun loadOBJ(name: String): Model
 
     fun loadMaterialLibrary(name: String): Map<String, Material>
 
