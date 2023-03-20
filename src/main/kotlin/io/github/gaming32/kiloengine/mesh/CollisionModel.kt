@@ -4,7 +4,7 @@ import org.ode4j.ode.DTriMeshData
 import org.ode4j.ode.OdeHelper
 
 data class CollisionModel(
-    val mesh: Mesh,
+    val mesh: Mesh<*>,
     val collisionTypes: Map<Material, CollisionType>
 ) {
     companion object {
