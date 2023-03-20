@@ -2,9 +2,9 @@ package io.github.gaming32.kiloengine.entity
 
 import com.google.gson.JsonObject
 import io.github.gaming32.kiloengine.loader.SceneLoader
-import io.github.gaming32.kiloengine.model.CollisionModel
-import io.github.gaming32.kiloengine.model.CollisionType
-import io.github.gaming32.kiloengine.model.Material
+import io.github.gaming32.kiloengine.mesh.CollisionModel
+import io.github.gaming32.kiloengine.mesh.CollisionType
+import io.github.gaming32.kiloengine.mesh.Material
 import io.github.gaming32.kiloengine.util.getElement
 import org.ode4j.ode.DContact
 import org.ode4j.ode.DContactGeom

@@ -1,4 +1,4 @@
-package io.github.gaming32.kiloengine.model
+package io.github.gaming32.kiloengine.mesh
 
 import io.github.gaming32.kiloengine.util.Drawable
 import io.github.gaming32.kiloengine.util.ModelBuilder

@@ -1,4 +1,4 @@
-package io.github.gaming32.kiloengine.model
+package io.github.gaming32.kiloengine.mesh
 
 import org.ode4j.ode.DTriMeshData
 import org.ode4j.ode.OdeHelper

@@ -1,4 +1,4 @@
-package io.github.gaming32.kiloengine.model
+package io.github.gaming32.kiloengine.mesh
 
 typealias CollisionType = String
 

@@ -7,9 +7,9 @@ import io.github.gaming32.kiloengine.ResourceGetter
 import io.github.gaming32.kiloengine.Scene
 import io.github.gaming32.kiloengine.entity.ComponentRegistry
 import io.github.gaming32.kiloengine.entity.Entity
-import io.github.gaming32.kiloengine.model.Material
-import io.github.gaming32.kiloengine.model.Mesh
-import io.github.gaming32.kiloengine.model.Model
+import io.github.gaming32.kiloengine.mesh.Material
+import io.github.gaming32.kiloengine.mesh.Mesh
+import io.github.gaming32.kiloengine.mesh.Model
 import io.github.gaming32.kiloengine.util.simpleParentDir
 import io.github.gaming32.kiloengine.util.toDVector3
 import org.joml.Vector3f
@@ -68,7 +68,7 @@ class SceneLoaderImpl(private val resourceGetter: () -> ResourceGetter) : SceneL
             }
         }
         Model(trises, materials)
-    } ?: throw IllegalArgumentException("Missing OBJ model: $name")
+    } ?: throw IllegalArgumentException("Missing OBJ mesh: $name")
 
     override fun loadMaterialLibrary(name: String) = textResource(name) { inp, parentDir ->
         val materials = mutableMapOf<String, Material>()

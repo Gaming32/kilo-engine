@@ -4,7 +4,7 @@ import com.google.gson.JsonObject
 import io.github.gaming32.kiloengine.Skybox
 import io.github.gaming32.kiloengine.TextureManager
 import io.github.gaming32.kiloengine.loader.SceneLoader
-import io.github.gaming32.kiloengine.model.Material
+import io.github.gaming32.kiloengine.mesh.Material
 import io.github.gaming32.kiloengine.util.*
 import org.joml.Vector2d
 import org.joml.Vector2f

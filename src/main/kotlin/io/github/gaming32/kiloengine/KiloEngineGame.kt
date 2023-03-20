@@ -329,7 +329,7 @@ abstract class KiloEngineGame {
         }
         glUseProgram(shaderProgram)
 
-        matrices.uniModel = glGetUniformLocation(shaderProgram, "model")
+        matrices.uniModel = glGetUniformLocation(shaderProgram, "mesh")
         matrices.uniProjection = glGetUniformLocation(shaderProgram, "projection")
 
         glGetAttribLocation(shaderProgram, "position").let {

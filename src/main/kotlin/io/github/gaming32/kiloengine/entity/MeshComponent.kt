@@ -2,9 +2,9 @@ package io.github.gaming32.kiloengine.entity
 
 import com.google.gson.JsonObject
 import io.github.gaming32.kiloengine.loader.SceneLoader
-import io.github.gaming32.kiloengine.model.Mesh
-import io.github.gaming32.kiloengine.model.MeshRegistry
-import io.github.gaming32.kiloengine.model.ProceduralMesh
+import io.github.gaming32.kiloengine.mesh.Mesh
+import io.github.gaming32.kiloengine.mesh.MeshRegistry
+import io.github.gaming32.kiloengine.mesh.ProceduralMesh
 import io.github.gaming32.kiloengine.util.getElement
 
 class MeshComponent(entity: Entity, val mesh: Mesh) : BaseComponent<MeshComponent>(Type, entity) {
