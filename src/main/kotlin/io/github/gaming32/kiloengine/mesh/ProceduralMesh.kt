@@ -2,7 +2,7 @@ package io.github.gaming32.kiloengine.mesh
 
 import io.github.gaming32.kiloengine.util.Dirtable
 
-abstract class ProceduralMesh : Mesh, Dirtable {
+abstract class ProceduralMesh<T : ProceduralMesh<T>> : Mesh<T>, Dirtable {
     private var triangles: List<Mesh.Triangle>
     private var dirty: Boolean = true
 

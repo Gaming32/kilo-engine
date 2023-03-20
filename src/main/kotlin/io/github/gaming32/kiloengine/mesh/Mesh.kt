@@ -1,11 +1,11 @@
 package io.github.gaming32.kiloengine.mesh
 
+import com.google.gson.JsonObject
 import io.github.gaming32.kiloengine.util.Drawable
 import io.github.gaming32.kiloengine.util.ModelBuilder
 import org.joml.Vector3f
 
-sealed interface Mesh : Drawable {
-
+sealed interface Mesh<T : Mesh<T>> : Drawable {
     fun getTriangles() : List<Triangle>
     fun getMaterial(key: String) : Material?
 
@@ -48,5 +48,9 @@ sealed interface Mesh : Drawable {
         }
 
         fun scale(scale: Float) = copy(a = a.scale(scale), b = b.scale(scale), c = c.scale(scale))
+    }
+
+    abstract class MeshType<T : Mesh<T>> {
+        abstract fun create(data: JsonObject): T
     }
 }
