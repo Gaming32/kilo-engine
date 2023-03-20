@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package io.github.gaming32.kiloengine.entity
 
 import io.github.gaming32.kiloengine.Scene

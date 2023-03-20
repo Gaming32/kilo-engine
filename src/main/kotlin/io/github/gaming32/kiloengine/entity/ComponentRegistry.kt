@@ -9,7 +9,7 @@ object ComponentRegistry {
         componentTypes[id] = type
     }
 
-    @Deprecated("Renamed", replaceWith = ReplaceWith("ComponentRegistry.get(id)"))
+    @Deprecated("Inconsistent", replaceWith = ReplaceWith("ComponentRegistry.get(id)"))
     fun getType(id: String) = componentTypes.getValue(id)
 
     @JvmStatic

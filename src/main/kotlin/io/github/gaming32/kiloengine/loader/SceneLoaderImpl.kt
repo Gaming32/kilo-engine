@@ -115,11 +115,11 @@ class SceneLoaderImpl(private val resourceGetter: () -> ResourceGetter) : SceneL
             }
             for (componentData in componentsData) {
                 if (componentData.isJsonPrimitive) {
-                    ComponentRegistry.getType(componentData.asString)
+                    ComponentRegistry[componentData.asString]
                         .create(entity, this, JsonObject())
                 } else {
                     componentData as JsonObject
-                    ComponentRegistry.getType(componentData.remove("type").asString)
+                    ComponentRegistry[componentData.remove("type").asString]
                         .create(entity, this, componentData)
                 }
             }
