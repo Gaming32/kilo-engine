@@ -4,13 +4,10 @@ import io.github.gaming32.kiloengine.util.Drawable
 import io.github.gaming32.kiloengine.util.ModelBuilder
 import org.joml.Vector3f
 
-interface Mesh : Drawable {
-    companion object {
-        val EMPTY = Model.EMPTY
-    }
+sealed interface Mesh : Drawable {
 
     fun getTriangles() : List<Triangle>
-    fun getMaterials() : Map<String, Material>
+    fun getMaterial(key: String) : Material?
 
     override fun draw(builder: ModelBuilder) {
         getTriangles().forEach {

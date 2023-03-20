@@ -9,7 +9,7 @@ data class CollisionModel(
 ) {
     companion object {
         @Suppress("unused")
-        val EMPTY = CollisionModel(Mesh.EMPTY, mapOf())
+        val EMPTY = CollisionModel(Model.EMPTY, mapOf())
     }
 
     fun getCollision(mat: Material?) = collisionTypes[mat] ?: CollisionTypes.SOLID

@@ -5,10 +5,10 @@ object MeshRegistry {
 
     @JvmStatic
     @Suppress("unused")
-    fun register(id: String, mesh: Mesh) {
-        meshes[id] = mesh
+    fun register(identifier: String, mesh: Mesh) {
+        meshes[identifier] = mesh
     }
 
     @JvmStatic
-    operator fun get(id: String) = meshes.getValue(id)
+    operator fun get(identifier: String) = meshes.getValue(identifier)
 }

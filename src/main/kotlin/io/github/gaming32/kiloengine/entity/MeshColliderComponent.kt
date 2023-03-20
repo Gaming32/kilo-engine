@@ -23,7 +23,9 @@ class MeshColliderComponent(
                     model,
                     IdentityHashMap<Material, String>().apply {
                         data.getElement("collision").asJsonObject.asMap().forEach { (key, value) ->
-                            put(model.getMaterials()[key], value.asString)
+                            model.getMaterial(key)?.let {
+                                put(it, value.asString)
+                            }
                         }
                     }
                 )

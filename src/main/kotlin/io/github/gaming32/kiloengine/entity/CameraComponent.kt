@@ -75,7 +75,7 @@ class CameraComponent @JvmOverloads constructor(
             TextureManager.loadAsVirtual(it.negativeX, "$baseId/negativeX")
             TextureManager.loadAsVirtual(it.positiveX, "$baseId/positiveX")
         }
-        sceneLoader.loadObj("/skybox.obj")
+        sceneLoader.loadOBJ("/skybox.obj")
             .replaceMaterials(mapOf(
                 "down" to Material.Texture("~$baseId/down"),
                 "up" to Material.Texture("~$baseId/up"),

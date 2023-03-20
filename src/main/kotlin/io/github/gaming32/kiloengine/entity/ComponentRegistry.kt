@@ -9,7 +9,11 @@ object ComponentRegistry {
         componentTypes[id] = type
     }
 
+    @Deprecated("Renamed", replaceWith = ReplaceWith("ComponentRegistry.get(id)"))
     fun getType(id: String) = componentTypes.getValue(id)
+
+    @JvmStatic
+    operator fun get(identifier: String) = componentTypes.getValue(identifier)
 
     init {
         register("camera", CameraComponent)
@@ -18,6 +22,5 @@ object ComponentRegistry {
         register("meshCollider", MeshColliderComponent)
         register("meshRenderer", MeshRendererComponent)
         register("player", PlayerComponent)
-        register("proceduralMesh", ProceduralMeshComponent)
     }
 }
