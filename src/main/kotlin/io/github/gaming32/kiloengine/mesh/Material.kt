@@ -1,4 +1,4 @@
-package io.github.gaming32.kiloengine.model
+package io.github.gaming32.kiloengine.mesh
 
 import io.github.gaming32.kiloengine.util.Drawable
 import io.github.gaming32.kiloengine.util.ModelBuilder
@@ -11,7 +11,7 @@ sealed class Material : Drawable {
         }
 
         override fun draw(builder: ModelBuilder) {
-            TODO("Implement color materials once again")
+            // TODO: Implement color materials once again
             builder.color(r, g, b, a)
         }
 

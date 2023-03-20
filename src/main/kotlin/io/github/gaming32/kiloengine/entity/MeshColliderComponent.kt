@@ -2,9 +2,9 @@ package io.github.gaming32.kiloengine.entity
 
 import com.google.gson.JsonObject
 import io.github.gaming32.kiloengine.loader.SceneLoader
-import io.github.gaming32.kiloengine.model.CollisionModel
-import io.github.gaming32.kiloengine.model.CollisionType
-import io.github.gaming32.kiloengine.model.Material
+import io.github.gaming32.kiloengine.mesh.CollisionModel
+import io.github.gaming32.kiloengine.mesh.CollisionType
+import io.github.gaming32.kiloengine.mesh.Material
 import io.github.gaming32.kiloengine.util.getElement
 import org.ode4j.ode.DContact
 import org.ode4j.ode.DContactGeom
@@ -18,12 +18,14 @@ class MeshColliderComponent(
     companion object Type : ComponentType<MeshColliderComponent>() {
         override fun create(entity: Entity, loader: SceneLoader, data: JsonObject) = MeshColliderComponent(
             entity,
-            entity.getComponent<MeshComponent>().model.let { model ->
+            entity.getComponent<MeshComponent>().mesh.let { model ->
                 CollisionModel(
                     model,
                     IdentityHashMap<Material, String>().apply {
                         data.getElement("collision").asJsonObject.asMap().forEach { (key, value) ->
-                            put(model.materials[key], value.asString)
+                            model.getMaterial(key)?.let {
+                                put(it, value.asString)
+                            }
                         }
                     }
                 )

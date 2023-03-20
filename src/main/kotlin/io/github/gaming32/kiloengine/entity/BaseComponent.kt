@@ -5,8 +5,8 @@ import io.github.gaming32.kiloengine.KiloEngineGame
 import io.github.gaming32.kiloengine.MatrixStacks
 import io.github.gaming32.kiloengine.MouseMoveEvent
 import io.github.gaming32.kiloengine.loader.SceneLoader
-import io.github.gaming32.kiloengine.model.CollisionType
-import io.github.gaming32.kiloengine.model.CollisionTypes
+import io.github.gaming32.kiloengine.mesh.CollisionType
+import io.github.gaming32.kiloengine.mesh.CollisionTypes
 import io.github.gaming32.kiloengine.util.Destroyable
 import io.github.gaming32.kiloengine.util.x
 import io.github.gaming32.kiloengine.util.y

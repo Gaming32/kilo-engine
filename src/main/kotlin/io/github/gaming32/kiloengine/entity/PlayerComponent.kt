@@ -6,9 +6,9 @@ import io.github.gaming32.kiloengine.MatrixStacks
 import io.github.gaming32.kiloengine.MouseMoveEvent
 import io.github.gaming32.kiloengine.TextureManager
 import io.github.gaming32.kiloengine.loader.SceneLoader
-import io.github.gaming32.kiloengine.model.CollisionType
-import io.github.gaming32.kiloengine.model.CollisionTypes
-import io.github.gaming32.kiloengine.model.capsule
+import io.github.gaming32.kiloengine.mesh.CollisionType
+import io.github.gaming32.kiloengine.mesh.CollisionTypes
+import io.github.gaming32.kiloengine.mesh.capsule
 import io.github.gaming32.kiloengine.util.*
 import org.joml.*
 import org.lwjgl.glfw.GLFW.glfwGetTime

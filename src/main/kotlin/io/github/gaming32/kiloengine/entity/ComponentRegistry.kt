@@ -9,7 +9,11 @@ object ComponentRegistry {
         componentTypes[id] = type
     }
 
+    @Deprecated("Inconsistent", replaceWith = ReplaceWith("ComponentRegistry.get(id)"))
     fun getType(id: String) = componentTypes.getValue(id)
+
+    @JvmStatic
+    operator fun get(identifier: String) = componentTypes.getValue(identifier)
 
     init {
         register("camera", CameraComponent)

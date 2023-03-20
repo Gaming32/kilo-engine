@@ -276,3 +276,147 @@ new CameraComponent(
 ```
 
 </details>
+
+## Entities
+***Warning:** you must add a camera to the scene, otherwise it just won't be rendered.*
+
+Entities are _everything_ in your game. They can be the camera, a light source, or that shiny house model you made.
+Everything is an entity, and custom behaviours for those entities - `Components` - can be created and assigned.
+```json5
+// scene.json5
+{
+  entities: [
+    // this is where the following codeblocks will be in.
+  ]
+}
+```
+
+Each entity is composed of three elements:
+1. [Position](#position)
+2. [Physics](#physics)
+3. [Components](#components)
+
+### Position
+The position of the object in the world, in a 3-element array representing a `Vector3f`.
+```json5
+{
+  //           x    y    z
+  position: [ 0.0, 0.0, 0.0 ]
+}
+```
+
+### Physics
+***Did you know?** Physics are on by default because otherwise god would've created this universe without them, because he/she/they (or even it) doesn't read READMEs.*
+
+For now, you can only do one thing: enable and disable physics. Play around with the example to experience the physics the engine has to offer.
+Remember colliders aren't automatic, but a component is needed for them.
+```json5
+{
+  kinematic: true // disables physics, 
+}
+```
+
+## Components
+These are the *good stuff*. Components are where you code your game!
+
+All components require a `type` - a string that is used to identify the component, and is unique to it.
+If a component doesn't have parameters, it can be shortened into a string.
+```json5
+{
+  components: [
+    {
+      type: "camelCase",
+      
+      // parameters go here
+    },
+    
+    // can also be wrote as:
+    "camelCase"
+  ]
+}
+```
+
+See [`ComponentRegistry.kt`](/src/main/kotlin/io/github/gaming32/kiloengine/entity/ComponentRegistry.kt) for a list of built-in components.
+
+### Mesh
+This component is used to add mesh to your object, whether it be a pre-made `.obj` file, or procedurally generated terrain.
+```json5
+{
+  type: "mesh",
+  
+  fromRegistry: false, // false by default
+  mesh: "path or identifier" // required
+}
+```
+#### Rendering
+A mesh won't render, unless its entity also has the component `meshRenderer`.
+```json5
+{
+  components: [
+    {
+      type: "mesh",
+      
+      mesh: "/my/mesh"
+    },
+    "meshRenderer"
+  ]
+}
+```
+
+#### Registry
+The mesh registry saves mesh _types_ to a unique `identifier` - a string, similarly to component types.
+
+If you set `fromRegistry` to `true`, the value of `mesh` will be used to pull the mesh type from the registry instead of being treated as a file path.
+
+An example of where and how you should register your mesh type:
+```kotlin
+fun main() = object : KiloEngineGame() {
+    /* ... */
+    
+    override fun loadInitScene() {
+        MeshRegistry.register("identifier", MyMeshType())
+        
+        sceneLoader.loadScene("/example/example.scene.json5", scene)
+    }
+}.main()
+```
+An example of a mesh type in a `scene.json5`:
+```json5
+{
+  type: "mesh",
+  
+  fromRegistry: true,
+  mesh: "myIdentifier", // turns into an identifier
+  
+  myMeshData: 0.4 // only supported in registry meshes
+}
+```
+
+#### Mesh Types
+a `MeshType` is an object that gets the component's json object as input, and returns mesh as output.
+It has two uses:
+1. **_Creating models on the fly_ -** for example, creating a cube model with a set size using code. This isn't a procedural mesh, as it doesn't change its size (although a cube that changes sizes is an excellent example of procedural mesh uses)
+2. **_Creating procedural meshes_ -** see below.
+
+#### Procedural Meshes
+Procedural meshes can *only* be called from the registry, as they're not contained in static code, but change
+once in a while based on their data, and data they received during initialization (as part of the component).
+
+Procedural meshes can be "marked dirty" using `.markDirty()`. Every tick, the engine checks if the mesh is "dirty".
+If it is, it is recalculated. Try to make this method as efficient as you can, and to use separate meshes if possible,
+as it results in less things to calculate at once, making your game more efficient.
+```kotlin
+class MyProceduralMesh : ProceduralMesh() {
+    override fun calculateMesh() {
+        val triangles = mutableListOf<Mesh.Triangle>()
+        
+        // do your stuff
+        
+        return triangles.toList()
+    }
+    
+    override fun getMaterial(identifier: String) : Material? // TODO: document this
+}
+```
+
+***TODO:** document [physics](#physics) and colliders.*

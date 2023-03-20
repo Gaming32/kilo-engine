@@ -1,7 +1,9 @@
+@file:Suppress("unused")
+
 package io.github.gaming32.kiloengine.entity
 
 import io.github.gaming32.kiloengine.Scene
-import io.github.gaming32.kiloengine.model.CollisionType
+import io.github.gaming32.kiloengine.mesh.CollisionType
 import org.ode4j.math.DVector3C
 import org.ode4j.ode.DBody
 import org.ode4j.ode.DContact.DSurfaceParameters

@@ -1,28 +1,29 @@
-package io.github.gaming32.kiloengine.model
+package io.github.gaming32.kiloengine.mesh
 
 import org.ode4j.ode.DTriMeshData
 import org.ode4j.ode.OdeHelper
 
 data class CollisionModel(
-    val model: Model,
+    val mesh: Mesh<*>,
     val collisionTypes: Map<Material, CollisionType>
 ) {
     companion object {
+        @Suppress("unused")
         val EMPTY = CollisionModel(Model.EMPTY, mapOf())
     }
 
     fun getCollision(mat: Material?) = collisionTypes[mat] ?: CollisionTypes.SOLID
 
-    fun getCollision(tri: Model.Tri) = getCollision(tri.material)
+    fun getCollision(triangle: Mesh.Triangle) = getCollision(triangle.material)
 
     fun toTriMeshData(
         collisionType: CollisionType,
         data: DTriMeshData = OdeHelper.createTriMeshData()
     ) = data.also {
-        val vertices = mutableMapOf<Model.Vertex, Int>() // ORDERED!
-        val indexData = IntArray(model.tris.count { getCollision(it) == collisionType } * 3)
+        val vertices = mutableMapOf<Mesh.Vertex, Int>() // ORDERED!
+        val indexData = IntArray(mesh.getTriangles().count { getCollision(it) == collisionType } * 3)
         var currentIndex = 0
-        model.tris.forEach { tri ->
+        mesh.getTriangles().forEach { tri ->
             if (getCollision(tri) != collisionType) {
                 return@forEach
             }
@@ -42,7 +43,7 @@ data class CollisionModel(
 
     fun toMultiTriMeshData(): Map<CollisionType, DTriMeshData> {
         val result = mutableMapOf<CollisionType, DTriMeshData>()
-        for (tri in model.tris) {
+        for (tri in mesh.getTriangles()) {
             val type = getCollision(tri)
             if (
                 type in result ||

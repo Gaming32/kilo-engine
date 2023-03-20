@@ -4,7 +4,7 @@ import com.google.gson.JsonObject
 import io.github.gaming32.kiloengine.Skybox
 import io.github.gaming32.kiloengine.TextureManager
 import io.github.gaming32.kiloengine.loader.SceneLoader
-import io.github.gaming32.kiloengine.model.Material
+import io.github.gaming32.kiloengine.mesh.Material
 import io.github.gaming32.kiloengine.util.*
 import org.joml.Vector2d
 import org.joml.Vector2f
@@ -75,7 +75,7 @@ class CameraComponent @JvmOverloads constructor(
             TextureManager.loadAsVirtual(it.negativeX, "$baseId/negativeX")
             TextureManager.loadAsVirtual(it.positiveX, "$baseId/positiveX")
         }
-        sceneLoader.loadObj("/skybox.obj")
+        sceneLoader.loadOBJ("/skybox.obj")
             .replaceMaterials(mapOf(
                 "down" to Material.Texture("~$baseId/down"),
                 "up" to Material.Texture("~$baseId/up"),
