@@ -7,6 +7,7 @@ import io.github.gaming32.kiloengine.MouseMoveEvent
 import io.github.gaming32.kiloengine.loader.SceneLoader
 import io.github.gaming32.kiloengine.model.CollisionType
 import io.github.gaming32.kiloengine.model.CollisionTypes
+import io.github.gaming32.kiloengine.ui.debug.DebugMenuItem
 import io.github.gaming32.kiloengine.util.Destroyable
 import io.github.gaming32.kiloengine.util.x
 import io.github.gaming32.kiloengine.util.y
@@ -71,6 +72,8 @@ abstract class BaseComponent<T : BaseComponent<T>>(val type: ComponentType<T>, v
     open fun handleMovement(movementInput: Vector3d) = Unit
 
     open fun drawUi(nanovg: Long) = Unit
+
+    open val debugMenu = listOf<DebugMenuItem>()
 
     open fun mouseMoved(event: MouseMoveEvent) = Unit
 }

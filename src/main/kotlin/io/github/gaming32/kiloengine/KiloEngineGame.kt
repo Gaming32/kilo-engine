@@ -5,6 +5,10 @@ import io.github.gaming32.kiloengine.entity.Entity
 import io.github.gaming32.kiloengine.entity.PlayerComponent
 import io.github.gaming32.kiloengine.loader.SceneLoader
 import io.github.gaming32.kiloengine.loader.SceneLoaderImpl
+import io.github.gaming32.kiloengine.ui.SCIENTIFICA
+import io.github.gaming32.kiloengine.ui.UIManager
+import io.github.gaming32.kiloengine.ui.debug.ListedDebugMenuItem
+import io.github.gaming32.kiloengine.ui.debug.SimpleDebugMenuItem
 import io.github.gaming32.kiloengine.util.*
 import org.joml.*
 import org.lwjgl.glfw.Callbacks.glfwFreeCallbacks
@@ -40,10 +44,17 @@ abstract class KiloEngineGame {
 
         @JvmField
         val EDITOR_MODE = System.getProperty("kilo.editor").toBoolean()
+        @JvmField
+        val DEV_MODE = System.getProperty("kilo.dev").toBoolean()
         val EDITOR_DEBUG_COLOR = Vector3f(50 / 255f, 168 / 255f, 113 / 255f)
         private const val EDITOR_MOVE_SPEED = 0.35f
         private const val EDITOR_LOOK_SPEED = 0.2f
         private const val EDITOR_FOV = 80f
+
+        const val DEBUG_MENU_TEXT_OFFSET = 10f
+        const val DEBUG_MENU_TEXT_SIZE = 22f
+        const val DEBUG_MENU_TITLE_SIZE = 33f
+        val DEBUG_MENU_FONT = SCIENTIFICA
     }
 
     init {
@@ -53,9 +64,10 @@ abstract class KiloEngineGame {
     val scene = Scene()
     private val windowSize = Vector2i()
     private val movementInput = Vector3d()
-    private var wireframe = false
     private val matrices = MatrixStacks(32)
     lateinit var sceneLoader: SceneLoader
+        private set
+    lateinit var ui: UIManager
         private set
 
     private val editorCameraPos = Vector3f()
@@ -71,13 +83,28 @@ abstract class KiloEngineGame {
     private var fragmentShader = 0
     private var shaderProgram = 0
 
+    // Screen States
+    var wireframe = false
+    var isDebugScreenEnabled = DEV_MODE
+    var isUIEnabled = true
+
+    val builtInDebug = ListedDebugMenuItem("Kilo Engine",
+        SimpleDebugMenuItem("FPS") {
+            fpsAverage.roundToLong().toString()
+        }, SimpleDebugMenuItem("Triangles") {
+            DisplayList.totalTriCount.toString()
+        }
+    )
+
+    // Stats
+    var fpsAverage = 0.0
+
     fun main() {
         init()
         registerEvents()
         loadInitScene()
         var lastTime = glfwGetTime()
         var lastPhysicsTime = lastTime
-        var fpsAverage = 0.0
         if (EDITOR_MODE) {
             scene.getComponentOrNull<PlayerComponent>()?.let {
                 editorCameraPos.set(it.entity.body.position.toVector3f())
@@ -254,7 +281,7 @@ abstract class KiloEngineGame {
             nvgText(nanovg, 10f, 35f, "FPS: ${fpsAverage.roundToLong()}")
             nvgText(nanovg, 10f, 55f, "Tri Count: ${DisplayList.totalTriCount}")
             if (!EDITOR_MODE) {
-                scene.invokeEvent(EventType.DRAW_UI, nanovg)
+                scene.invokeEvent(EventType.DRAW_UI, ui)
             }
             nvgEndFrame(nanovg)
 
@@ -292,7 +319,9 @@ abstract class KiloEngineGame {
 //        GLUtil.setupDebugMessageCallback()
 
         nanovg = nvgCreate(NVG_ANTIALIAS)
-        loadFont(nanovg, "minecraftia")
+        ui = UIManager(nanovg)
+
+        ui.loadFont(SCIENTIFICA)
 
         glfwSwapInterval(1)
 
@@ -416,26 +445,31 @@ abstract class KiloEngineGame {
                     movementInput.x = 0.0
                     movementInput.z = 0.0
                 }
+
                 GLFW_KEY_W -> if (press) {
                     movementInput.z++
                 } else {
                     movementInput.z--
                 }
+
                 GLFW_KEY_S -> if (press) {
                     movementInput.z--
                 } else {
                     movementInput.z++
                 }
+
                 GLFW_KEY_A -> if (press) {
                     movementInput.x++
                 } else {
                     movementInput.x--
                 }
+
                 GLFW_KEY_D -> if (press) {
                     movementInput.x--
                 } else {
                     movementInput.x++
                 }
+
                 GLFW_KEY_SPACE -> if (EDITOR_MODE) {
                     if (!press) {
                         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL)
@@ -445,15 +479,25 @@ abstract class KiloEngineGame {
                 } else if (press && mouseLocked) {
                     movementInput.y = 1.0
                 }
-                GLFW_KEY_F3 -> if (press && (mouseLocked || EDITOR_MODE)) {
+
+                GLFW_KEY_F4 -> if (press && (mouseLocked || EDITOR_MODE)) {
                     wireframe = !wireframe
                     if (wireframe) {
                         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
                         glLineWidth(2f)
+                        isUIEnabled = false
                     } else {
                         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
                         glLineWidth(10f)
                     }
+                }
+
+                GLFW_KEY_F3 -> if (press && (mouseLocked || EDITOR_MODE)) {
+                    isDebugScreenEnabled = !isDebugScreenEnabled
+                }
+
+                GLFW_KEY_F1 -> if (press && (mouseLocked || EDITOR_MODE)) {
+                    isUIEnabled = !isUIEnabled && !wireframe // wireframe must be off for UI to be enabled
                 }
             }
         }

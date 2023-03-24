@@ -9,10 +9,10 @@ import io.github.gaming32.kiloengine.loader.SceneLoader
 import io.github.gaming32.kiloengine.model.CollisionType
 import io.github.gaming32.kiloengine.model.CollisionTypes
 import io.github.gaming32.kiloengine.model.capsule
+import io.github.gaming32.kiloengine.ui.debug.SimpleDebugMenuItem
 import io.github.gaming32.kiloengine.util.*
 import org.joml.*
 import org.lwjgl.glfw.GLFW.glfwGetTime
-import org.lwjgl.nanovg.NanoVG.nvgText
 import org.ode4j.math.DMatrix3
 import org.ode4j.math.DVector3
 import org.ode4j.ode.DContact
@@ -147,35 +147,52 @@ open class PlayerComponent(
         uiForce.set(entity.body.force)
     }
 
-    override fun drawUi(nanovg: Long) {
-        nvgText(
-            nanovg, 10f, 75f,
-            "X/Y/Z: " +
-                "${UI_DEC_FORMAT.format(entity.body.position.x)}/" +
+//    override fun drawUi(nanovg: Long) {
+//        nvgText(
+//            nanovg, 10f, 75f,
+//            "X/Y/Z: " +
+//                "${UI_DEC_FORMAT.format(entity.body.position.x)}/" +
+//                "${UI_DEC_FORMAT.format(entity.body.position.y)}/" +
+//                UI_DEC_FORMAT.format(entity.body.position.z)
+//        )
+//        nvgText(
+//            nanovg, 10f, 95f,
+//            "FX/FY/FZ: " +
+//                "${UI_DEC_FORMAT.format(uiForce.x)}/" +
+//                "${UI_DEC_FORMAT.format(uiForce.y)}/" +
+//                UI_DEC_FORMAT.format(uiForce.z)
+//        )
+//        nvgText(
+//            nanovg, 10f, 115f,
+//            "VX/VY/VZ: " +
+//                "${UI_DEC_FORMAT.format(entity.body.linearVel.x)}/" +
+//                "${UI_DEC_FORMAT.format(entity.body.linearVel.y)}/" +
+//                UI_DEC_FORMAT.format(entity.body.linearVel.z)
+//        )
+//        nvgText(
+//            nanovg, 10f, 135f,
+//            "RY/RX: " +
+//                "${UI_DEC_FORMAT.format(rotation.y)}/" +
+//                UI_DEC_FORMAT.format(rotation.x)
+//        )
+//    }
+
+    override val debugMenu = listOf(SimpleDebugMenuItem("X/Y/Z") {
+        "${UI_DEC_FORMAT.format(entity.body.position.x)}/" +
                 "${UI_DEC_FORMAT.format(entity.body.position.y)}/" +
                 UI_DEC_FORMAT.format(entity.body.position.z)
-        )
-        nvgText(
-            nanovg, 10f, 95f,
-            "FX/FY/FZ: " +
-                "${UI_DEC_FORMAT.format(uiForce.x)}/" +
+    }, SimpleDebugMenuItem("FX/FY/FZ") {
+        "${UI_DEC_FORMAT.format(uiForce.x)}/" +
                 "${UI_DEC_FORMAT.format(uiForce.y)}/" +
                 UI_DEC_FORMAT.format(uiForce.z)
-        )
-        nvgText(
-            nanovg, 10f, 115f,
-            "VX/VY/VZ: " +
-                "${UI_DEC_FORMAT.format(entity.body.linearVel.x)}/" +
+    }, SimpleDebugMenuItem("VX/VY/VZ") {
+        "${UI_DEC_FORMAT.format(entity.body.linearVel.x)}/" +
                 "${UI_DEC_FORMAT.format(entity.body.linearVel.y)}/" +
                 UI_DEC_FORMAT.format(entity.body.linearVel.z)
-        )
-        nvgText(
-            nanovg, 10f, 135f,
-            "RY/RX: " +
-                "${UI_DEC_FORMAT.format(rotation.y)}/" +
+    }, SimpleDebugMenuItem("RY/RX") {
+        "${UI_DEC_FORMAT.format(rotation.y)}/" +
                 UI_DEC_FORMAT.format(rotation.x)
-        )
-    }
+    })
 
     override fun mouseMoved(event: MouseMoveEvent) {
         rotation.y = normalizeDegrees(
