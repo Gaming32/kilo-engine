@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package io.github.gaming32.kiloengine
 
 import io.github.gaming32.kiloengine.entity.BaseComponent
