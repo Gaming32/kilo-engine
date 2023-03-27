@@ -82,8 +82,11 @@ abstract class KiloEngineGame {
 
     // Screen States
     var wireframe = false
+        get() = field && DEV_MODE
     var isDebugScreenEnabled = DEV_MODE
+        get() = field && DEV_MODE
     var isUIEnabled = true
+        get() = field && !wireframe
 
     val builtInDebugMenu = listOf(
         SimpleDebugMenuItem("FPS") {
@@ -294,7 +297,7 @@ abstract class KiloEngineGame {
         }
 
         // draw UI
-        if (isUIEnabled && !wireframe) {
+        if (isUIEnabled) {
             ui on window
         }
     }
@@ -516,7 +519,7 @@ abstract class KiloEngineGame {
                 }
 
                 GLFW_KEY_F1 -> if (press && (mouseLocked || EDITOR_MODE)) {
-                    isUIEnabled = !isUIEnabled // wireframe must be off for UI to be enabled
+                    isUIEnabled = !isUIEnabled
                 }
             }
         }
