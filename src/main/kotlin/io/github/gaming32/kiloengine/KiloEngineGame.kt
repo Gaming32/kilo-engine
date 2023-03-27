@@ -22,10 +22,12 @@ import org.ode4j.math.DVector3
 import org.ode4j.ode.DContact.DSurfaceParameters
 import org.ode4j.ode.DContactGeomBuffer
 import org.ode4j.ode.OdeHelper
+import java.awt.Color
 import java.awt.Rectangle
 import java.awt.datatransfer.Clipboard
 import java.awt.datatransfer.ClipboardOwner
 import java.awt.datatransfer.Transferable
+import kotlin.math.max
 import kotlin.math.roundToLong
 import kotlin.math.sin
 
@@ -47,6 +49,7 @@ abstract class KiloEngineGame : ClipboardOwner {
 
         @JvmField
         val EDITOR_MODE = System.getProperty("kilo.editor").toBoolean()
+
         @JvmField
         val DEV_MODE = System.getProperty("kilo.dev").toBoolean()
         val EDITOR_DEBUG_COLOR = Vector3f(50 / 255f, 168 / 255f, 113 / 255f)
@@ -54,9 +57,20 @@ abstract class KiloEngineGame : ClipboardOwner {
         private const val EDITOR_LOOK_SPEED = 0.2f
         private const val EDITOR_FOV = 80f
 
+        @JvmField
+        val DEBUG_MENU_FONT_FAMILY = DEFAULT_FONT_FAMILY
+
+        @JvmField
+        val DEBUG_MENU_TEXT_COLOR = WHITE
+
+        @JvmField
+        val DEBUG_MENU_BACKGROUND_COLOR = Color(0.75f, 0.75f, 0.75f, 0.5f).toNVGColor()
         const val DEBUG_MENU_TEXT_SIZE = DEFAULT_TEXT_SIZE
         const val DEBUG_MENU_TITLE_SIZE = DEFAULT_TITLE_SIZE
         const val DEBUG_MENU_CATEGORY_OFFSET = DEFAULT_PARGRAPH_TEXT_OFFSET
+        const val DEBUG_MENU_BACKGROUND_RADIUS = 10f
+        const val DEBUG_MENU_TEXT_OFFSET = 10f
+        const val DEBUG_MENU_BACKGROUND_OFFSET = 5f
     }
 
     init {
@@ -76,7 +90,7 @@ abstract class KiloEngineGame : ClipboardOwner {
     private var editorSelected: Entity? = null
 
     // Handles
-    private lateinit var window : Window
+    private lateinit var window: Window
     private var nanovg = 0L
     private var vao = 0
     private var vbo = 0
@@ -318,18 +332,32 @@ abstract class KiloEngineGame : ClipboardOwner {
     /**
      * @return new y
      */
-    private fun drawDebugCategory(name: String, debugData: List<DebugMenuItem>, x : Float = 10f, y: Float) : Float {
+    private fun drawDebugCategory(
+        name: String,
+        debugData: List<DebugMenuItem>,
+        x: Float = DEBUG_MENU_TEXT_OFFSET,
+        y: Float
+    ): Float {
         if (debugData.isEmpty()) return y
 
-
         val title = SimpleTextElement(name, DEFAULT_FONT_FAMILY.bold(), DEBUG_MENU_TITLE_SIZE) with ui at Vector2f(x, y)
-        var newY = y + title.height
+        var width = title.width
+        var height = title.height
 
         debugData.forEach {
-            newY += (it.toElement() with ui at Vector2f(x, newY)).height
+            val element = it.toElement() with ui at Vector2f(x, y + height)
+            height += element.height
+            width = max(width, element.width)
         }
 
-        return newY + DEBUG_MENU_CATEGORY_OFFSET
+        SimpleBoxElement(
+            name,
+            Vector2f(width + DEBUG_MENU_TEXT_OFFSET, height + DEBUG_MENU_CATEGORY_OFFSET / 2),
+            DEBUG_MENU_BACKGROUND_COLOR,
+            DEBUG_MENU_BACKGROUND_RADIUS
+        ) with ui prioritizedAt Vector2f(x - (DEBUG_MENU_TEXT_OFFSET - DEBUG_MENU_BACKGROUND_OFFSET), y - title.height)
+
+        return y + height + DEBUG_MENU_CATEGORY_OFFSET
     }
 
     private fun init() {

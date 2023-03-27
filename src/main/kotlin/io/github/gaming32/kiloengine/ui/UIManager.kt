@@ -5,7 +5,6 @@ import io.github.gaming32.kiloengine.util.loadFont
 import org.joml.Vector2fc
 import org.lwjgl.nanovg.NanoVG.nvgBeginFrame
 import org.lwjgl.nanovg.NanoVG.nvgEndFrame
-import kotlin.properties.Delegates
 
 typealias UITask = (nanovg: Long) -> Unit
 
@@ -15,7 +14,7 @@ typealias UITask = (nanovg: Long) -> Unit
 data class UIManager(private val nanovg: Long) {
     private val tasks = mutableListOf<Task>()
 
-    infix fun on(window: Window.KnownSize) {
+    infix fun on(window: Window) {
         nvgBeginFrame(nanovg, window.size.x.toFloat(), window.size.y.toFloat(), window.pixelRatio)
 
         tasks.removeIf {
@@ -28,13 +27,21 @@ data class UIManager(private val nanovg: Long) {
 
     fun addTask(task: Task) = tasks.add(task)
 
-    @JvmOverloads
-    fun addTask(task: UITask, removeAfterInvoking: Boolean = true) = addTask(Task(task, removeAfterInvoking))
+    fun addPrioritizedTask(task: Task) = tasks.add(0, task)
 
-    operator fun invoke(task: UITask) = addTask(task)
+    @JvmOverloads
+    fun invokeWithPriority(removeAfterInvoking: Boolean = true, task: UITask) = addPrioritizedTask(
+        Task(
+            removeAfterInvoking,
+            task
+        )
+    )
+
+    @JvmOverloads
+    operator fun invoke(removeAfterInvoking: Boolean = true, task: UITask) = addTask(Task(removeAfterInvoking, task))
 
     operator fun plusAssign(task: UITask) {
-        addTask(task)
+        invoke(task = task)
     }
 
     fun loadFont(font: String) = loadFont(nanovg, font)
@@ -51,10 +58,10 @@ data class UIManager(private val nanovg: Long) {
      * Properties cannot be called until the UI is drawn for the first time.
      */
     open inner class Element internal constructor(private val element: UIElement) {
-        val width : Float
+        val width: Float
             get() = element.width(nanovg)
 
-        val height : Float
+        val height: Float
             get() = element.height(nanovg)
 
         /**
@@ -68,7 +75,15 @@ data class UIManager(private val nanovg: Long) {
 
             return this
         }
+
+        infix fun prioritizedAt(location: Vector2fc): Element {
+            invokeWithPriority {
+                element.draw(it, location)
+            }
+
+            return this
+        }
     }
 
-    data class Task(val task: UITask, val removeAfterInvoking: Boolean)
+    data class Task(val removeAfterInvoking: Boolean, val task: UITask)
 }

@@ -2,8 +2,17 @@ package io.github.gaming32.kiloengine.ui
 
 import org.joml.Vector2f
 import org.joml.Vector2fc
+import org.lwjgl.nanovg.NVGColor
 
-data class TextElement(override var label: String, val font: Font = DEFAULT_FONT_FAMILY, override var size: Float = 22f) : AbstractTextElement {
+open class TextElement(
+    override var label: String,
+    val font: Font = DEFAULT_FONT_FAMILY,
+    override var size: Float = 22f,
+    override var color: NVGColor = WHITE,
+    override var backgroundColor: NVGColor? = null,
+    override var radius: Float? = null
+) : AbstractBoxElement, AbstractTextElement {
+
     override fun draw(nanovg: Long, location: Vector2fc) {
         val elements = toSubElements()
         val position = Vector2f(location.x(), location.y())
@@ -13,13 +22,15 @@ data class TextElement(override var label: String, val font: Font = DEFAULT_FONT
 
             position.x += it.width(nanovg)
         }
+
+        super.draw(nanovg, location)
     }
 
     fun toSubElements(): List<SimpleTextElement> {
         val substrings = mutableListOf<SimpleTextElement>()
 
         var index = label.indexOf(FORMAT, ignoreCase = true)
-        var nextIndex : Int
+        var nextIndex: Int
 
         while (index != label.length) {
             nextIndex = label.indexOf(FORMAT, index + 1, true)
@@ -28,13 +39,15 @@ data class TextElement(override var label: String, val font: Font = DEFAULT_FONT
                 nextIndex = label.length
             }
 
-            substrings += SimpleTextElement(label.substring(index + 2, nextIndex), when (label[index + 1]) {
-                FORMAT_ITALICS -> font.italic()
-                FORMAT_BOLD -> font.bold()
-                FORMAT_ITALICS_BOLD -> font.italicBold()
+            substrings += SimpleTextElement(
+                label.substring(index + 2, nextIndex), when (label[index + 1]) {
+                    FORMAT_ITALICS -> font.italic()
+                    FORMAT_BOLD -> font.bold()
+                    FORMAT_ITALICS_BOLD -> font.italicBold()
 
-                else -> font.regular
-            }, size)
+                    else -> font.regular
+                }, size, color
+            )
 
             index = nextIndex
         }
@@ -51,4 +64,6 @@ data class TextElement(override var label: String, val font: Font = DEFAULT_FONT
 
         return result
     }
+
+    override fun height(nanovg: Long): Float = super.height(nanovg)
 }

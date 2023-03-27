@@ -3,6 +3,9 @@
 
 package io.github.gaming32.kiloengine.ui
 
+import org.lwjgl.nanovg.NVGColor
+import java.awt.Color
+
 const val ENGINE_NAME = "Kilo Engine"
 
 const val FORMAT = '§';
@@ -28,3 +31,20 @@ const val DEFAULT_FONT = JETBRAINS_MONO_REGULAR
 const val DEFAULT_TEXT_SIZE = 11 * 1.5f
 const val DEFAULT_TITLE_SIZE = 22f
 const val DEFAULT_PARGRAPH_TEXT_OFFSET = 20f
+
+@JvmField
+val WHITE = Color.WHITE.toNVGColor()
+@JvmField
+val BLACK = Color.BLACK.toNVGColor()
+
+
+fun Color.toNVGColor() : NVGColor {
+    val color = NVGColor.create()
+    color.r(red / 255f)
+    color.g(green / 255f)
+    color.b(blue / 255f)
+    color.a(alpha / 255f)
+    return color
+}
+
+fun javaToNVGColor(color: Color) = color.toNVGColor()
