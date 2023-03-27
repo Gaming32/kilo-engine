@@ -4,6 +4,7 @@
     <module name="kilo-engine.main" />
     <shortenClasspath name="NONE" />
     <option name="VM_PARAMETERS" value="-Dkilo.dev=true" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/out" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

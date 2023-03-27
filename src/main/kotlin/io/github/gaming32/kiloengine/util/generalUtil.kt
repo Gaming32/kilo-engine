@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package io.github.gaming32.kiloengine.util
 
 import com.google.gson.JsonElement
@@ -103,3 +105,5 @@ fun getShader(type: Int, file: String) = Resources.getResource(file)?.use {
     }
     shader
 } ?: throw IllegalArgumentException("Cannot find shader file $file")
+
+infix fun Byte.shl(number: Int) = toInt() shl number

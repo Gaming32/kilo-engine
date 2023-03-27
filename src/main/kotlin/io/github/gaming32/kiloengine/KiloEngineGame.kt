@@ -22,11 +22,15 @@ import org.ode4j.math.DVector3
 import org.ode4j.ode.DContact.DSurfaceParameters
 import org.ode4j.ode.DContactGeomBuffer
 import org.ode4j.ode.OdeHelper
-import java.awt.Component
+import java.awt.Rectangle
+import java.awt.datatransfer.Clipboard
+import java.awt.datatransfer.ClipboardOwner
+import java.awt.datatransfer.Transferable
 import kotlin.math.roundToLong
 import kotlin.math.sin
 
-abstract class KiloEngineGame {
+
+abstract class KiloEngineGame : ClipboardOwner {
     companion object {
         private const val PHYSICS_SPEED = 0.02
         const val CONTACT_COUNT = 32
@@ -98,6 +102,15 @@ abstract class KiloEngineGame {
 
     // Stats
     var fpsAverage = 0.0
+
+    fun takeScreenshot() {
+        val location = window.location
+        val screen = Rectangle(location.x, location.y, window.size.x, window.size.y)
+
+        val screenshot = Screenshot.capture(screen)
+        screenshot.save()
+        screenshot.copy(this)
+    }
 
     fun main() {
         init()
@@ -503,6 +516,18 @@ abstract class KiloEngineGame {
                     movementInput.y = 1.0
                 }
 
+                GLFW_KEY_F1 -> if (press && (mouseLocked || EDITOR_MODE)) {
+                    isUIEnabled = !isUIEnabled
+                }
+
+                GLFW_KEY_F2 -> if (press && (mouseLocked || EDITOR_MODE)) {
+                    takeScreenshot()
+                }
+
+                GLFW_KEY_F3 -> if (press && (mouseLocked || EDITOR_MODE)) {
+                    isDebugScreenEnabled = !isDebugScreenEnabled
+                }
+
                 GLFW_KEY_F4 -> if (press && (mouseLocked || EDITOR_MODE)) {
                     wireframe = !wireframe
                     if (wireframe) {
@@ -512,14 +537,6 @@ abstract class KiloEngineGame {
                         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
                         glLineWidth(10f)
                     }
-                }
-
-                GLFW_KEY_F3 -> if (press && (mouseLocked || EDITOR_MODE)) {
-                    isDebugScreenEnabled = !isDebugScreenEnabled
-                }
-
-                GLFW_KEY_F1 -> if (press && (mouseLocked || EDITOR_MODE)) {
-                    isUIEnabled = !isUIEnabled
                 }
             }
         }
@@ -543,4 +560,8 @@ abstract class KiloEngineGame {
     abstract val title: String
 
     abstract fun loadInitScene()
+
+    override fun lostOwnership(clipboard: Clipboard?, contents: Transferable?) {
+        println("Screenshot deleted from clipboard")
+    }
 }
