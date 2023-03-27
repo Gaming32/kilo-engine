@@ -277,7 +277,7 @@ abstract class KiloEngineGame {
                 windowSize.x.toFloat(), windowSize.y.toFloat(),
                 widthArray[0].toFloat() / windowSize.x
             )
-            nvgFontFace(nanovg, "minecraftia")
+            nvgFontFace(nanovg, "scientifica")
             nvgText(nanovg, 10f, 35f, "FPS: ${fpsAverage.roundToLong()}")
             nvgText(nanovg, 10f, 55f, "Tri Count: ${DisplayList.totalTriCount}")
             if (!EDITOR_MODE) {
