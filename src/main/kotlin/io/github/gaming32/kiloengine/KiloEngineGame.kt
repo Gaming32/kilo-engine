@@ -76,7 +76,7 @@ abstract class KiloEngineGame : ClipboardOwner {
     private var editorSelected: Entity? = null
 
     // Handles
-    private lateinit var window : Window.KnownSize
+    private lateinit var window : Window
     private var nanovg = 0L
     private var vao = 0
     private var vbo = 0
@@ -349,7 +349,7 @@ abstract class KiloEngineGame : ClipboardOwner {
 //        val monitor = glfwGetPrimaryMonitor()
 //        val videoMode = glfwGetVideoMode(monitor) ?: throw Exception("Could not determine video mode")
 
-        window = Window.KnownSize(Vector2i(1280, 720), title)
+        window = Window(Vector2i(1280, 720), title)
         window.makeCurrent()
         GL.createCapabilities()
 //        GLUtil.setupDebugMessageCallback()
