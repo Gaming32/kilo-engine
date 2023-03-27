@@ -6,6 +6,10 @@ data class Font @JvmOverloads constructor(
     val italic: String? = null,
     val italicBold: String? = null
 ) {
+    fun bold() = bold ?: regular
+    fun italic() = italic ?: regular
+    fun italicBold() = italicBold ?: bold ?: italic ?: regular
+
     val isBoldSupported : Boolean
         get() = bold != null
 

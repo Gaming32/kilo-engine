@@ -1,8 +1,8 @@
 package io.github.gaming32.kiloengine.ui
 
+import io.github.gaming32.kiloengine.Window
 import io.github.gaming32.kiloengine.util.loadFont
 import org.joml.Vector2fc
-import org.joml.Vector2ic
 import org.lwjgl.nanovg.NanoVG.nvgBeginFrame
 import org.lwjgl.nanovg.NanoVG.nvgEndFrame
 import kotlin.properties.Delegates
@@ -15,8 +15,8 @@ typealias UITask = (nanovg: Long) -> Unit
 data class UIManager(private val nanovg: Long) {
     private val tasks = mutableListOf<Task>()
 
-    fun drawOn(windowSize: Vector2ic, pixelRatio: Float) {
-        nvgBeginFrame(nanovg, windowSize.x().toFloat(), windowSize.y().toFloat(), pixelRatio)
+    infix fun on(window: Window.KnownSize) {
+        nvgBeginFrame(nanovg, window.size.x.toFloat(), window.size.y.toFloat(), window.pixelRatio)
 
         tasks.removeIf {
             it.task.invoke(nanovg)
@@ -30,7 +30,9 @@ data class UIManager(private val nanovg: Long) {
 
     @JvmOverloads
     fun addTask(task: UITask, removeAfterInvoking: Boolean = true) = addTask(Task(task, removeAfterInvoking))
+
     operator fun invoke(task: UITask) = addTask(task)
+
     operator fun plusAssign(task: UITask) {
         addTask(task)
     }
@@ -48,26 +50,23 @@ data class UIManager(private val nanovg: Long) {
      * Represents a UIElement that has been assigned to a UIManager.
      * Properties cannot be called until the UI is drawn for the first time.
      */
-    inner class Element internal constructor(private val element: UIElement) {
-        var width by Delegates.notNull<Float>()
-            private set
+    open inner class Element internal constructor(private val element: UIElement) {
+        val width : Float
+            get() = element.width(nanovg)
 
-        var height by Delegates.notNull<Float>()
-            private set
-
-        init {
-            invoke {
-                width = element.width(it)
-                height = element.height(it)
-            }
-        }
+        val height : Float
+            get() = element.height(nanovg)
 
         /**
          * Add a task to draw this element on the provided location to the assigned manager.
          * @return was the task successfully added to the drawing queue?
          */
-        infix fun at(location: Vector2fc) = invoke {
-            element.draw(it, location)
+        infix fun at(location: Vector2fc): Element {
+            invoke {
+                element.draw(it, location)
+            }
+
+            return this
         }
     }
 
