@@ -8,7 +8,7 @@ import java.awt.Color
 
 const val ENGINE_NAME = "Kilo Engine"
 
-const val FORMAT = '§';
+const val FORMAT = '§'
 
 const val FORMAT_REGULAR = 'r'
 const val FORMAT_BOLD = 'b'

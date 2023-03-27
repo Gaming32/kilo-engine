@@ -13,7 +13,7 @@ interface AbstractBoxElement: UIElement {
 
 
         nvgBeginPath(nanovg)
-        nvgFillColor(nanovg, backgroundColor)
+        nvgFillColor(nanovg, backgroundColor!!)
         val radius = radius
 
         if (radius == null) {
