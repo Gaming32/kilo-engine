@@ -106,13 +106,20 @@ abstract class KiloEngineGame : ClipboardOwner {
     var isUIEnabled = true
         get() = field && !wireframe
 
-    val builtInDebugMenu = listOf(
+    val builtInDebugMenu = mutableListOf<DebugMenuItem>(
         SimpleDebugMenuItem("FPS") {
             fpsAverage.roundToLong().toString()
         }, SimpleDebugMenuItem("Triangles") {
             DisplayList.totalTriCount.toString()
         }
-    )
+    ).also {
+        it.addAll(debugMenu)
+    }.toList()
+
+    /**
+     * Use this to add your own, custom, global debug data
+     */
+    protected open val debugMenu = listOf<DebugMenuItem>()
 
     // Stats
     var fpsAverage = 0.0
