@@ -1,4 +1,6 @@
 @file:Suppress("unused")
+@file:JvmName(UTILITIES_CLASS_NAME)
+@file:JvmMultifileClass
 
 package io.github.gaming32.kiloengine.util
 
@@ -11,6 +13,8 @@ import org.lwjgl.system.MemoryUtil
 import java.io.ByteArrayOutputStream
 import kotlin.math.PI
 import kotlin.math.abs
+
+const val UTILITIES_CLASS_NAME = "Utilities"
 
 const val FPI = PI.toFloat()
 

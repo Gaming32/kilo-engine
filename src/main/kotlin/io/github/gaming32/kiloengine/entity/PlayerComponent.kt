@@ -177,22 +177,26 @@ open class PlayerComponent(
 //        )
 //    }
 
-    override val debugMenu = listOf(SimpleDebugMenuItem("X/Y/Z") {
-        "${UI_DEC_FORMAT.format(entity.body.position.x)}/" +
-                "${UI_DEC_FORMAT.format(entity.body.position.y)}/" +
-                UI_DEC_FORMAT.format(entity.body.position.z)
-    }, SimpleDebugMenuItem("FX/FY/FZ") {
-        "${UI_DEC_FORMAT.format(uiForce.x)}/" +
-                "${UI_DEC_FORMAT.format(uiForce.y)}/" +
-                UI_DEC_FORMAT.format(uiForce.z)
-    }, SimpleDebugMenuItem("VX/VY/VZ") {
-        "${UI_DEC_FORMAT.format(entity.body.linearVel.x)}/" +
-                "${UI_DEC_FORMAT.format(entity.body.linearVel.y)}/" +
-                UI_DEC_FORMAT.format(entity.body.linearVel.z)
-    }, SimpleDebugMenuItem("RY/RX") {
-        "${UI_DEC_FORMAT.format(rotation.y)}/" +
-                UI_DEC_FORMAT.format(rotation.x)
-    })
+    override val debugMenu = listOf(
+        SimpleDebugMenuItem.ofColoredCoordinates("Coordinates",
+            Pair("X") { UI_DEC_FORMAT.format(entity.body.position.x) },
+            Pair("Y") { UI_DEC_FORMAT.format(entity.body.position.y) },
+            Pair("Z") { UI_DEC_FORMAT.format(entity.body.position.z) }),
+
+        SimpleDebugMenuItem.ofColoredCoordinates("Force",
+            Pair("X") { UI_DEC_FORMAT.format(uiForce.x) },
+            Pair("Y") { UI_DEC_FORMAT.format(uiForce.y) },
+            Pair("Z") { UI_DEC_FORMAT.format(uiForce.z) }),
+
+        SimpleDebugMenuItem.ofColoredCoordinates("Velocity",
+            Pair("X") { UI_DEC_FORMAT.format(entity.body.linearVel.x) },
+            Pair("Y") { UI_DEC_FORMAT.format(entity.body.linearVel.y) },
+            Pair("Z") { UI_DEC_FORMAT.format(entity.body.linearVel.z) }),
+
+        SimpleDebugMenuItem.ofColoredCoordinates("Rotation",
+            Pair("X") { UI_DEC_FORMAT.format(rotation.x) },
+            Pair("Y") { UI_DEC_FORMAT.format(rotation.y) })
+    )
 
     override fun mouseMoved(event: MouseMoveEvent) {
         rotation.y = normalizeDegrees(

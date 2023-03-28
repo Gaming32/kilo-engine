@@ -1,4 +1,6 @@
 @file:Suppress("NOTHING_TO_INLINE")
+@file:JvmName(UTILITIES_CLASS_NAME)
+@file:JvmMultifileClass
 
 package io.github.gaming32.kiloengine.util
 

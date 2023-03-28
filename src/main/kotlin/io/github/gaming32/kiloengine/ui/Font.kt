@@ -18,4 +18,13 @@ data class Font @JvmOverloads constructor(
 
     val isItalicBoldSupported : Boolean
         get() = italicBold != null
+
+    fun formatCodeToFont(code: Char) = when (code) {
+        FORMAT_ITALICS -> italic()
+        FORMAT_BOLD -> bold()
+        FORMAT_ITALICS_BOLD -> italicBold()
+        FORMAT_REGULAR -> regular
+
+        else -> null
+    }
 }

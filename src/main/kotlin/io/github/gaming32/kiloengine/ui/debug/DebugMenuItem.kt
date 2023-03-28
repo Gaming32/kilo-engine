@@ -6,5 +6,5 @@ import io.github.gaming32.kiloengine.KiloEngineGame.Companion.DEBUG_MENU_TEXT_SI
 import io.github.gaming32.kiloengine.ui.TextElement
 
 interface DebugMenuItem {
-    fun toElement() = TextElement(this.toString(), DEBUG_MENU_FONT_FAMILY, DEBUG_MENU_TEXT_SIZE, DEBUG_MENU_TEXT_COLOR, null)
+    fun toElement() = TextElement(this.toString(), DEBUG_MENU_FONT_FAMILY, DEBUG_MENU_TEXT_SIZE, DEBUG_MENU_TEXT_COLOR)
 }

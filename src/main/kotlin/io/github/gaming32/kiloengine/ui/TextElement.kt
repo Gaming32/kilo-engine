@@ -1,5 +1,6 @@
 package io.github.gaming32.kiloengine.ui
 
+import io.github.gaming32.kiloengine.util.formatCodeToColor
 import org.joml.Vector2f
 import org.joml.Vector2fc
 import org.lwjgl.nanovg.NVGColor
@@ -32,6 +33,9 @@ open class TextElement(
         var index = label.indexOf(FORMAT, ignoreCase = true)
         var nextIndex: Int
 
+        var currentColor: NVGColor = DEFAULT_TEXT_COLOR
+        var currentFont: String = font.regular
+
         while (index != label.length) {
             nextIndex = label.indexOf(FORMAT, index + 1, true)
 
@@ -39,15 +43,13 @@ open class TextElement(
                 nextIndex = label.length
             }
 
-            substrings += SimpleTextElement(
-                label.substring(index + 2, nextIndex), when (label[index + 1]) {
-                    FORMAT_ITALICS -> font.italic()
-                    FORMAT_BOLD -> font.bold()
-                    FORMAT_ITALICS_BOLD -> font.italicBold()
+            currentColor = formatCodeToColor(label[index + 1]) ?: currentColor
+            currentFont = font.formatCodeToFont(label[index + 1]) ?: currentFont
 
-                    else -> font.regular
-                }, size, color
-            )
+            val substring = label.substring(index + 2, nextIndex)
+
+            if (substring.isNotEmpty()) substrings += SimpleTextElement(substring, currentFont, size, currentColor)
+
 
             index = nextIndex
         }
