@@ -28,6 +28,8 @@ open class TextElement(
     }
 
     fun toSubElements(): List<SimpleTextElement> {
+        if (label.isEmpty()) return listOf()
+
         val substrings = mutableListOf<SimpleTextElement>()
 
         var index = label.indexOf(FORMAT, ignoreCase = true)

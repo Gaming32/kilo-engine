@@ -7,4 +7,9 @@ import io.github.gaming32.kiloengine.ui.TextElement
 
 interface DebugMenuItem {
     fun toElement() = TextElement(this.toString(), DEBUG_MENU_FONT_FAMILY, DEBUG_MENU_TEXT_SIZE, DEBUG_MENU_TEXT_COLOR)
+
+    @Suppress("unused")
+    object EmptyLine : DebugMenuItem {
+        override fun toString() = ""
+    }
 }
