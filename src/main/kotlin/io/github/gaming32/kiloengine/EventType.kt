@@ -1,5 +1,6 @@
 package io.github.gaming32.kiloengine
 
+import io.github.gaming32.kiloengine.ui.UIManager
 import org.joml.Vector3d
 
 internal typealias EventInvoker = (Any?) -> Unit
@@ -13,8 +14,9 @@ internal class EventType<T>(
         val TICK = EventType<Nothing?>("tick")
         val DRAW = EventType("draw", MatrixStacks::class.java)
         val HANDLE_MOVEMENT = EventType("handleMovement", Vector3d::class.java)
-        val DRAW_UI = EventType("drawUi", Long::class.javaPrimitiveType)
+        val DRAW_UI = EventType("drawUi", UIManager::class.javaPrimitiveType)
         val MOUSE_MOVED = EventType("mouseMoved", MouseMoveEvent::class.java)
+
         val EVENT_TYPES = mutableListOf(PRE_TICK, TICK, DRAW, HANDLE_MOVEMENT, DRAW_UI, MOUSE_MOVED)
     }
 

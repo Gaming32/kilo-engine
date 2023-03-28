@@ -11,6 +11,13 @@ object ComponentRegistry {
 
     fun getType(id: String) = componentTypes.getValue(id)
 
+    fun identifierOf(type : ComponentType<*>) : String {
+        componentTypes.forEach {
+            if (it.value == type) return it.key
+        }
+        return "unknownComponent"
+    }
+
     init {
         register("camera", CameraComponent)
         register("capsuleCollider", CapsuleColliderComponent)

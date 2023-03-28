@@ -1,3 +1,7 @@
+@file:Suppress("unused")
+@file:JvmName(UTILITIES_CLASS_NAME)
+@file:JvmMultifileClass
+
 package io.github.gaming32.kiloengine.util
 
 import com.google.gson.JsonElement
@@ -9,6 +13,8 @@ import org.lwjgl.system.MemoryUtil
 import java.io.ByteArrayOutputStream
 import kotlin.math.PI
 import kotlin.math.abs
+
+const val UTILITIES_CLASS_NAME = "Utilities"
 
 const val FPI = PI.toFloat()
 
@@ -103,3 +109,5 @@ fun getShader(type: Int, file: String) = Resources.getResource(file)?.use {
     }
     shader
 } ?: throw IllegalArgumentException("Cannot find shader file $file")
+
+infix fun Byte.shl(number: Int) = toInt() shl number

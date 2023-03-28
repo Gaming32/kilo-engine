@@ -1,16 +1,18 @@
 package io.github.gaming32.kiloengine
 
 import io.github.gaming32.kiloengine.entity.CameraComponent
+import io.github.gaming32.kiloengine.entity.ComponentRegistry
 import io.github.gaming32.kiloengine.entity.Entity
 import io.github.gaming32.kiloengine.entity.PlayerComponent
 import io.github.gaming32.kiloengine.loader.SceneLoader
 import io.github.gaming32.kiloengine.loader.SceneLoaderImpl
+import io.github.gaming32.kiloengine.ui.*
+import io.github.gaming32.kiloengine.ui.debug.DebugMenuItem
+import io.github.gaming32.kiloengine.ui.debug.SimpleDebugMenuItem
 import io.github.gaming32.kiloengine.util.*
 import org.joml.*
-import org.lwjgl.glfw.Callbacks.glfwFreeCallbacks
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.glfw.GLFWErrorCallback
-import org.lwjgl.nanovg.NanoVG.*
 import org.lwjgl.nanovg.NanoVGGL3.NVG_ANTIALIAS
 import org.lwjgl.nanovg.NanoVGGL3.nvgCreate
 import org.lwjgl.opengl.GL
@@ -20,10 +22,17 @@ import org.ode4j.math.DVector3
 import org.ode4j.ode.DContact.DSurfaceParameters
 import org.ode4j.ode.DContactGeomBuffer
 import org.ode4j.ode.OdeHelper
+import java.awt.Color
+import java.awt.Rectangle
+import java.awt.datatransfer.Clipboard
+import java.awt.datatransfer.ClipboardOwner
+import java.awt.datatransfer.Transferable
+import kotlin.math.max
 import kotlin.math.roundToLong
 import kotlin.math.sin
 
-abstract class KiloEngineGame {
+
+abstract class KiloEngineGame : ClipboardOwner {
     companion object {
         private const val PHYSICS_SPEED = 0.02
         const val CONTACT_COUNT = 32
@@ -40,10 +49,28 @@ abstract class KiloEngineGame {
 
         @JvmField
         val EDITOR_MODE = System.getProperty("kilo.editor").toBoolean()
+
+        @JvmField
+        val DEV_MODE = System.getProperty("kilo.dev").toBoolean()
         val EDITOR_DEBUG_COLOR = Vector3f(50 / 255f, 168 / 255f, 113 / 255f)
         private const val EDITOR_MOVE_SPEED = 0.35f
         private const val EDITOR_LOOK_SPEED = 0.2f
         private const val EDITOR_FOV = 80f
+
+        @JvmField
+        val DEBUG_MENU_FONT_FAMILY = DEFAULT_FONT_FAMILY
+
+        @JvmField
+        val DEBUG_MENU_TEXT_COLOR = WHITE
+
+        @JvmField
+        val DEBUG_MENU_BACKGROUND_COLOR = Color(0.75f, 0.75f, 0.75f, 0.5f).toNVGColor()
+        const val DEBUG_MENU_TEXT_SIZE = DEFAULT_TEXT_SIZE
+        const val DEBUG_MENU_TITLE_SIZE = DEFAULT_TITLE_SIZE
+        const val DEBUG_MENU_CATEGORY_OFFSET = DEFAULT_PARGRAPH_TEXT_OFFSET
+        const val DEBUG_MENU_BACKGROUND_RADIUS = 10f
+        const val DEBUG_MENU_TEXT_OFFSET = 10f
+        const val DEBUG_MENU_BACKGROUND_OFFSET = 5f
     }
 
     init {
@@ -51,11 +78,11 @@ abstract class KiloEngineGame {
     }
 
     val scene = Scene()
-    private val windowSize = Vector2i()
     private val movementInput = Vector3d()
-    private var wireframe = false
     private val matrices = MatrixStacks(32)
     lateinit var sceneLoader: SceneLoader
+        private set
+    lateinit var ui: UIManager
         private set
 
     private val editorCameraPos = Vector3f()
@@ -63,7 +90,7 @@ abstract class KiloEngineGame {
     private var editorSelected: Entity? = null
 
     // Handles
-    private var window = 0L
+    private lateinit var window: Window
     private var nanovg = 0L
     private var vao = 0
     private var vbo = 0
@@ -71,13 +98,40 @@ abstract class KiloEngineGame {
     private var fragmentShader = 0
     private var shaderProgram = 0
 
+    // Screen States
+    var wireframe = false
+        get() = field && DEV_MODE
+    var isDebugScreenEnabled = DEV_MODE
+        get() = field && DEV_MODE
+    var isUIEnabled = true
+        get() = field && !wireframe
+
+    val builtInDebugMenu = listOf<DebugMenuItem>(
+        SimpleDebugMenuItem("FPS") {
+            fpsAverage.roundToLong().toString()
+        }, SimpleDebugMenuItem("Triangles") {
+            DisplayList.totalTriCount.toString()
+        }
+    )
+
+    // Stats
+    var fpsAverage = 0.0
+
+    fun takeScreenshot() {
+        val location = window.location
+        val screen = Rectangle(location.x, location.y, window.size.x, window.size.y)
+
+        val screenshot = Screenshot.capture(screen)
+        screenshot.save()
+        screenshot.copy(this)
+    }
+
     fun main() {
         init()
         registerEvents()
         loadInitScene()
         var lastTime = glfwGetTime()
         var lastPhysicsTime = lastTime
-        var fpsAverage = 0.0
         if (EDITOR_MODE) {
             scene.getComponentOrNull<PlayerComponent>()?.let {
                 editorCameraPos.set(it.entity.body.position.toVector3f())
@@ -85,7 +139,7 @@ abstract class KiloEngineGame {
             }
         }
         val contactJointGroup = OdeHelper.createJointGroup()
-        while (!glfwWindowShouldClose(window)) {
+        while (!window.shouldClose()) {
             glfwPollEvents()
 
             val time = glfwGetTime()
@@ -98,7 +152,7 @@ abstract class KiloEngineGame {
                 lastPhysicsTime = time - 1.0
             }
             while (time - lastPhysicsTime > PHYSICS_SPEED) {
-                val mouseLocked = glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED
+                val mouseLocked = glfwGetInputMode(window.lwjglID, GLFW_CURSOR) == GLFW_CURSOR_DISABLED
                 if (EDITOR_MODE) {
                     if (mouseLocked) {
                         editorCameraPos += movementInput.toVector3f()
@@ -151,12 +205,12 @@ abstract class KiloEngineGame {
 
             if (EDITOR_MODE) {
                 glBindFramebuffer(GL_FRAMEBUFFER, 0)
-                glViewport(0, 0, windowSize.x, windowSize.y)
+                glViewport(0, 0, window.size.x, window.size.y)
 
                 matrices.projection.clear()
                 matrices.projection.perspective(
                     Math.toRadians(EDITOR_FOV),
-                    windowSize.x / windowSize.y.toFloat(),
+                    window.size.x / window.size.y.toFloat(),
                     VIEW_NEAR, VIEW_FAR
                 )
 
@@ -174,11 +228,11 @@ abstract class KiloEngineGame {
                     val aspect: Float
                     if (camera.renderArea != null) {
                         glBindFramebuffer(GL_FRAMEBUFFER, 0)
-                        val w = (camera.renderArea.second.x - camera.renderArea.first.x) * windowSize.x
-                        val h = (camera.renderArea.second.y - camera.renderArea.first.y) * windowSize.y
+                        val w = (camera.renderArea.second.x - camera.renderArea.first.x) * window.size.x
+                        val h = (camera.renderArea.second.y - camera.renderArea.first.y) * window.size.y
                         glViewport(
-                            (camera.renderArea.first.x * windowSize.x).toInt(),
-                            (camera.renderArea.first.y * windowSize.y).toInt(),
+                            (camera.renderArea.first.x * window.size.x).toInt(),
+                            (camera.renderArea.first.y * window.size.y).toInt(),
                             w.toInt(), h.toInt()
                         )
                         aspect = w / h
@@ -234,38 +288,76 @@ abstract class KiloEngineGame {
             }
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0)
-            glViewport(0, 0, windowSize.x, windowSize.y)
+            glViewport(0, 0, window.size.x, window.size.y)
 
             // HUD
             matrices.projection.clear()
-            matrices.projection.ortho(0f, windowSize.x.toFloat(), windowSize.y.toFloat(), 0f, 1f, 3f)
+            matrices.projection.ortho(0f, window.size.x.toFloat(), window.size.y.toFloat(), 0f, 1f, 3f)
             matrices.model.clear()
             matrices.model.translate(0f, 0f, -2f)
             glDisable(GL_DEPTH_TEST)
 
-            val widthArray = IntArray(1)
-            glfwGetFramebufferSize(window, widthArray, null)
-            nvgBeginFrame(
-                nanovg,
-                windowSize.x.toFloat(), windowSize.y.toFloat(),
-                widthArray[0].toFloat() / windowSize.x
-            )
-            nvgFontFace(nanovg, "minecraftia")
-            nvgText(nanovg, 10f, 35f, "FPS: ${fpsAverage.roundToLong()}")
-            nvgText(nanovg, 10f, 55f, "Tri Count: ${DisplayList.totalTriCount}")
-            if (!EDITOR_MODE) {
-                scene.invokeEvent(EventType.DRAW_UI, nanovg)
-            }
-            nvgEndFrame(nanovg)
+            drawUi()
 
             glUseProgram(shaderProgram)
             glBindVertexArray(vao)
             glBindBuffer(GL_ARRAY_BUFFER, vbo)
 
-            glfwSwapBuffers(window)
+            window.swapBuffers()
         }
+
         contactJointGroup.destroy()
         quit()
+    }
+
+    private fun drawUi() {
+        if (isDebugScreenEnabled) {
+            var y = drawDebugCategory(ENGINE_NAME, builtInDebugMenu, y = 35f)
+
+            scene.components.forEach {
+                y = drawDebugCategory(
+                    "${it.entity.hashCode()}/${ComponentRegistry.identifierOf(it.type)}",
+                    it.debugMenu,
+                    y = y
+                )
+            }
+        }
+
+        // draw UI
+        if (isUIEnabled) {
+            ui on window
+        }
+    }
+
+    /**
+     * @return new y
+     */
+    private fun drawDebugCategory(
+        name: String,
+        debugData: List<DebugMenuItem>,
+        x: Float = DEBUG_MENU_TEXT_OFFSET,
+        y: Float
+    ): Float {
+        if (debugData.isEmpty()) return y
+
+        val title = SimpleTextElement(name, DEFAULT_FONT_FAMILY.bold(), DEBUG_MENU_TITLE_SIZE) with ui at Vector2f(x, y)
+        var width = title.width
+        var height = title.height
+
+        debugData.forEach {
+            val element = it.toElement() with ui at Vector2f(x, y + height)
+            height += element.height
+            width = max(width, element.width)
+        }
+
+        SimpleBoxElement(
+            name,
+            Vector2f(width + DEBUG_MENU_TEXT_OFFSET, height + DEBUG_MENU_CATEGORY_OFFSET / 2),
+            DEBUG_MENU_BACKGROUND_COLOR,
+            DEBUG_MENU_BACKGROUND_RADIUS
+        ) with ui prioritizedAt Vector2f(x - (DEBUG_MENU_TEXT_OFFSET - DEBUG_MENU_BACKGROUND_OFFSET), y - title.height)
+
+        return y + height + DEBUG_MENU_CATEGORY_OFFSET
     }
 
     private fun init() {
@@ -285,19 +377,20 @@ abstract class KiloEngineGame {
 //        val monitor = glfwGetPrimaryMonitor()
 //        val videoMode = glfwGetVideoMode(monitor) ?: throw Exception("Could not determine video mode")
 
-        windowSize.set(1280, 720)
-        window = glfwCreateWindow(windowSize.x, windowSize.y, title, 0, 0)
-        glfwMakeContextCurrent(window)
+        window = Window(Vector2i(1280, 720), title)
+        window.makeCurrent()
         GL.createCapabilities()
 //        GLUtil.setupDebugMessageCallback()
 
         nanovg = nvgCreate(NVG_ANTIALIAS)
-        loadFont(nanovg, "minecraftia")
+        ui = UIManager(nanovg)
+
+        ui.loadFont(JETBRAINS_MONO)
 
         glfwSwapInterval(1)
 
-        glfwSetWindowSizeCallback(window) { _, width, height ->
-            windowSize.set(width, height)
+        glfwSetWindowSizeCallback(window.lwjglID) { _, width, height ->
+            window.size.set(width, height)
         }
 
         glEnable(GL_BLEND)
@@ -354,7 +447,7 @@ abstract class KiloEngineGame {
 
     private fun registerEvents() {
         val lastMousePos = Vector2d(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY)
-        glfwSetCursorPosCallback(window) { window, x, y ->
+        glfwSetCursorPosCallback(window.lwjglID) { window, x, y ->
             if (
                 lastMousePos.x != Double.POSITIVE_INFINITY &&
                 glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED
@@ -375,15 +468,15 @@ abstract class KiloEngineGame {
             lastMousePos.set(x, y)
         }
 
-        glfwSetMouseButtonCallback(window) { window, _, action, _ ->
+        glfwSetMouseButtonCallback(window.lwjglID) { window, _, action, _ ->
             if (action == GLFW_PRESS) {
                 if (EDITOR_MODE) {
                     if (glfwGetInputMode(window, GLFW_CURSOR) != GLFW_CURSOR_DISABLED) {
                         // From https://gamedev.stackexchange.com/a/55499/121681
-                        val relX = ((2 - lastMousePos.x * 2 / windowSize.x) - 1).toFloat()
-                        val relY = ((2 - lastMousePos.y * 2 / windowSize.y) - 1).toFloat()
+                        val relX = ((2 - lastMousePos.x * 2 / this.window.size.x) - 1).toFloat()
+                        val relY = ((2 - lastMousePos.y * 2 / this.window.size.y) - 1).toFloat()
                         val dir = Vector3f(
-                            relX * sin(Math.toRadians(EDITOR_FOV)) * windowSize.x / windowSize.y,
+                            relX * sin(Math.toRadians(EDITOR_FOV)) * this.window.size.x / this.window.size.y,
                             relY * sin(Math.toRadians(EDITOR_FOV)),
                             1f
                         ).normalize().mul(
@@ -403,7 +496,7 @@ abstract class KiloEngineGame {
             }
         }
 
-        glfwSetKeyCallback(window) { window, key, _, action, _ ->
+        glfwSetKeyCallback(window.lwjglID) { window, key, _, action, _ ->
             if (action == GLFW_REPEAT) return@glfwSetKeyCallback
             val press = action == GLFW_PRESS
             if (press && EDITOR_MODE && key == GLFW_KEY_SPACE) {
@@ -416,26 +509,31 @@ abstract class KiloEngineGame {
                     movementInput.x = 0.0
                     movementInput.z = 0.0
                 }
+
                 GLFW_KEY_W -> if (press) {
                     movementInput.z++
                 } else {
                     movementInput.z--
                 }
+
                 GLFW_KEY_S -> if (press) {
                     movementInput.z--
                 } else {
                     movementInput.z++
                 }
+
                 GLFW_KEY_A -> if (press) {
                     movementInput.x++
                 } else {
                     movementInput.x--
                 }
+
                 GLFW_KEY_D -> if (press) {
                     movementInput.x--
                 } else {
                     movementInput.x++
                 }
+
                 GLFW_KEY_SPACE -> if (EDITOR_MODE) {
                     if (!press) {
                         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL)
@@ -445,7 +543,20 @@ abstract class KiloEngineGame {
                 } else if (press && mouseLocked) {
                     movementInput.y = 1.0
                 }
+
+                GLFW_KEY_F1 -> if (press && (mouseLocked || EDITOR_MODE)) {
+                    isUIEnabled = !isUIEnabled
+                }
+
+                GLFW_KEY_F2 -> if (press && (mouseLocked || EDITOR_MODE)) {
+                    takeScreenshot()
+                }
+
                 GLFW_KEY_F3 -> if (press && (mouseLocked || EDITOR_MODE)) {
+                    isDebugScreenEnabled = !isDebugScreenEnabled
+                }
+
+                GLFW_KEY_F4 -> if (press && (mouseLocked || EDITOR_MODE)) {
                     wireframe = !wireframe
                     if (wireframe) {
                         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
@@ -463,8 +574,8 @@ abstract class KiloEngineGame {
         scene.destroy()
         OdeHelper.closeODE()
         TextureManager.unload()
-        glfwFreeCallbacks(window)
-        glfwDestroyWindow(window)
+        window.freeCallbacks()
+        window.destroy()
         glDeleteVertexArrays(vao)
         glDeleteBuffers(vbo)
         glDeleteShader(vertexShader)
@@ -477,4 +588,8 @@ abstract class KiloEngineGame {
     abstract val title: String
 
     abstract fun loadInitScene()
+
+    override fun lostOwnership(clipboard: Clipboard?, contents: Transferable?) {
+        println("Screenshot deleted from clipboard")
+    }
 }

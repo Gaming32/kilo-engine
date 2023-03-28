@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package io.github.gaming32.kiloengine
 
 import io.github.gaming32.kiloengine.entity.BaseComponent
@@ -53,6 +55,15 @@ class Scene {
     }
 
     val entities get() = bodyToEntity.values
+    val components : List<BaseComponent<*>> get() {
+        val value = mutableListOf<BaseComponent<*>>()
+
+        entities.forEach {
+            value.addAll(it.components)
+        }
+
+        return value.toList()
+    }
 
     fun <T : BaseComponent<T>> getComponentOrNull(type: BaseComponent.ComponentType<T>) =
         entities.firstNotNullOfOrNull { it.getComponentOrNull(type) }
